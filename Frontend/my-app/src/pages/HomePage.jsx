@@ -1,5 +1,6 @@
 import Navbar from '../components/NavBar'
 
+
 const HomePage = () => {
   return (
     <div>
@@ -42,6 +43,7 @@ const HomePage = () => {
           <p className="text-gray-500 mt-1">Countries</p>
         </div>
       </section>
+       
     </div>
   )
 }
