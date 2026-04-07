@@ -1,4 +1,5 @@
 import { FileText, Play, Pencil, Trash2 } from "lucide-react";
+import Button from "./Button";
 
 const TemplateCard = ({
   title,
@@ -32,31 +33,22 @@ const TemplateCard = ({
       </div>
 
       {/* Execute dugme */}
-      <button
-        onClick={onExecute}
-        className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
-      >
-        <Play className="w-4 h-4" />
+      <Button onClick={onExecute} className="w-full">
+        <Play className="w-4 h-4 mr-2" />
         Execute
-      </button>
+      </Button>
 
       {/* Edit i Delete dugmad */}
       <div className="flex gap-3">
-        <button
-          onClick={onEdit}
-          className="flex-1 border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2 rounded-xl flex items-center justify-center gap-2 transition-colors"
-        >
-          <Pencil className="w-4 h-4" />
+        <Button variant="outline" onClick={onEdit} className="flex-1">
+          <Pencil className="w-4 h-4 mr-2" />
           Edit
-        </button>
+        </Button>
 
-        <button
-          onClick={onDelete}
-          className="flex-1 border border-red-200 hover:bg-red-50 text-red-500 font-medium py-2 rounded-xl flex items-center justify-center gap-2 transition-colors"
-        >
-          <Trash2 className="w-4 h-4" />
+        <Button variant="destructive" onClick={onDelete} className="flex-1">
+          <Trash2 className="w-4 h-4 mr-2" />
           Delete
-        </button>
+        </Button>
       </div>
 
     </div>
