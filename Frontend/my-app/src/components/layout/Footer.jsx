@@ -33,9 +33,9 @@ const Footer = () => {
                             <li>
                                 <a
                                     href="/about"
-                                    className="text-sm text-slate-600 transition-colors hover:underline"
-                                    onMouseEnter={(e) => (e.currentTarget.style.color = '#2ECC71')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.color = '')}
+                                    className="text-sm text-slate-600 transition-colors"
+                                    onMouseEnter={(e) => { e.currentTarget.style.color = '#2ECC71'; e.currentTarget.style.textDecoration = 'underline'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.textDecoration = 'none'; }}
                                 >
                                     About
                                 </a>
@@ -43,9 +43,9 @@ const Footer = () => {
                             <li>
                                 <a
                                     href="/team"
-                                    className="text-sm text-slate-600 transition-colors hover:underline"
-                                    onMouseEnter={(e) => (e.currentTarget.style.color = '#2ECC71')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.color = '')}
+                                    className="text-sm text-slate-600 transition-colors"
+                                    onMouseEnter={(e) => { e.currentTarget.style.color = '#2ECC71'; e.currentTarget.style.textDecoration = 'underline'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.textDecoration = 'none'; }}
                                 >
                                     Team
                                 </a>
@@ -53,9 +53,9 @@ const Footer = () => {
                             <li>
                                 <a
                                     href="/contact"
-                                    className="text-sm text-slate-600 transition-colors hover:underline"
-                                    onMouseEnter={(e) => (e.currentTarget.style.color = '#2ECC71')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.color = '')}
+                                    className="text-sm text-slate-600 transition-colors"
+                                    onMouseEnter={(e) => { e.currentTarget.style.color = '#2ECC71'; e.currentTarget.style.textDecoration = 'underline'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.textDecoration = 'none'; }}
                                 >
                                     Contact
                                 </a>
@@ -72,9 +72,9 @@ const Footer = () => {
                             <li>
                                 <a
                                     href="/login"
-                                    className="text-sm text-slate-600 transition-colors hover:underline"
-                                    onMouseEnter={(e) => (e.currentTarget.style.color = '#2ECC71')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.color = '')}
+                                    className="text-sm text-slate-600 transition-colors"
+                                    onMouseEnter={(e) => { e.currentTarget.style.color = '#2ECC71'; e.currentTarget.style.textDecoration = 'underline'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.textDecoration = 'none'; }}
                                 >
                                     Sign in
                                 </a>
@@ -82,9 +82,9 @@ const Footer = () => {
                             <li>
                                 <a
                                     href="/register"
-                                    className="text-sm text-slate-600 transition-colors hover:underline"
-                                    onMouseEnter={(e) => (e.currentTarget.style.color = '#2ECC71')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.color = '')}
+                                    className="text-sm text-slate-600 transition-colors"
+                                    onMouseEnter={(e) => { e.currentTarget.style.color = '#2ECC71'; e.currentTarget.style.textDecoration = 'underline'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.textDecoration = 'none'; }}
                                 >
                                     Register
                                 </a>
