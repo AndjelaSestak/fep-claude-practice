@@ -1,4 +1,5 @@
 import Navbar from '../components/layout/NavBar'
+import Footer from '../components/layout/Footer'
 
 
 const HomePage = () => {
@@ -43,7 +44,8 @@ const HomePage = () => {
           <p className="text-gray-500 mt-1">Countries</p>
         </div>
       </section>
-       
+
+      <Footer />
     </div>
   )
 }
