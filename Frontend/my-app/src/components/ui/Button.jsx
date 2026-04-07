@@ -11,12 +11,12 @@ export default function Button({
         "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none";
 
     const variants = {
-        default: "bg-emerald-600 text-white hover:bg-emerald-700",
-        outline: "border border-gray-300 text-gray-700 hover:bg-gray-50",
-        secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200",
-        ghost: "bg-transparent text-gray-600 hover:bg-gray-100",
+        default: "bg-primary text-white hover:bg-primary-dark",
+        outline: "border border-gray-300 text-gray-700 hover:bg-primary-light",
+        secondary: "bg-primary-light text-gray-700 hover:bg-primary hover:text-white",
+        ghost: "bg-transparent text-gray-600 hover:bg-primary-light",
         destructive: "bg-red-500 text-white hover:bg-red-600",
-        link: "text-emerald-600 underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline",
     };
 
     const sizes = {
