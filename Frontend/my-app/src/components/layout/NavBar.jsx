@@ -1,3 +1,5 @@
+import Button from '../ui/Button'
+
 const Navbar = () => {
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
@@ -19,10 +21,8 @@ const Navbar = () => {
 
       {/* Buttons */}
       <div className="flex items-center gap-4">
-        <a href="/login" className="text-gray-600 hover:text-primary font-medium">Sign in</a>
-        <a href="/register" className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark font-medium">
-          Get Started
-        </a>
+        <Button version="secondary" size="lg" onClick={() => window.location.href = '/login'}>Sign in</Button>
+         <Button version="secondary" size="lg" onClick={() => window.location.href = '/register'}>Get Started</Button>
       </div>
     </nav>
   )
