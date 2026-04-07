@@ -21,8 +21,7 @@ export function DataTable({
     return (
         <section
             className={cn(
-                "rounded-2xl border border-gray-200 bg-white p-6 shadow-sm",
-                "font-sans",
+                "rounded-2xl border border-gray-200 bg-surface p-6 shadow-sm",
                 className
             )}
         >
@@ -63,7 +62,7 @@ export function DataTable({
                                     {columns.map((column) => (
                                         <td
                                             key={column.key}
-                                            className="px-4 py-3 align-middle text-gray-700"
+                                            className="px-4 py-3 align-middle"
                                         >
                                             {row[column.key] ?? "-"}
                                         </td>
@@ -74,7 +73,7 @@ export function DataTable({
                             <tr>
                                 <td
                                     colSpan={columns.length}
-                                    className="px-4 py-6 text-center text-gray-500"
+                                    className="px-4 py-6 text-center"
                                 >
                                     No data available.
                                 </td>

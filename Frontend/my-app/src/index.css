@@ -9,6 +9,8 @@
   /* Light Green */
   --color-primary-light: #f0fdf4;
   --font-sans: 'Inter', sans-serif;
+  /* White */
+  --color-surface: #ffffff;
 }
 
 @layer base {
