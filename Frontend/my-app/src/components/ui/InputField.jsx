@@ -1,5 +1,4 @@
 const Input = ({
-  label,
   placeholder,
   type = "text",
   value,
@@ -10,13 +9,7 @@ const Input = ({
   return (
     <div className="flex flex-col gap-1">
 
-      {/* Label iznad polja */}
-      {label && (
-        <label className="text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      )}
-
+    
       {/* Input polje */}
       <input
         type={type}
