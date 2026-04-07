@@ -1,6 +1,19 @@
+import { useLocation } from "react-router-dom";
+
+
 const Navbar = () => {
+  const location = useLocation();
+
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+    { name: "Team", path: "/team" },
+    { name: "Contact", path: "/contact" },
+  ];
+
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
+      
       {/* Logo */}
       <div className="flex items-center gap-2">
         <div className="bg-primary rounded-lg p-2">
@@ -11,10 +24,14 @@ const Navbar = () => {
 
       {/* Links */}
       <div className="flex items-center gap-8">
-        <a href="/" className="text-primary font-medium">Home</a>
-        <a href="/about" className="text-gray-600 hover:text-primary">About</a>
-        <a href="/team" className="text-gray-600 hover:text-primary">Team</a>
-        <a href="/contact" className="text-gray-600 hover:text-primary">Contact</a>
+       {navLinks.map((link) => (
+      <a key={link.name}
+       href={link.path}
+       className={location.pathname === link.path ? "text-primary font-medium" : "text-gray-600 hover:text-primary"}
+     >
+      {link.name}
+     </a>
+))}
       </div>
 
       {/* Buttons */}
@@ -24,8 +41,9 @@ const Navbar = () => {
           Get Started
         </a>
       </div>
-    </nav>
-  )
-}
 
-export default Navbar
+    </nav>
+  );
+};
+
+export default Navbar;

@@ -3,6 +3,7 @@ import HomePage from '../pages/HomePage'
 import LoginPage from '../pages/LoginPage'
 import NotFoundPage from '../pages/NotFoundPage'
 import DashboardPage from '../pages/DashboardPage'
+import AboutPage from '../pages/AboutPage'
 
 const router = createBrowserRouter([
     {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
     {
         path: '/dashboard',
         element: <DashboardPage />,
+    },
+    {
+        path: '/about',
+        element: <AboutPage />,
     },
 ])
 
