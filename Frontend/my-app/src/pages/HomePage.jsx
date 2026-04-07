@@ -1,5 +1,6 @@
 import Navbar from '../components/layout/NavBar'
 import Footer from '../components/layout/Footer'
+import Button from '../components/ui/Button'
 
 
 const HomePage = () => {
@@ -16,12 +17,12 @@ const HomePage = () => {
           Experience the future of banking with SecureBank. Manage your finances, track expenses, and make payments—all from one secure platform.
         </p>
         <div className="flex gap-4 mt-8">
-          <a href="/register" className="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark">
+          <Button variant="default" size="lg" onClick={() => window.location.href = '/register'}>
             Get Started Free
-          </a>
-          <a href="/about" className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:border-primary hover:text-primary">
+          </Button>
+          <Button variant="outline" size="lg" onClick={() => window.location.href = '/about'} >
             Learn More
-          </a>
+          </Button>
         </div>
       </section>
 
