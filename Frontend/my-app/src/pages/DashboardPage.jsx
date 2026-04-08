@@ -1,5 +1,31 @@
 import Button from "../components/ui/Button";
 import SearchBar from "../components/ui/SearchBar";
+import {TransactionItem} from "../components/ui/TransactionItem";
+import { ItemList } from "../components/ui/ItemList";
+
+// Test example transactions - in a real app, these would come from an API
+const transactions = [
+  {
+    id: 1,
+    direction: "outgoing",
+    recipient: "Amazon",
+    sender: null,
+    type: "single",
+    amount: 90,
+    currency: "RSD",
+    created_at: "2026-03-28T00:00:00Z",
+  },
+  {
+    id: 2,
+    direction: "incoming",
+    recipient: null,
+    sender: "Salary Deposit",
+    type: "single",
+    amount: 5000,
+    currency: "RSD",
+    created_at: "2026-03-25T00:00:00Z",
+  },
+];
 
 const DashboardPage = () => {
   return (
@@ -20,6 +46,16 @@ const DashboardPage = () => {
         <Button variant="destructive">Destructive</Button>
         <Button variant="link">Link</Button>
       </div>
+
+      {/* --- Transactions List --- */}
+      <div className="mt-10">
+        <ItemList title="Recent Transactions" description="Your latest transactions">
+          {transactions.map((transaction) => (
+            <TransactionItem key={transaction.id} transaction={transaction} />
+          ))}
+        </ItemList>
+      </div>
+
     </div>
   );
 };
