@@ -54,5 +54,6 @@ const TemplateCard = ({
     </div>
   );
 };
+/* U templatePage cu implementirati mapiranje TemplateCard komponenti sa podacima o šablonima. */
 
 export default TemplateCard;
