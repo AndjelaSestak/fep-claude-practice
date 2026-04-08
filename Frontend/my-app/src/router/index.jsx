@@ -4,6 +4,7 @@ import LoginPage from '../pages/LoginPage'
 import NotFoundPage from '../pages/NotFoundPage'
 import DashboardPage from '../pages/DashboardPage'
 import AboutPage from '../pages/AboutPage'
+import ContactUsPage from '../pages/ContactUsPage'
 
 const router = createBrowserRouter([
     {
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
         path: '/about',
         element: <AboutPage />,
     },
+    {
+        path: '/contactus',
+        element: <ContactUsPage />,
+    }
 ])
 
 export default router

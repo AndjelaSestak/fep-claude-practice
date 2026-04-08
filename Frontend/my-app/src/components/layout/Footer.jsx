@@ -52,7 +52,7 @@ const Footer = () => {
                             </li>
                             <li>
                                 <a
-                                    href="/contact"
+                                    href="/contactus"
                                     className="text-sm text-slate-600 transition-colors"
                                     onMouseEnter={(e) => { e.currentTarget.style.color = '#2ECC71'; e.currentTarget.style.textDecoration = 'underline'; }}
                                     onMouseLeave={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.textDecoration = 'none'; }}
