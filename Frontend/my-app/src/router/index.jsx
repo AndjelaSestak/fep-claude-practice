@@ -5,6 +5,7 @@ import NotFoundPage from '../pages/NotFoundPage'
 import DashboardPage from '../pages/DashboardPage'
 import AboutPage from '../pages/AboutPage'
 import ContactUsPage from '../pages/ContactUsPage'
+import TeamPage from '../pages/TeamPage'
 
 const router = createBrowserRouter([
     {
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
     {
         path: '/contactus',
         element: <ContactUsPage />,
+    },
+    {
+        path: '/team',
+        element: <TeamPage />,
     }
 ])
 

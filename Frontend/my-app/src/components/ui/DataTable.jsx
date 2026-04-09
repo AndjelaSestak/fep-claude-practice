@@ -21,7 +21,7 @@ export function DataTable({
     return (
         <section
             className={cn(
-                "rounded-2xl border border-gray-200 bg-surface p-6 shadow-sm",
+                "rounded-2xl border border-border bg-surface p-6 shadow-sm",
                 className
             )}
         >
@@ -37,10 +37,10 @@ export function DataTable({
                 </div>
             )}
 
-            <div className="overflow-x-auto rounded-xl border border-gray-200">
+            <div className="overflow-x-auto rounded-xl border border-border">
                 <table className="w-full text-sm">
                     <thead className="bg-gray-50">
-                        <tr className="border-b border-gray-200">
+                        <tr className="border-b border-border">
                             {columns.map((column) => (
                                 <th
                                     key={column.key}
@@ -57,7 +57,7 @@ export function DataTable({
                             data.map((row, index) => (
                                 <tr
                                     key={row.id ?? index}
-                                    className="border-b border-gray-200 last:border-b-0"
+                                    className="border-b border-border last:border-b-0"
                                 >
                                     {columns.map((column) => (
                                         <td
