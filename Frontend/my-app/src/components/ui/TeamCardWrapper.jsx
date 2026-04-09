@@ -5,7 +5,7 @@ const variantStyles = {
     "w-full min-h-[360px] rounded-3xl border border-border bg-surface p-8 shadow-sm flex flex-col items-center text-center",
 };
 
-const InfoCard = ({
+const TeamCard = ({
   children,
   variant = "team",
   className,
@@ -24,4 +24,4 @@ const InfoCard = ({
   );
 };
 
-export default InfoCard;
+export default TeamCard;

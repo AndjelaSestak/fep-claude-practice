@@ -1,6 +1,6 @@
 import Navbar from '../components/layout/NavBar'
 import Footer from '../components/layout/Footer'
-import InfoCardWrapper from '../components/ui/InfoCardWrapper'
+import TeamCard from '../components/ui/TeamCardWrapper'
 
 
 
@@ -36,7 +36,7 @@ const TeamPage = () => {
 
             <div className="mt-14 grid gap-8 xl:grid-cols-2">
               <div >
-                <InfoCardWrapper hover>
+                <TeamCard hover>
                   <div className="flex flex-col items-center">
                     <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 text-3xl font-semibold text-white">
                       SD
@@ -53,12 +53,12 @@ const TeamPage = () => {
                   <p className="mt-6 text-base leading-7 text-slate-500">
                     A confident and outspoken leader with outstanding organizational abilities and strong development expertise built from an early start in high school, further refined through academic experience at university in the capital.
                   </p>
-                </InfoCardWrapper>
+                </TeamCard>
               </div>
 
               <div >
                 {/* Reusable leadership card component ide ovde */}
-                <InfoCardWrapper hover>
+                <TeamCard hover>
                   <div className="flex flex-col items-center">
                     <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 text-3xl font-semibold text-white">
                       AS
@@ -75,11 +75,11 @@ const TeamPage = () => {
                   <p className="mt-6 text-base leading-7 text-slate-500">
                     A highly adaptable developer with a keen eye for detail, known for deep, in-depth work and playing a key role in maintaining team balance and cohesion.
                   </p>
-                </InfoCardWrapper>
+                </TeamCard>
               </div>
 
               <div >
-                <InfoCardWrapper hover>
+                <TeamCard hover>
                   <div className="flex flex-col items-center">
                     <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 text-3xl font-semibold text-white">
                       LM
@@ -96,11 +96,11 @@ const TeamPage = () => {
                   <p className="mt-6 text-base leading-7 text-slate-500">
                     A highly efficient, reliable developer and an ideal teammate, whose experience in the gaming industry was instrumental in designing this platform.
                   </p>
-                </InfoCardWrapper>
+                </TeamCard>
               </div>
 
               <div >
-                <InfoCardWrapper hover>
+                <TeamCard hover>
                   <div className="flex flex-col items-center">
                     <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 text-3xl font-semibold text-white">
                       VJ
@@ -117,7 +117,7 @@ const TeamPage = () => {
                   <p className="mt-6 text-base leading-7 text-slate-500">
                     A dedicated and versatile developer with a strong focus on building well-structured solutions, while fostering a positive team atmosphere and keeping morale high.
                   </p>
-                </InfoCardWrapper>
+                </TeamCard>
               </div>
 
             </div>
