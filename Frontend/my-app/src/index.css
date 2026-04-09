@@ -8,9 +8,12 @@
   --color-primary-dark: #16a34a;
   /* Light Green */
   --color-primary-light: #f0fdf4;
-  --font-sans: 'Inter', sans-serif;
+  /* Gray 200 */
+  --color-border: #e5e7eb;
   /* White */
   --color-surface: #ffffff;
+  /* Font */
+  --font-sans: 'Inter', sans-serif;
 }
 
 @layer base {

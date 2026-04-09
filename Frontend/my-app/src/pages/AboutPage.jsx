@@ -10,7 +10,7 @@ const AboutPage = () => {
       <main className="flex-1">
 
         {/* Hero sekcija */}
-        <section className="text-center py-20 px-8">
+        <section className="bg-primary-light flex flex-col items-center justify-center text-center px-8 py-24">
           <h1 className="text-5xl font-bold text-gray-900">
             About <span className="text-primary">SecureBank</span>
           </h1>
