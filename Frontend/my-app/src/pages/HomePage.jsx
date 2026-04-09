@@ -2,7 +2,7 @@ import Navbar from '../components/layout/NavBar'
 import Footer from '../components/layout/Footer'
 import Button from '../components/ui/Button'
 import { Shield, CreditCard, TrendingUp, Clock, Lock, Headphones } from 'lucide-react'
-import PaymentCard from "../components/ui/PaymentCard";
+
 
 const features = [
   { icon: Shield, title: 'Bank-Grade Security', desc: 'Your data is protected with military-grade encryption and multi-factor authentication.' },
@@ -81,7 +81,7 @@ const HomePage = () => {
 ))}
   </div>
 </section>
-    
+
       <Footer />
     </div>
    
