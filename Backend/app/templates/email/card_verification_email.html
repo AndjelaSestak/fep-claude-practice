@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Confirm New Card</h3>
+<p>Hi {{ name }},</p>
+<p>You are trying to link a card ending in <strong>{{ card_last_four }}</strong> to your SecureBank account.</p>
+<p>Please use the following code to verify this action:</p>
+<h1 style="color: #3b82f6; letter-spacing: 5px; background: #eff6ff; padding: 10px; display: inline-block;">{{ otp }}</h1>
+<p>If you did not initiate this request, please lock your card immediately in the app.</p>
+{% endblock %}
