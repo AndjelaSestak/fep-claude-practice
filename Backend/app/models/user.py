@@ -9,7 +9,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
-    password_hash: Mapped[bytes] = mapped_column(nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     city: Mapped[str] = mapped_column(String, nullable=True)
     address: Mapped[str] = mapped_column(Text, nullable=True)
