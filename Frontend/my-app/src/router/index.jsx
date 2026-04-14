@@ -6,6 +6,7 @@ import DashboardPage from '../pages/DashboardPage'
 import AboutPage from '../pages/AboutPage'
 import ContactUsPage from '../pages/ContactUsPage'
 import TeamPage from '../pages/TeamPage'
+import RegistrationPage from '../pages/RegistrationPage'
 
 const router = createBrowserRouter([
     {
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
     {
         path: '/team',
         element: <TeamPage />,
+    },
+    {
+        path: '/register',
+        element: <RegistrationPage />,
     }
 ])
 
