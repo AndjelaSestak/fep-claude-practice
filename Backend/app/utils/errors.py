@@ -53,7 +53,6 @@ def setup_exception_handlers(app: FastAPI):
             status_code=422,
             content={"detail": " | ".join(error_messages)}
         )
-<<<<<<< HEAD
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Request, exc: ValueError):
@@ -68,13 +67,3 @@ def setup_exception_handlers(app: FastAPI):
             status_code=404,
             content={"detail": str(exc)},
         )
-=======
-    
-
-    @app.exception_handler(UserNotFoundError)
-    async def user_not_found_handler(request: Request, exc: UserNotFoundError):
-        return JSONResponse(
-            status_code=404, # Standard za "ne postoji"
-            content={"detail": str(exc)},
-    )
->>>>>>> dev
