@@ -10,6 +10,8 @@ class RoleNotFoundError(Exception):
 
 class DatabaseTransactionError(Exception):
     pass
+class UserNotFoundError(Exception):
+    pass
 
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(EmailAlreadyRegisteredError)
@@ -47,4 +49,18 @@ def setup_exception_handlers(app: FastAPI):
         return JSONResponse(
             status_code=422,
             content={"detail": " | ".join(error_messages)}
+        )
+
+    @app.exception_handler(ValueError)
+    async def value_error_handler(request: Request, exc: ValueError):
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(exc)},
+        )
+    
+    @app.exception_handler(UserNotFoundError)
+    async def user_not_found_handler(request: Request, exc: UserNotFoundError):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": str(exc)},
         )

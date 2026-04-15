@@ -15,6 +15,7 @@ class User(Base):
     address: Mapped[str] = mapped_column(Text, nullable=True)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"), nullable=True)
 
     role: Mapped["Role"] = relationship("Role", back_populates="users")
