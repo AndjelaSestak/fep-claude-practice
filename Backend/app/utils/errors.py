@@ -11,6 +11,15 @@ class RoleNotFoundError(Exception):
 class DatabaseTransactionError(Exception):
     pass
 
+class UserNotFoundError(Exception):
+    pass
+
+class InvalidOTPError(Exception):
+    pass
+
+class OTPExpiredError(Exception):
+    pass
+
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(EmailAlreadyRegisteredError)
     async def email_registered_handler(request: Request, exc: EmailAlreadyRegisteredError):
@@ -47,4 +56,25 @@ def setup_exception_handlers(app: FastAPI):
         return JSONResponse(
             status_code=422,
             content={"detail": " | ".join(error_messages)}
+        )
+    
+    @app.exception_handler(UserNotFoundError)
+    async def user_not_found_handler(request: Request, exc: UserNotFoundError):
+        return JSONResponse(
+            status_code=404, # Standard za "ne postoji"
+            content={"detail": str(exc)},
+        )
+
+    @app.exception_handler(InvalidOTPError)
+    async def invalid_otp_handler(request: Request, exc: InvalidOTPError):
+        return JSONResponse(
+            status_code=400, # Bad Request
+            content={"detail": str(exc)},
+        )
+
+    @app.exception_handler(OTPExpiredError)
+    async def otp_expired_handler(request: Request, exc: OTPExpiredError):
+        return JSONResponse(
+            status_code=400, # Ili 410 (Gone), ali 400 je sasvim okej
+            content={"detail": str(exc)},
         )
