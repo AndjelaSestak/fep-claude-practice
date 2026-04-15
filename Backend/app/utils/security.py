@@ -1,17 +1,28 @@
+from datetime import datetime, timedelta, timezone
+from jose import jwt # type: ignore
 from passlib.context import CryptContext
+from app.config import settings
 
-# Configure passlib to use the standard 'bcrypt' algorithm for password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
 def get_password_hash(password: str) -> str:
-    """
-    Takes a plain text password and returns its hashed string representation.
-    """
     return pwd_context.hash(password)
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verifies a plain text password against the stored hash.
-    Returns True if they match, False otherwise.
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    # Sada pristupamo varijablama preko settings objekta
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+def create_refresh_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+

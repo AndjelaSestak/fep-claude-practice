@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from alembic import command
 from alembic.config import Config
-
 from app.routers.auth import router as auth_router
 from app.utils.errors import setup_exception_handlers
 from app.seed import seed
@@ -11,6 +11,7 @@ from app.seed import seed
 async def lifespan(app: FastAPI):
     
     alembic_cfg = Config("alembic.ini")
+
     command.upgrade(alembic_cfg, "head")
 
     try:
@@ -19,7 +20,17 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Failed to seed data: {e}")
 
-    yield
+    yield 
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app = FastAPI(lifespan=lifespan)
 
