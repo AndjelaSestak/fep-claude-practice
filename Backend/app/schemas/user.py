@@ -34,3 +34,14 @@ class UserUpdate(BaseModel):
     city: str | None = Field(default=None)
     address: str | None = Field(default=None)
     date_of_birth: date | None = Field(default=None)
+
+class UserPasswordUpdate(BaseModel):
+    current_password: str = Field(min_length=8)
+    new_password: str = Field(min_length=8)
+    confirm_new_password: str = Field(min_length=8)
+
+    @model_validator(mode='after')
+    def check_new_passwords_match(self) -> 'UserPasswordUpdate':
+        if self.new_password != self.confirm_new_password:
+            raise ValueError('New passwords do not match')
+        return self
