@@ -1,17 +1,24 @@
-from passlib.context import CryptContext
-
-# Configure passlib to use the standard 'bcrypt' algorithm for password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password: str) -> str:
-    """
-    Takes a plain text password and returns its hashed string representation.
-    """
-    return pwd_context.hash(password)
+import bcrypt
+from datetime import datetime, timedelta, timezone
+from jose import jwt
+from app.config import settings
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verifies a plain text password against the stored hash.
-    Returns True if they match, False otherwise.
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+def get_password_hash(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+def create_refresh_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+

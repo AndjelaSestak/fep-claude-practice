@@ -1,7 +1,7 @@
 import sys
 import os
 from datetime import date, timezone, datetime
-
+import traceback
 # Ensure app can be imported if script is run directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

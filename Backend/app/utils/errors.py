@@ -13,6 +13,9 @@ class DatabaseTransactionError(Exception):
 class UserNotFoundError(Exception):
     pass
 
+class UserNotFoundError(Exception):
+    pass
+
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(EmailAlreadyRegisteredError)
     async def email_registered_handler(request: Request, exc: EmailAlreadyRegisteredError):
@@ -44,12 +47,13 @@ def setup_exception_handlers(app: FastAPI):
             # Clean up the "Value error, " prefix from model validators if it exists
             if msg.startswith("Value error, "):
                 msg = msg.replace("Value error, ", "")
-            error_messages.append(msg)
+            error_messages.append(msg)  
             
         return JSONResponse(
             status_code=422,
             content={"detail": " | ".join(error_messages)}
         )
+<<<<<<< HEAD
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Request, exc: ValueError):
@@ -64,3 +68,13 @@ def setup_exception_handlers(app: FastAPI):
             status_code=404,
             content={"detail": str(exc)},
         )
+=======
+    
+
+    @app.exception_handler(UserNotFoundError)
+    async def user_not_found_handler(request: Request, exc: UserNotFoundError):
+        return JSONResponse(
+            status_code=404, # Standard za "ne postoji"
+            content={"detail": str(exc)},
+    )
+>>>>>>> dev
