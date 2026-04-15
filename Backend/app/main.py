@@ -14,6 +14,7 @@ async def lifespan(app: FastAPI):
     command.upgrade(alembic_cfg, "head")
     try:
         seed()
+        print("Database seeded successfully!")
     except Exception as e:
         print(f"Failed to seed data: {e}")
 
