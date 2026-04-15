@@ -7,7 +7,6 @@ from alembic.config import Config
 from app.routers.auth_router import router as auth_router
 from app.routers.user_router import router as user_router    
 from alembic.config import Config 
-from app.routers.auth_router import router as auth_router
 from app.utils.errors import setup_exception_handlers
 from app.seed import seed
 
