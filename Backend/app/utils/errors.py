@@ -10,6 +10,11 @@ class RoleNotFoundError(Exception):
 
 class DatabaseTransactionError(Exception):
     pass
+class UserNotFoundError(Exception):
+    pass
+
+class UserNotFoundError(Exception):
+    pass
 
 class UserNotFoundError(Exception):
     pass
@@ -51,11 +56,18 @@ def setup_exception_handlers(app: FastAPI):
             # Clean up the "Value error, " prefix from model validators if it exists
             if msg.startswith("Value error, "):
                 msg = msg.replace("Value error, ", "")
-            error_messages.append(msg)
+            error_messages.append(msg)  
             
         return JSONResponse(
             status_code=422,
             content={"detail": " | ".join(error_messages)}
+        )
+
+    @app.exception_handler(ValueError)
+    async def value_error_handler(request: Request, exc: ValueError):
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(exc)},
         )
     
     @app.exception_handler(UserNotFoundError)
@@ -76,5 +88,6 @@ def setup_exception_handlers(app: FastAPI):
     async def otp_expired_handler(request: Request, exc: OTPExpiredError):
         return JSONResponse(
             status_code=400, # Ili 410 (Gone), ali 400 je sasvim okej
+            status_code=404,
             content={"detail": str(exc)},
         )

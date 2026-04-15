@@ -1,16 +1,19 @@
+import secrets
+import string
+
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 
 import random
-from app.schemas.auth import VerifyOTP
+from app.schemas.auth import TokenResponse, VerifyOTP
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
 from app.models.role import Role
 from app.models.wallet import Wallet
 from app.schemas.user import UserCreate
-from app.utils.security import get_password_hash
+from app.utils.security import create_access_token, create_refresh_token, get_password_hash, verify_password
 from app.services.email_types import send_verification_email, send_welcome_email
 from fastapi import BackgroundTasks
 
@@ -43,7 +46,8 @@ def register_user(db: Session, user_data: UserCreate,background_tasks: Backgroun
         db.add(new_user)
         db.flush()
 
-        otp_code = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        
+        otp_code = "".join(secrets.choice(string.digits) for _ in range(6))
 
         new_verification = EmailVerification(
             user_id=new_user.id,
@@ -55,7 +59,11 @@ def register_user(db: Session, user_data: UserCreate,background_tasks: Backgroun
         db.add(new_verification)
 
         # Create a wallet for the new user automatically
-        account_number = "".join([str(random.randint(0, 9)) for _ in range(16)])
+        while True:
+            account_number = "".join([str(random.randint(0, 9)) for _ in range(16)])
+            existing = db.query(Wallet).filter(Wallet.account_number == account_number).first()
+            if not existing:
+                break
         new_wallet = Wallet(
             user_id=new_user.id,
             balance=0,
@@ -117,3 +125,17 @@ def verify_user_email(db: Session, data: VerifyOTP,background_tasks: BackgroundT
         raise DatabaseTransactionError("An error occurred while creating the account. Please try again.")
 
     return {"message": "Email successfully verified!"}
+
+def login_user(db: Session, email: str, password: str) -> User:
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user or not verify_password(password, user.password_hash):
+        raise UserNotFoundError("Invalid email or password")
+
+    access_token = create_access_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token
+    )
