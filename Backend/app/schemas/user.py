@@ -1,9 +1,23 @@
 from datetime import datetime, date
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator, field_validator
 
 class UserBase(BaseModel):
-    name: str = Field(min_length=1, max_length=50)
-    email: EmailStr = Field(max_length=120)
+    name: str = Field(max_length=50)
+    email: EmailStr
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Name is required")
+        return v.strip().title()
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def validate_email(cls, v):
+        if v is None or str(v).strip() == "":
+            raise ValueError("Email is required")
+        return v.lower().strip()
 
 class UserCreate(UserBase):
     city: str | None = Field(default=None)
@@ -41,7 +55,8 @@ class UserPasswordUpdate(BaseModel):
     confirm_new_password: str = Field(min_length=8)
 
     @model_validator(mode='after')
-    def check_new_passwords_match(self) -> 'UserPasswordUpdate':
+    def check_passwords_match(self):
         if self.new_password != self.confirm_new_password:
-            raise ValueError('New passwords do not match')
+            raise ValueError("New passwords do not match")
+
         return self
