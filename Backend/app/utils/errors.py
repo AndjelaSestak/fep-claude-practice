@@ -25,6 +25,12 @@ class InvalidOTPError(Exception):
 class OTPExpiredError(Exception):
     pass
 
+class InvalidTokenError(Exception):
+    pass
+
+class NotAuthenticatedError(Exception):
+    pass
+
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(EmailAlreadyRegisteredError)
     async def email_registered_handler(request: Request, exc: EmailAlreadyRegisteredError):
@@ -88,6 +94,19 @@ def setup_exception_handlers(app: FastAPI):
     async def otp_expired_handler(request: Request, exc: OTPExpiredError):
         return JSONResponse(
             status_code=400, # Ili 410 (Gone), ali 400 je sasvim okej
-            status_code=404,
+            content={"detail": str(exc)},
+        )
+
+    @app.exception_handler(InvalidTokenError)
+    async def invalid_token_handler(request: Request, exc: InvalidTokenError):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": str(exc)},
+        )
+
+    @app.exception_handler(NotAuthenticatedError)
+    async def not_authenticated_handler(request: Request, exc: NotAuthenticatedError):
+        return JSONResponse(
+            status_code=401,
             content={"detail": str(exc)},
         )
