@@ -35,7 +35,7 @@ const DashboardPage = () => {
       <Sidebar />
       
       <div className="flex flex-col flex-1 overflow-hidden">
-        <NavBarAfterLogin username="" />
+        <NavBarAfterLogin />
         
         <main className="p-8 overflow-y-auto">
           <h1 className="text-2xl font-bold mb-6 text-[#111827]">Dashboard Page</h1>

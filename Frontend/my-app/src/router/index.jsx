@@ -7,6 +7,7 @@ import AboutPage from '../pages/AboutPage'
 import ContactUsPage from '../pages/ContactUsPage'
 import TeamPage from '../pages/TeamPage'
 import RegistrationPage from '../pages/RegistrationPage'
+import ProtectedRoute from './ProtectedRoute'
 
 const router = createBrowserRouter([
     {
@@ -23,7 +24,11 @@ const router = createBrowserRouter([
     },
     {
         path: '/dashboard',
-        element: <DashboardPage />,
+        element: (
+            <ProtectedRoute>
+                <DashboardPage />
+            </ProtectedRoute>
+        ),
     },
     {
         path: '/about',
