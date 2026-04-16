@@ -10,11 +10,6 @@ class RoleNotFoundError(Exception):
 
 class DatabaseTransactionError(Exception):
     pass
-class UserNotFoundError(Exception):
-    pass
-
-class UserNotFoundError(Exception):
-    pass
 
 class UserNotFoundError(Exception):
     pass

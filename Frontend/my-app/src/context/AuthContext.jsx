@@ -8,10 +8,14 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        let cancelled = false
+
         getMe()
-            .then(setUser)
-            .catch(() => setUser(null))
-            .finally(() => setLoading(false))
+            .then((data) => { if (!cancelled) setUser(data) })
+            .catch(() => { if (!cancelled) setUser(null) })
+            .finally(() => { if (!cancelled) setLoading(false) })
+
+        return () => { cancelled = true }
     }, [])
 
     const login = async (email, password) => {
