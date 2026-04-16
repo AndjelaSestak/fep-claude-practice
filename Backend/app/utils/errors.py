@@ -13,12 +13,6 @@ class DatabaseTransactionError(Exception):
 class UserNotFoundError(Exception):
     pass
 
-class UserNotFoundError(Exception):
-    pass
-
-class UserNotFoundError(Exception):
-    pass
-
 class InvalidOTPError(Exception):
     pass
 
@@ -87,7 +81,6 @@ def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(OTPExpiredError)
     async def otp_expired_handler(request: Request, exc: OTPExpiredError):
         return JSONResponse(
-            status_code=400, # Ili 410 (Gone), ali 400 je sasvim okej
             status_code=404,
             content={"detail": str(exc)},
         )
