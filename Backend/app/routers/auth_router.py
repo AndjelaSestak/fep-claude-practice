@@ -7,7 +7,7 @@ from app.schemas.auth import VerifyOTP
 from app.dependencies import get_db
 from app.services import auth_service
 from app.models.user import User
-from app.schemas.auth import LoginRequest, TokenResponse
+from app.schemas.auth import LoginRequest, TokenResponse, ForgotPasswordRequest
 from app.utils.security import verify_password, create_access_token, create_refresh_token
 
 
@@ -24,3 +24,7 @@ def verify_email(data: VerifyOTP, background_tasks: BackgroundTasks, db: Annotat
 @router.post("/login", response_model=TokenResponse)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     return auth_service.login_user(db=db, email=request.email, password=request.password)
+
+@router.post("/forgot-password_email")
+def forgot_password_email(request: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    return auth_service.forgot_password(db=db, email=request.email, background_tasks=background_tasks)
