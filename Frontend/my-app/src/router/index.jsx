@@ -8,6 +8,7 @@ import ContactUsPage from '../pages/ContactUsPage'
 import TeamPage from '../pages/TeamPage'
 import RegistrationPage from '../pages/RegistrationPage'
 import OTPVerificationPage from '../pages/OTPVerificationPage'
+import ProtectedRoute from './ProtectedRoute'
 import SettingsPage from '../pages/SettingsPage'
 
 const router = createBrowserRouter([
@@ -25,7 +26,11 @@ const router = createBrowserRouter([
     },
     {
         path: '/dashboard',
-        element: <DashboardPage />,
+        element: (
+            <ProtectedRoute>
+                <DashboardPage />
+            </ProtectedRoute>
+        ),
     },
     {
         path: '/about',

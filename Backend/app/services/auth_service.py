@@ -7,17 +7,20 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 
 import random
-from app.schemas.auth import TokenResponse, VerifyOTP
+from app.schemas.auth import VerifyOTP
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
 from app.models.role import Role
 from app.models.wallet import Wallet
+from app.models.refresh_token import RefreshToken
 from app.schemas.user import UserCreate
-from app.utils.security import create_access_token, create_refresh_token, get_password_hash, verify_password
+from app.utils.security import create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
 from app.services.email_types import send_verification_email, send_welcome_email
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, Depends, Request
+from app.config import settings
+from app.dependencies import get_db
 
-from app.utils.errors import EmailAlreadyRegisteredError, InvalidOTPError, OTPExpiredError, RoleNotFoundError, DatabaseTransactionError, UserNotFoundError
+from app.utils.errors import EmailAlreadyRegisteredError, InvalidOTPError, InvalidTokenError, NotAuthenticatedError, OTPExpiredError, RoleNotFoundError, DatabaseTransactionError, UserNotFoundError
 
 def register_user(db: Session, user_data: UserCreate,background_tasks: BackgroundTasks) -> User:
     existing_user = db.query(User).filter(
@@ -126,16 +129,68 @@ def verify_user_email(db: Session, data: VerifyOTP,background_tasks: BackgroundT
 
     return {"message": "Email successfully verified!"}
 
-def login_user(db: Session, email: str, password: str) -> User:
-    user = db.query(User).filter(User.email == email).first()
+def login_user(db: Session, email: str, password: str) -> dict:
+    user = db.query(User).filter(User.email == email.lower()).first()
 
     if not user or not verify_password(password, user.password_hash):
         raise UserNotFoundError("Invalid email or password")
 
+    jti = secrets.token_hex(32)
     access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id), "jti": jti})
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token
+    db_token = RefreshToken(
+        user_id=user.id,
+        token=get_password_hash(refresh_token),
+        jti=jti,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     )
+    db.add(db_token)
+    db.commit()
+
+    return {"access_token": access_token, "refresh_token": refresh_token}
+
+def logout_user(db: Session, refresh_token: str | None):
+    if not refresh_token:
+       return
+    try:
+        payload = decode_token(refresh_token)
+        jti = payload.get("jti")
+    except Exception:
+        return
+    db_token = db.query(RefreshToken).filter(RefreshToken.jti == jti).first()
+    if db_token:
+        db_token.revoked = True
+        db.commit()
+
+def refresh_access_token(db: Session, refresh_token: str) -> str:
+    from jose import JWTError
+    try:
+        payload = decode_token(refresh_token)
+        jti = payload.get("jti")
+    except JWTError:
+        raise InvalidTokenError("Refresh token is invalid or expired")
+ 
+    db_token = db.query(RefreshToken).filter(
+        RefreshToken.jti == jti, # type: ignore
+        RefreshToken.revoked == False
+    ).first()
+    if not db_token or not verify_password(refresh_token, db_token.token):  
+        raise InvalidTokenError("Refresh token is invalid or revoked")
+
+    return create_access_token({"sub": payload["sub"]})
+
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+    from jose import JWTError
+    token = request.cookies.get("access_token")
+    if not token:
+        raise NotAuthenticatedError("Not authenticated")
+    try:
+        payload = decode_token(token)
+        user_id = int(payload["sub"])
+    except (JWTError, KeyError, ValueError):
+        raise InvalidTokenError("Invalid or expired token")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise InvalidTokenError("User not found")
+    return user
