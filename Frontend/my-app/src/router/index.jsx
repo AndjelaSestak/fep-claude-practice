@@ -10,6 +10,7 @@ import RegistrationPage from '../pages/RegistrationPage'
 import OTPVerificationPage from '../pages/OTPVerificationPage'
 import ProtectedRoute from './ProtectedRoute'
 import SettingsPage from '../pages/SettingsPage'
+import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 
 const router = createBrowserRouter([
     {
@@ -19,6 +20,10 @@ const router = createBrowserRouter([
     {
         path: '/login',
         element: <LoginPage />,
+    },
+    {
+        path: '/forgot-password',
+        element: <ForgotPasswordPage />,
     },
     {
         path: '*',
@@ -55,6 +60,10 @@ const router = createBrowserRouter([
     {
         path: '/settings',
         element: <SettingsPage />,
+    },
+    {
+        path: '/forgot-password',
+        element: <ForgotPasswordPage />,
     }
     
 ])
