@@ -26,3 +26,5 @@ class ResetPasswordRequest(BaseModel):
         if self.new_password != self.confirm_new_password:
             raise ValueError("Passwords do not match")
         return self
+class MessageResponse(BaseModel):
+    message: str

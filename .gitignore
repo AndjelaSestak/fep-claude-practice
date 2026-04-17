@@ -62,3 +62,7 @@ yarn-error.log*
 # React Cache
 .eslintcache
 .parcel-cache
+
+# Postman local files
+.postman/
+postman/

@@ -15,7 +15,11 @@ import AlertDialog, {
   AlertDialogCancel
 } from '../components/ui/AlertDialog'
 
+
 const RegistrationPage = () => {
+
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -34,8 +38,6 @@ const RegistrationPage = () => {
 
   // SUCCESS DIALOG
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
-
-  const navigate = useNavigate()
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -188,5 +190,4 @@ const RegistrationPage = () => {
     </div>
   )
 }
-
 export default RegistrationPage
