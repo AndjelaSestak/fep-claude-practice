@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 
 import random
-from app.schemas.auth import TokenResponse, VerifyOTP
+from app.schemas.auth import TokenResponse, VerifyOTP, ResetPasswordRequest
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
 from app.models.role import Role
@@ -167,3 +167,31 @@ def forgot_password(db: Session, email: str, background_tasks: BackgroundTasks):
     )
 
     return {"message": "If an account with that email exists, a password reset link has been sent."}
+
+def reset_password(db: Session, data: ResetPasswordRequest):
+    verification = db.query(EmailVerification).filter(
+        EmailVerification.token == data.token,
+        EmailVerification.purpose == VerificationPurpose.password_reset,
+        EmailVerification.is_used == False
+    ).first()
+
+    if not verification:
+        raise InvalidOTPError("Invalid or expired reset link")
+
+    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise OTPExpiredError("Reset link has expired")
+
+    user = db.query(User).filter(
+        User.id == verification.user_id,
+        User.is_deleted == False
+    ).first()
+
+    if not user:
+        raise UserNotFoundError("User not found")
+
+    user.password_hash = get_password_hash(data.new_password)
+    verification.is_used = True
+
+    db.commit()
+
+    return {"message": "Password reset successfully."}

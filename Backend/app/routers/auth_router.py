@@ -1,12 +1,11 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from typing import Annotated
 from sqlalchemy.orm import Session
 
 from app.schemas.user import UserCreate, UserResponse
-from app.schemas.auth import VerifyOTP
+from app.schemas.auth import ResetPasswordRequest, VerifyOTP
 from app.dependencies import get_db
 from app.services import auth_service
-from app.models.user import User
 from app.schemas.auth import LoginRequest, TokenResponse, ForgotPasswordRequest
 from app.utils.security import verify_password, create_access_token, create_refresh_token
 
@@ -28,3 +27,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/forgot-password_email")
 def forgot_password_email(request: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     return auth_service.forgot_password(db=db, email=request.email, background_tasks=background_tasks)
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    return auth_service.reset_password(db=db, data=data)

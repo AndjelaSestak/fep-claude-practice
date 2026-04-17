@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 
 class VerifyOTP(BaseModel):
     email: EmailStr
@@ -15,3 +15,14 @@ class TokenResponse(BaseModel):
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+    confirm_new_password: str
+
+    @model_validator(mode="after")
+    def check_passwords_match(self) -> "ResetPasswordRequest":
+        if self.new_password != self.confirm_new_password:
+            raise ValueError("Passwords do not match")
+        return self
