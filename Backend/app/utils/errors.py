@@ -82,10 +82,6 @@ def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(OTPExpiredError)
     async def otp_expired_handler(request: Request, exc: OTPExpiredError):
         return JSONResponse(
-<<<<<<< HEAD
-            status_code=400,
-=======
             status_code=404,
->>>>>>> dev
             content={"detail": str(exc)},
         )
