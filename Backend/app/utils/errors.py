@@ -81,7 +81,7 @@ def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(InvalidOTPError)
     async def invalid_otp_handler(request: Request, exc: InvalidOTPError):
         return JSONResponse(
-            status_code=400, # Bad Request
+            status_code=400, 
             content={"detail": str(exc)},
         )
 
