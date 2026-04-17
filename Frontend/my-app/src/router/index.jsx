@@ -7,6 +7,7 @@ import AboutPage from '../pages/AboutPage'
 import ContactUsPage from '../pages/ContactUsPage'
 import TeamPage from '../pages/TeamPage'
 import RegistrationPage from '../pages/RegistrationPage'
+import OTPVerificationPage from '../pages/OTPVerificationPage'
 
 const router = createBrowserRouter([
     {
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
     {
         path: '/register',
         element: <RegistrationPage />,
+    },
+    {
+        path: '/verify-email',
+        element: <OTPVerificationPage />,
     }
 ])
 
