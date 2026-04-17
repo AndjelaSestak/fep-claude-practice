@@ -13,6 +13,14 @@ export const getMe = async () => {
     return response.data
 }
 
+export const resetPassword = async ({ token, new_password, confirm_new_password }) => {
+    const response = await api.post('/auth/reset-password', {
+        token,
+        new_password,
+        confirm_new_password,
+    })
+    return response.data
+}
 
 export const authService = {
     async register(userData) {

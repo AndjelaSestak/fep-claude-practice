@@ -11,6 +11,7 @@ import OTPVerificationPage from '../pages/OTPVerificationPage'
 import ProtectedRoute from './ProtectedRoute'
 import SettingsPage from '../pages/SettingsPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
+import ResetPasswordPage from '../pages/ResetPasswordPage'
 
 const router = createBrowserRouter([
     {
@@ -56,6 +57,10 @@ const router = createBrowserRouter([
     {
         path: '/verify-email',
         element: <OTPVerificationPage />,
+    },
+    {
+        path: '/reset-password',
+        element: <ResetPasswordPage />,
     },
     {
         path: '/settings',
