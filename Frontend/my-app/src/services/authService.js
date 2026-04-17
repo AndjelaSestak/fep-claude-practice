@@ -1,18 +1,14 @@
-import axios from 'axios';
-const API = axios.create({
-  baseURL: 'http://localhost:8000',
-});
+import api from './api'
 
-export const registerUser = async (userData) => {
+export const authService = {
+    async register(userData) {
+        const response = await api.post('/auth/register', userData)
+        return response.data
+    },
+    async verifyEmail(verificationData) {
+        const response = await api.post('/auth/verify-email', verificationData)
+        return response.data
+    },
+}
 
-  const response = await API.post('/auth/register', userData);
-  return response.data; 
-};
 
-export const verifyEmail = async (email, otpCode) => {
-  const response = await API.post('/auth/verify-email', {
-    email: email,
-    otp_code: otpCode
-  });
-  return response.data;
-};

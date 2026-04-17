@@ -1,41 +1,124 @@
-import  Button  from '../components/ui/Button';
-import  FormField  from '../components/ui/FormField';
-import  Input  from '../components/ui/InputField';
-import { Link } from 'react-router-dom';
-import FormWrapper from '../components/ui/FormWrapper';
-import { useNavigate } from 'react-router-dom'; 
-import { registerUser } from '../services/authService';
-import { useState } from 'react';
+import { useState } from 'react'
+import Button from '../components/ui/Button'
+import FormField from '../components/ui/FormField'
+import Input from '../components/ui/InputField'
+import { Link, useNavigate } from 'react-router-dom'
+import FormWrapper from '../components/ui/FormWrapper'
+import { authService } from '../services/authService'
+
+import AlertDialog, {
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel
+} from '../components/ui/AlertDialog'
+
 
 const RegistrationPage = () => {
 
   const navigate = useNavigate();
-  
-  // Stanje za formu (ovako povezuješ inpute)
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     city: '',
     address: '',
     date_of_birth: '',
-    password: ''
-  });
+    password: '',
+    confirm_password: ''
+  })
 
-  const handleRegister = async () => {
+  const [loading, setLoading] = useState(false)
+
+  // ERROR DIALOG
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // SUCCESS DIALOG
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false)
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    setLoading(true)
+
     try {
-      // 1. Pozivamo bekand preko servisa
-      await registerUser(formData);
-      
-      // 2. Ako je uspešno, šaljemo ga na OTP stranicu
-      // Prosleđujemo email kroz 'state' da bi OTP stranica znala kome proverava kod
-      navigate('/verify-email', { state: { email: formData.email } });
-      
+      await authService.register({
+        ...formData,
+        date_of_birth: formData.date_of_birth || null,
+      })
+
+      setSuccessDialogOpen(true)
     } catch (err) {
-      alert(err.message); // Ovde ispisuješ one tvoje Custom Errore sa bekanda
+      setErrorMessage(
+        err.response?.data?.detail || 'Registration failed. Please try again.'
+      )
+      setErrorDialogOpen(true)
+    } finally {
+      setLoading(false)
     }
-  };
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center px-4 pt-12">
+
+      {/* SUCCESS DIALOG */}
+      <AlertDialog
+        open={successDialogOpen}
+        onClose={() => setSuccessDialogOpen(false)}
+      >
+        <AlertDialogHeader>
+          <AlertDialogTitle>Account created </AlertDialogTitle>
+          <AlertDialogDescription>
+            Your account has been successfully created.
+            You will be redirected to email verification.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogAction
+            onClick={() => {
+              setSuccessDialogOpen(false)
+              navigate('/verify-email', {
+                state: { email: formData.email }
+              })
+            }}
+          >
+            Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialog>
+
+      {/* ERROR DIALOG */}
+      <AlertDialog
+        open={errorDialogOpen}
+        onClose={() => setErrorDialogOpen(false)}
+      >
+        <AlertDialogHeader>
+          <AlertDialogTitle>Registration failed</AlertDialogTitle>
+          <AlertDialogDescription>
+            {errorMessage}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>
+            Close
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialog>
+
+      {/* HEADER */}
       <div className="mb-8 text-center">
         <div className="flex items-center justify-center gap-2">
           <div className="rounded-lg bg-primary p-2">
@@ -48,6 +131,7 @@ const RegistrationPage = () => {
         </p>
       </div>
 
+      {/* FORM */}
       <FormWrapper>
         <div className="w-full">
           <div className="mb-8 text-left">
@@ -59,49 +143,51 @@ const RegistrationPage = () => {
             </p>
           </div>
 
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+
             <FormField label="Full Name" required>
-              <Input placeholder="John Doe" className="w-full" />
+              <Input name="name" value={formData.name} onChange={handleChange} />
             </FormField>
 
             <FormField label="Email" required>
-              <Input type="email" placeholder="name@example.com" className="w-full" />
+              <Input name="email" value={formData.email} onChange={handleChange} />
             </FormField>
 
-            <FormField label="City" required>
-              <Input placeholder="Belgrade" className="w-full" />
+            <FormField label="City" >
+              <Input name="city" value={formData.city} onChange={handleChange} />
             </FormField>
 
-            <FormField label="Address" required>
-              <Input placeholder="123 Main St" className="w-full" />
+            <FormField label="Address" >
+              <Input name="address" value={formData.address} onChange={handleChange} />
             </FormField>
 
             <FormField label="Date of Birth">
-              <Input type="date" className="w-full" />
+              <Input type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} />
             </FormField>
 
             <FormField label="Password" required>
-              <Input type="password" placeholder="••••••••" className="w-full" />
+              <Input type="password" name="password" value={formData.password} onChange={handleChange} />
             </FormField>
 
             <FormField label="Confirm Password" required>
-              <Input type="password" placeholder="••••••••" className="w-full" />
+              <Input type="password" name="confirm_password" value={formData.confirm_password} onChange={handleChange} />
             </FormField>
 
-            <Button size="lg" className="w-full mt-4" onClick={handleRegister}>
-              Create account
+            <Button type="submit" className="w-full mt-4" disabled={loading}>
+              {loading ? 'Creating account...' : 'Create account'}
             </Button>
 
-            <p className="text-center text-sm text-slate-600">
-              Already have an account?{" "}
-              <Link to="/login" className="font-medium text-primary hover:underline">
-                Sign in
-              </Link>
-            </p>
-          </div>
+          </form>
+
+          <p className="text-center text-sm text-slate-600 mt-4">
+            Already have an account?{" "}
+            <Link to="/login" className="font-medium text-primary hover:underline">
+              Sign in
+            </Link>
+          </p>
         </div>
       </FormWrapper>
     </div>
-  );
-};
-export default RegistrationPage;
+  )
+}
+export default RegistrationPage

@@ -8,6 +8,7 @@ import ContactUsPage from '../pages/ContactUsPage'
 import TeamPage from '../pages/TeamPage'
 import RegistrationPage from '../pages/RegistrationPage'
 import OTPVerificationPage from '../pages/OTPVerificationPage'
+import SettingsPage from '../pages/SettingsPage'
 
 const router = createBrowserRouter([
     {
@@ -45,7 +46,12 @@ const router = createBrowserRouter([
     {
         path: '/verify-email',
         element: <OTPVerificationPage />,
+    },
+    {
+        path: '/settings',
+        element: <SettingsPage />,
     }
+    
 ])
 
 export default router
