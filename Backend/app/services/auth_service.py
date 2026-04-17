@@ -141,7 +141,7 @@ def login_user(db: Session, email: str, password: str) -> dict:
 
     db_token = RefreshToken(
         user_id=user.id,
-        token=refresh_token,
+        token=get_password_hash(refresh_token),
         jti=jti,
         expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     )
@@ -152,8 +152,13 @@ def login_user(db: Session, email: str, password: str) -> dict:
 
 def logout_user(db: Session, refresh_token: str | None):
     if not refresh_token:
+       return
+    try:
+        payload = decode_token(refresh_token)
+        jti = payload.get("jti")
+    except Exception:
         return
-    db_token = db.query(RefreshToken).filter(RefreshToken.token == refresh_token).first()
+    db_token = db.query(RefreshToken).filter(RefreshToken.jti == jti).first()
     if db_token:
         db_token.revoked = True
         db.commit()
@@ -162,14 +167,15 @@ def refresh_access_token(db: Session, refresh_token: str) -> str:
     from jose import JWTError
     try:
         payload = decode_token(refresh_token)
+        jti = payload.get("jti")
     except JWTError:
         raise InvalidTokenError("Refresh token is invalid or expired")
-
+ 
     db_token = db.query(RefreshToken).filter(
-        RefreshToken.token == refresh_token,
+        RefreshToken.jti == jti, # type: ignore
         RefreshToken.revoked == False
     ).first()
-    if not db_token:
+    if not db_token or not verify_password(refresh_token, db_token.token):  
         raise InvalidTokenError("Refresh token is invalid or revoked")
 
     return create_access_token({"sub": payload["sub"]})

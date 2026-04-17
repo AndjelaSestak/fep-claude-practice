@@ -26,14 +26,13 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config
+        const isRefreshRequest = originalRequest?.url === '/auth/refresh'
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest?._retry && !isRefreshRequest) {
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject })
-                })
-                    .then(() => api(originalRequest))
-                    .catch((err) => Promise.reject(err))
+                }).then(() => api(originalRequest)).catch((err) => Promise.reject(err))
             }
 
             originalRequest._retry = true
