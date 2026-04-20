@@ -5,6 +5,14 @@ import FormField from '../components/ui/FormField'
 import Input from '../components/ui/InputField'
 import FormWrapper from '../components/ui/FormWrapper'
 import { authService } from '../services/authService'
+import AlertDialog, {
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel
+} from '../components/ui/AlertDialog'
 
 const OTPVerificationPage = () => {
   const location = useLocation()
@@ -15,6 +23,15 @@ const OTPVerificationPage = () => {
   const [loading, setLoading] = useState(false)
 
   const email = location.state?.email || ""
+
+    // ERROR DIALOG
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // SUCCESS DIALOG
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false)
+
+  const [resendDialogOpen, setResendDialogOpen] = useState(false)
 
   // Zaštita: Ako nema email-a (npr. refresh stranice), vrati korisnika na registraciju
   useEffect(() => {
@@ -36,26 +53,89 @@ const OTPVerificationPage = () => {
       setLoading(true)
       setError("")
       
-      // Poziv servisu sa objektom koji sadrži email i otp_code
+    
       await authService.verifyEmail({ 
         email: email, 
         otp_code: otp 
       })
       
-      // Možeš zameniti sa AlertDialog-om kasnije ako želiš
-      alert("Email verified successfully! Welcome to SecureBank.")
-      navigate('/dashboard') 
+      setSuccessDialogOpen(true)
       
     } catch (err) {
       const errorMessage = err.response?.data?.detail || "Invalid code or session expired."
-      setError(errorMessage)
+      setErrorMessage(errorMessage)
+      setErrorDialogOpen(true)
     } finally {
       setLoading(false)
     }
   }
 
+  const handleResend = async (e) => {
+    e.preventDefault()
+
+    try{
+         setLoading(true)
+        await authService.resendVerificationEmail(email)
+        setResendDialogOpen(true)
+    }
+    catch(err){
+        const errorMessage = err.response?.data?.detail || "Failed to resend verification email. Please try again."
+      setErrorMessage(errorMessage)
+      setErrorDialogOpen(true)
+    }finally {
+      setLoading(false)
+    }
+
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center px-4 pt-12">
+
+        {/* SUCCESS DIALOG - Nakon uspešne verifikacije */}
+    <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Email Verified!</AlertDialogTitle>
+        <AlertDialogDescription>
+          Your email has been successfully verified. You can now access your dashboard.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogAction onClick={() => navigate('/dashboard')}>
+          Go to Dashboard
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialog>
+
+    {/* RESEND DIALOG - Nakon ponovnog slanja koda */}
+    <AlertDialog open={resendDialogOpen} onClose={() => setResendDialogOpen(false)}>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Code Sent</AlertDialogTitle>
+        <AlertDialogDescription>
+          A new 6-digit verification code has been sent to <b>{email}</b>.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogAction onClick={() => setResendDialogOpen(false)}>
+          Got it
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialog>
+
+    {/* ERROR DIALOG */}
+      <AlertDialog open={errorDialogOpen} onClose={() => setErrorDialogOpen(false)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Error</AlertDialogTitle>
+          <AlertDialogDescription>
+            {errorMessage}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>
+            Close
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialog>
+      
       {/* HEADER / LOGO */}
       <div className="mb-8 text-center">
         <div className="flex items-center justify-center gap-2">
@@ -117,7 +197,7 @@ const OTPVerificationPage = () => {
               <button 
                 type="button"
                 className="font-medium text-primary hover:underline transition-all"
-                onClick={() => alert("Code resent!")}
+                onClick={handleResend}
               >
                 Resend code
               </button>
