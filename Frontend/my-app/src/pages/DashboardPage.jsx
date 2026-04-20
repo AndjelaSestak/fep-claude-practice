@@ -2,8 +2,12 @@ import  Sidebar  from "../components/layout/SideBar";
 import NavBarAfterLogin from "../components/layout/NavBarAfterLogin";
 import Button from "../components/ui/Button";
 import SearchBar from "../components/ui/SearchBar";
+import InfoCard from "../components/ui/InfoCard";
+import Select from "../components/ui/Select";
 import {TransactionItem} from "../components/ui/TransactionItem";
 import { ItemList } from "../components/ui/ItemList";
+import { getCurrencies, getExchangeRate, getWalletBalance } from "../services/walletService";
+import { useEffect, useState } from "react";
 
 // Test example transactions - in a real app, these would come from an API
 const transactions = [
@@ -29,7 +33,73 @@ const transactions = [
   },
 ];
 
+
 const DashboardPage = () => {
+const [walletBalance, setWalletBalance] = useState(null);
+const [walletCurrency, setWalletCurrency] = useState("");
+const [currencies, setCurrencies] = useState([]);
+const [selectedCurrency, setSelectedCurrency] = useState("");
+const [displayBalance, setDisplayBalance] = useState(null);
+
+useEffect(() => {
+    const loadBalance = async () => {
+        try {
+            const wallet = await getWalletBalance();
+            setWalletBalance(wallet.balance);
+            setWalletCurrency(wallet.currency);
+            setSelectedCurrency(wallet.currency);
+            setDisplayBalance(wallet.balance);
+        } catch (error) {
+            console.error("Failed to load wallet balance:", error);
+        }
+    }
+    loadBalance();
+}, []);
+
+useEffect(() => {
+    const loadCurrencies = async () => {
+        try {
+            const currencyOptions = await getCurrencies();
+            setCurrencies(currencyOptions);
+        } catch (error) {
+            console.error("Failed to load currencies:", error);
+        }
+    };
+
+    loadCurrencies();
+}, []);
+
+useEffect(() => {
+    const convertBalance = async () => {
+        if (walletBalance === null) {
+            return;
+        }
+
+        if (!walletCurrency || !selectedCurrency) {
+            return;
+        }
+
+        if (selectedCurrency === walletCurrency) {
+            setDisplayBalance(walletBalance);
+            return;
+        }
+
+        try {
+            const rate = await getExchangeRate(walletCurrency, selectedCurrency);
+            setDisplayBalance(walletBalance * rate);
+        } catch (error) {
+            console.error("Failed to convert wallet balance:", error);
+        }
+    };
+
+    convertBalance();
+}, [selectedCurrency, walletBalance, walletCurrency]);
+
+const formattedBalance =
+  displayBalance !== null
+    ? `${selectedCurrency || walletCurrency} ${displayBalance.toFixed(2)}`
+    : "Loading...";
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -64,7 +134,28 @@ const DashboardPage = () => {
         </ItemList>
       </div>
 
+          <div className="p-8">
+            <InfoCard 
+              title="Wallet Balance"
+              value={formattedBalance}
+              action={
+                <div className="w-32">
+                  <Select
+                    value={selectedCurrency}
+                    onChange={(event) => setSelectedCurrency(event.target.value)}
+                    options={currencies.map((currency) => ({
+                      value: currency.value,
+                      label: currency.value,
+                    }))}
+                    placeholder="Currency"
+                  />
+                </div>
+              }
+            />
+          </div>
+
     </div>
+
   )
 }
 
