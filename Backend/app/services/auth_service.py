@@ -166,7 +166,7 @@ def resend_verification_email(db: Session, email: str,background_tasks: Backgrou
     return {"message": "A new verification email has been sent."}
 
 def login_user(db: Session, email: str, password: str) -> dict:
-    user = db.query(User).filter(User.email == email.lower()).first()
+    user = db.query(User).filter(User.email == email.lower(), User.is_deleted == False).first()
 
     if not user or not verify_password(password, user.password_hash):
         raise UserNotFoundError("Invalid email or password")
