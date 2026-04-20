@@ -50,7 +50,7 @@ const SettingsPage = () => {
       setIsSaving(true);
 
       try {
-        await updateCurrentUser(testUserId, updateData);
+        await updateCurrentUser(updateData);
         setAlert({
           title: "Profile updated",
           description: "Your personal details have been saved successfully.",
@@ -70,7 +70,7 @@ const SettingsPage = () => {
       setIsSaving(true);
 
       try {
-        await changePassword(testUserId, passwordData);
+        await changePassword(passwordData);
         setAlert({
           title: "Password updated",
           description: "Your password has been updated successfully.",
@@ -89,7 +89,7 @@ const SettingsPage = () => {
       setIsSaving(true);
       
       try {
-        await deleteUser(testUserId);
+        await deleteUser();
         setAlert({
           title: "Account deleted",
           description: "Your account has been deleted successfully.",
