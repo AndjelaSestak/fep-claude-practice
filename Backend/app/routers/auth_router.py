@@ -3,9 +3,10 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 
 from app.schemas.user import UserCreate, UserResponse
-from app.schemas.auth import LoginRequest, MessageResponse, VerifyOTP
 from app.dependencies import get_db
 from app.services import auth_service
+from app.schemas.auth import LoginRequest, TokenResponse, ForgotPasswordRequest, MessageResponse, ResetPasswordRequest, VerifyOTP
+from app.utils.security import verify_password, create_access_token, create_refresh_token
 from app.config import settings
 from app.models.user import User
 
@@ -20,6 +21,14 @@ def register_user(user: UserCreate, background_tasks: BackgroundTasks, db: Annot
 def verify_email(data: VerifyOTP, background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)]):
     return auth_service.verify_user_email(db=db, data=data, background_tasks=background_tasks)
 
+@router.post("/forgot-password_email")
+def forgot_password_email(request: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    return auth_service.forgot_password(db=db, email=request.email, background_tasks=background_tasks)
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    return auth_service.reset_password(db=db, data=data)
+  
 @router.post("/login", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 def login(request: LoginRequest, response: Response, db: Session = Depends(get_db)):
     tokens = auth_service.login_user(db=db, email=request.email, password=request.password)

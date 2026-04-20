@@ -13,6 +13,14 @@ export const getMe = async () => {
     return response.data
 }
 
+export const resetPassword = async ({ token, new_password, confirm_new_password }) => {
+    const response = await api.post('/auth/reset-password', {
+        token,
+        new_password,
+        confirm_new_password,
+    })
+    return response.data
+}
 
 export const authService = {
     async register(userData) {
@@ -27,6 +35,11 @@ export const authService = {
         const response = await api.post('/auth/resend-verification-email', { email })
         return response.data
     },
+}
+
+export const forgotPassword = async (email) => {
+    const response = await api.post('/auth/forgot-password_email', { email })
+    return response.data
 }
 
 

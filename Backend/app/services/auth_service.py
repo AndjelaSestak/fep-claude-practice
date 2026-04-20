@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 
 import random
-from app.schemas.auth import VerifyOTP
+from app.schemas.auth import TokenResponse, VerifyOTP, ResetPasswordRequest
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
 from app.models.role import Role
@@ -15,7 +15,7 @@ from app.models.wallet import Wallet
 from app.models.refresh_token import RefreshToken
 from app.schemas.user import UserCreate
 from app.utils.security import create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
-from app.services.email_types import send_verification_email, send_welcome_email
+from app.services.email_types import send_verification_email, send_welcome_email, send_reset_password_email
 from fastapi import BackgroundTasks, Depends, Request
 from app.config import settings
 from app.dependencies import get_db
@@ -138,7 +138,7 @@ def login_user(db: Session, email: str, password: str) -> dict:
     jti = secrets.token_hex(32)
     access_token = create_access_token({"sub": str(user.id)})
     refresh_token = create_refresh_token({"sub": str(user.id), "jti": jti})
-
+    
     db_token = RefreshToken(
         user_id=user.id,
         token=get_password_hash(refresh_token),
@@ -149,6 +149,65 @@ def login_user(db: Session, email: str, password: str) -> dict:
     db.commit()
 
     return {"access_token": access_token, "refresh_token": refresh_token}
+
+    
+
+def forgot_password(db: Session, email: str, background_tasks: BackgroundTasks):
+    user = db.query(User).filter(User.email == email.lower(), User.is_deleted == False).first()
+    if not user:
+         return {"message": "If an account with that email exists, a password reset link has been sent."}
+
+    reset_token = secrets.token_urlsafe(32)
+
+    new_verification = EmailVerification(
+        user_id=user.id,
+        token=reset_token,
+        purpose=VerificationPurpose.password_reset,
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+        is_used=False
+    )
+    db.add(new_verification)
+    db.commit()
+
+    reset_link = f"http://localhost:5173/reset-password?token={reset_token}"
+
+    background_tasks.add_task(
+        send_reset_password_email,
+        recipient=user.email,
+        name=user.name,
+        reset_link=reset_link
+    )
+
+    return {"message": "If an account with that email exists, a password reset link has been sent."}
+
+def reset_password(db: Session, data: ResetPasswordRequest):
+    verification = db.query(EmailVerification).filter(
+        EmailVerification.token == data.token,
+        EmailVerification.purpose == VerificationPurpose.password_reset,
+        EmailVerification.is_used == False
+    ).first()
+
+    if not verification:
+        raise InvalidOTPError("Invalid or expired reset link")
+
+    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise OTPExpiredError("Reset link has expired")
+
+    user = db.query(User).filter(
+        User.id == verification.user_id,
+        User.is_deleted == False
+    ).first()
+
+    if not user:
+        raise UserNotFoundError("User not found")
+
+    user.password_hash = get_password_hash(data.new_password)
+    verification.is_used = True
+
+    db.commit()
+
+    return {"message": "Password reset successfully."}
+    
 
 def logout_user(db: Session, refresh_token: str | None):
     if not refresh_token:
