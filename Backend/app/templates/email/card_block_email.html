@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3 style="color: #dc2626;">Card Security Alert</h3>
+<p>Hi {{ name }},</p>
+<p>This is an automated notification to inform you that your SecureBank card ending in <strong>{{ card_last_four }}</strong> has been <strong>BLOCKED</strong>.</p>
+
+<div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+    <p style="margin: 0; color: #991b1b;"><strong>Reason:</strong> {{ reason }}</p>
+</div>
+
+<p>For your protection, all transactions with this card are now disabled. If this was a mistake or you have recovered your card (in case of a manual block), please contact our support or use the mobile app to manage your card settings.</p>
+
+<p>If you did <strong>not</strong> request this block, please contact us immediately at <a href="mailto:support@securebank.com">support@securebank.com</a>.</p>
+{% endblock %}
