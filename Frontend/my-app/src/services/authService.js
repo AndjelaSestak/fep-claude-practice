@@ -23,6 +23,10 @@ export const authService = {
         const response = await api.post('/auth/verify-email', verificationData)
         return response.data
     },
+    async resendVerificationEmail(email) {
+        const response = await api.post('/auth/resend-verification-email', { email })
+        return response.data
+    },
 }
 
 
