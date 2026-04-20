@@ -1,16 +1,15 @@
-import  Sidebar  from "../components/layout/SideBar";
+import { useEffect, useState, useCallback } from "react";
+import Sidebar from "../components/layout/SideBar";
 import NavBarAfterLogin from "../components/layout/NavBarAfterLogin";
-import Button from "../components/ui/Button";
-import SearchBar from "../components/ui/SearchBar";
 import InfoCard from "../components/ui/InfoCard";
 import Select from "../components/ui/Select";
-import {TransactionItem} from "../components/ui/TransactionItem";
+import { TransactionItem } from "../components/ui/TransactionItem";
 import { ItemList } from "../components/ui/ItemList";
+import { TransactionFilters } from "../components/ui/TransactionFilters";
 import { getCurrencies, getExchangeRate, getWalletBalance } from "../services/walletService";
-import { useEffect, useState } from "react";
 
-// Test example transactions - in a real app, these would come from an API
-const transactions = [
+// Privremeni podaci (dok ne povežeš pravi API poziv za transakcije)
+const mockTransactions = [
   {
     id: 1,
     direction: "outgoing",
@@ -19,144 +18,178 @@ const transactions = [
     type: "single",
     amount: 90,
     currency: "RSD",
-    created_at: "2026-03-28T00:00:00Z",
+    created_at: "2026-03-28T14:30:00Z",
   },
   {
     id: 2,
     direction: "incoming",
     recipient: null,
     sender: "Salary Deposit",
-    type: "single",
+    type: "recurring",
     amount: 5000,
     currency: "RSD",
-    created_at: "2026-03-25T00:00:00Z",
+    created_at: "2026-03-25T09:00:00Z",
   },
 ];
 
-
 const DashboardPage = () => {
-const [walletBalance, setWalletBalance] = useState(null);
-const [walletCurrency, setWalletCurrency] = useState("");
-const [currencies, setCurrencies] = useState([]);
-const [selectedCurrency, setSelectedCurrency] = useState("");
-const [displayBalance, setDisplayBalance] = useState(null);
+  // State za balans i valute
+  const [walletBalance, setWalletBalance] = useState(null);
+  const [walletCurrency, setWalletCurrency] = useState("");
+  const [currencies, setCurrencies] = useState([]);
+  const [selectedCurrency, setSelectedCurrency] = useState("");
+  const [displayBalance, setDisplayBalance] = useState(null);
 
-useEffect(() => {
-    const loadBalance = async () => {
-        try {
-            const wallet = await getWalletBalance();
-            setWalletBalance(wallet.balance);
-            setWalletCurrency(wallet.currency);
-            setSelectedCurrency(wallet.currency);
-            setDisplayBalance(wallet.balance);
-        } catch (error) {
-            console.error("Failed to load wallet balance:", error);
-        }
-    }
-    loadBalance();
-}, []);
+  // State za transakcije (originalni i filtrirani niz)
+  const [allTransactions, setAllTransactions] = useState(mockTransactions);
+  const [filteredTransactions, setFilteredTransactions] = useState(mockTransactions);
 
-useEffect(() => {
-    const loadCurrencies = async () => {
-        try {
-            const currencyOptions = await getCurrencies();
-            setCurrencies(currencyOptions);
-        } catch (error) {
-            console.error("Failed to load currencies:", error);
-        }
+  // --- LOGIKA ZA BALANS ---
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [wallet, currencyOptions] = await Promise.all([
+          getWalletBalance(),
+          getCurrencies()
+        ]);
+        setWalletBalance(wallet.balance);
+        setWalletCurrency(wallet.currency);
+        setSelectedCurrency(wallet.currency);
+        setDisplayBalance(wallet.balance);
+        setCurrencies(currencyOptions);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      }
     };
+    loadData();
+  }, []);
 
-    loadCurrencies();
-}, []);
-
-useEffect(() => {
+  useEffect(() => {
     const convertBalance = async () => {
-        if (walletBalance === null) {
-            return;
-        }
-
-        if (!walletCurrency || !selectedCurrency) {
-            return;
-        }
-
-        if (selectedCurrency === walletCurrency) {
-            setDisplayBalance(walletBalance);
-            return;
-        }
-
-        try {
-            const rate = await getExchangeRate(walletCurrency, selectedCurrency);
-            setDisplayBalance(walletBalance * rate);
-        } catch (error) {
-            console.error("Failed to convert wallet balance:", error);
-        }
+      if (walletBalance === null || !walletCurrency || !selectedCurrency) return;
+      if (selectedCurrency === walletCurrency) {
+        setDisplayBalance(walletBalance);
+        return;
+      }
+      try {
+        const rate = await getExchangeRate(walletCurrency, selectedCurrency);
+        setDisplayBalance(walletBalance * rate);
+      } catch (error) {
+        console.error("Failed to convert balance:", error);
+      }
     };
-
     convertBalance();
-}, [selectedCurrency, walletBalance, walletCurrency]);
+  }, [selectedCurrency, walletBalance, walletCurrency]);
 
-const formattedBalance =
-  displayBalance !== null
-    ? `${selectedCurrency || walletCurrency} ${displayBalance.toFixed(2)}`
+  // --- LOGIKA ZA FILTRIRANJE ---
+  const handleFilterChange = useCallback((activeFilters) => {
+    let result = [...allTransactions];
+
+    // 1. Search filter
+    if (activeFilters.search.trim() !== "") {
+      const term = activeFilters.search.toLowerCase();
+      result = result.filter(t => 
+        (t.recipient && t.recipient.toLowerCase().includes(term)) ||
+        (t.sender && t.sender.toLowerCase().includes(term))
+      );
+    }
+
+    // 2. Type filter (income/outgoing)
+    if (activeFilters.type !== "all") {
+      result = result.filter(t => t.direction === activeFilters.type);
+    }
+
+    // 3. Date range filter
+    if (activeFilters.dateRange !== "all") {
+      const now = new Date();
+      result = result.filter(t => {
+        const tDate = new Date(t.created_at);
+        if (activeFilters.dateRange === "today") {
+          return tDate.toDateString() === now.toDateString();
+        }
+        if (activeFilters.dateRange === "last7") {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(now.getDate() - 7);
+          return tDate >= sevenDaysAgo;
+        }
+        if (activeFilters.dateRange === "last30") {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(now.getDate() - 30);
+          return tDate >= thirtyDaysAgo;
+        }
+        return true;
+      });
+    }
+
+    setFilteredTransactions(result);
+  }, [allTransactions]);
+
+  const formattedBalance = displayBalance !== null
+    ? `${selectedCurrency} ${displayBalance.toLocaleString("sr-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : "Loading...";
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="flex flex-col flex-1 overflow-hidden">
         <NavBarAfterLogin />
-        
+
         <main className="p-8 overflow-y-auto">
-          <h1 className="text-2xl font-bold mb-6 text-[#111827]">Dashboard Page</h1>
+          <div className="max-w-6xl mx-auto space-y-10">
+            
+            {/* Header i Balans */}
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                <p className="text-gray-500">Welcome back! Here's what's happening with your money.</p>
+              </div>
+              
+              <div className="w-full md:w-80">
+                <InfoCard
+                  title="Total Balance"
+                  value={formattedBalance}
+                  action={
+                    <div className="w-28">
+                      <Select
+                        value={selectedCurrency}
+                        onChange={(e) => setSelectedCurrency(e.target.value)}
+                        options={currencies.map((c) => ({ value: c.value, label: c.value }))}
+                      />
+                    </div>
+                  }
+                />
+              </div>
+            </header>
 
-          <div className="mb-10">
-            <SearchBar placeholder="Search users..." />
-          </div>
+            {/* Filteri i Search */}
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+              <TransactionFilters onFilterChange={handleFilterChange} />
+            </div>
 
-          <div className="flex flex-wrap gap-4 border-t pt-8">
-            <Button>Default</Button>
-            <Button variant="outline">Outline</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="ghost">Ghost</Button>
-            <Button variant="destructive">Destructive</Button>
-            <Button variant="link">Link</Button>
+            {/* Lista transakcija */}
+            <div className="space-y-4">
+              <ItemList 
+                title="Transactions" 
+                description={`Showing ${filteredTransactions.length} results`}
+                emptyMessage="No transactions found matching your filters."
+              >
+                <div className="grid gap-3">
+                  {filteredTransactions.map((transaction) => (
+                    <TransactionItem 
+                      key={transaction.id} 
+                      transaction={transaction} 
+                    />
+                  ))}
+                </div>
+              </ItemList>
+            </div>
+
           </div>
         </main>
       </div>
-
-      {/* --- Transactions List --- */}
-      <div className="mt-10">
-        <ItemList title="Recent Transactions" description="Your latest transactions">
-          {transactions.map((transaction) => (
-            <TransactionItem key={transaction.id} transaction={transaction} />
-          ))}
-        </ItemList>
-      </div>
-
-          <div className="p-8">
-            <InfoCard 
-              title="Wallet Balance"
-              value={formattedBalance}
-              action={
-                <div className="w-32">
-                  <Select
-                    value={selectedCurrency}
-                    onChange={(event) => setSelectedCurrency(event.target.value)}
-                    options={currencies.map((currency) => ({
-                      value: currency.value,
-                      label: currency.value,
-                    }))}
-                    placeholder="Currency"
-                  />
-                </div>
-              }
-            />
-          </div>
-
     </div>
-
-  )
-}
+  );
+};
 
 export default DashboardPage;
