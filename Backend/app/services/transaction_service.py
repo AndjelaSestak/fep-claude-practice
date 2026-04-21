@@ -1,3 +1,4 @@
+import asyncio
 from sqlalchemy.orm import Session
 from app.models.transaction import Transaction, TransactionStatus, TransactionDirection, TransactionType
 from app.models.card import Card, CardStatus
@@ -5,12 +6,12 @@ from app.models.wallet import Wallet
 from app.models.user import User
 from app.schemas.transaction import CreateTransactionRequest
 from app.services.exchange_rate_service import convert_amount
-from app.services.wallet_service import get_wallet_balance
+from app.database import SessionLocal
 from app.utils.errors import InvalidTokenError
 
-def create_transaction(db: Session, request: CreateTransactionRequest, current_user: User) -> Transaction:
+PENDING_DELAY_SECONDS = 180
 
-    # 1. Proveri karticu
+def create_transaction(db: Session, request: CreateTransactionRequest, current_user: User) -> Transaction:
     card = db.query(Card).filter(
         Card.id == request.card_id,
         Card.user_id == current_user.id
@@ -25,7 +26,6 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
     if not card.is_email_verified:
         raise ValueError("Card is not verified")
 
-    # 2. Uzmi wallet
     wallet = db.query(Wallet).filter(
         Wallet.user_id == current_user.id,
         Wallet.is_active == True
@@ -34,10 +34,8 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
     if not wallet:
         raise ValueError("Wallet not found")
 
-    # 3. Konvertuj u valutu walleta
     amount_converted = convert_amount(request.amount, request.currency, wallet.currency)
 
-    # 4. Kreiraj transakciju sa pending statusom
     transaction = Transaction(
         user_id=current_user.id,
         card_id=request.card_id,
@@ -53,16 +51,57 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
         direction=TransactionDirection.outgoing
     )
     db.add(transaction)
-    db.flush()
+    db.commit()
+    db.refresh(transaction)
 
-    # 5. Proveri balance i izvrsi transakciju
-    if float(wallet.balance) < amount_converted:
-        transaction.status = TransactionStatus.failed
+    return transaction
+
+
+async def process_transaction(transaction_id: int) -> None:
+    await asyncio.sleep(PENDING_DELAY_SECONDS)
+
+    db: Session = SessionLocal()
+    try:
+        transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+
+        if not transaction or transaction.status != TransactionStatus.pending:
+            return
+
+        wallet = db.query(Wallet).filter(
+            Wallet.user_id == transaction.user_id,
+            Wallet.is_active == True
+        ).first()
+
+        if not wallet:
+            transaction.status = TransactionStatus.failed
+            db.commit()
+            return
+
+        if float(wallet.balance) < float(transaction.amount):
+            transaction.status = TransactionStatus.failed
+            db.commit()
+            return
+
+        wallet.balance = float(wallet.balance) - float(transaction.amount)
+        transaction.status = TransactionStatus.completed
         db.commit()
-        raise ValueError("Insufficient funds")
+    finally:
+        db.close()
 
-    wallet.balance = float(wallet.balance) - amount_converted
-    transaction.status = TransactionStatus.completed
+
+def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> Transaction:
+    transaction = db.query(Transaction).filter(
+        Transaction.id == transaction_id,
+        Transaction.user_id == current_user.id
+    ).first()
+
+    if not transaction:
+        raise ValueError("Transaction not found")
+
+    if transaction.status != TransactionStatus.pending:
+        raise ValueError("Only pending transactions can be cancelled")
+
+    transaction.status = TransactionStatus.cancelled
     db.commit()
     db.refresh(transaction)
 
