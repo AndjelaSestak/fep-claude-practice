@@ -18,9 +18,9 @@ def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None
         query = query.filter(
             (Transaction.recipient.ilike(search_pattern)) |
             (Transaction.sender.ilike(search_pattern)) |
-            (Transaction.amount.cast(String).ilike(search_pattern)) |
-            (Transaction.type.ilike(search_pattern))
+            (Transaction.reference.ilike(search_pattern))
         )
+        
 
     return query.order_by(Transaction.created_at.desc()).offset(offset).limit(limit).all()
 
