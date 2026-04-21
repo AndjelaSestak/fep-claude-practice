@@ -26,15 +26,6 @@ class InvalidTokenError(Exception):
 class NotAuthenticatedError(Exception):
     pass
 
-class CardNotFoundError(Exception):
-    pass
-
-class CardTypeNotFoundError(Exception):
-    pass
-
-class WalletNotFoundError(Exception):
-    pass
-
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(EmailAlreadyRegisteredError)
     async def email_registered_handler(request: Request, exc: EmailAlreadyRegisteredError):
@@ -59,25 +50,18 @@ def setup_exception_handlers(app: FastAPI):
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
-        errors = []
+        # Extract messages from Pydantic errors and format them as a single string
+        error_messages = []
         for err in exc.errors():
-            errors.append({
-                "type": err.get("type"),
-                "loc": err.get("loc"),
-                "msg": err.get("msg"),
-                "input": err.get("input"),
-            })
             msg = err.get("msg", "Validation error")
             # Clean up the "Value error, " prefix from model validators if it exists
             if msg.startswith("Value error, "):
                 msg = msg.replace("Value error, ", "")
-            if msg not in error_messages:
-                error_messages.append(msg)  
+            error_messages.append(msg)  
             
         return JSONResponse(
             status_code=422,
-            headers={"Access-Control-Allow-Origin": "http://localhost:5173"},
-            content={"detail": errors}
+            content={"detail": " | ".join(error_messages)}
         )
 
     @app.exception_handler(ValueError)
@@ -120,25 +104,4 @@ def setup_exception_handlers(app: FastAPI):
         return JSONResponse(
             status_code=401,
             content={"detail": str(exc)},
-        )
-
-    @app.exception_handler(CardNotFoundError)
-    async def card_not_found_handler(request: Request, exc: CardNotFoundError):
-        return JSONResponse(
-            status_code=404,
-            content={"detail": str(exc)},
-        )
-
-    @app.exception_handler(CardTypeNotFoundError)
-    async def card_type_not_found_handler(request: Request, exc: CardTypeNotFoundError):
-        return JSONResponse(
-            status_code=400,
-            content={"detail": str(exc)},
-        )
-    
-    @app.exception_handler(WalletNotFoundError)
-    async def wallet_not_found_handler(request: Request, exc: WalletNotFoundError):
-        return JSONResponse(
-            status_code=400,
-            content={"detail": str(exc)}
         )

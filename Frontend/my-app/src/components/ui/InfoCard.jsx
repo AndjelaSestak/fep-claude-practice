@@ -3,7 +3,6 @@ const InfoCard = ({
   value,
   icon: Icon,
   iconColor = "text-primary",
-  action,
 }) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col gap-4">
@@ -16,8 +15,6 @@ const InfoCard = ({
 
       {/* Donji deo - vrednost */}
       <p className="text-3xl font-bold text-gray-900">{value}</p>
-
-      {action && <div className="pt-2 border-t border-gray-100">{action}</div>}
 
     </div>
   );

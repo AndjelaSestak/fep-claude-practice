@@ -54,7 +54,7 @@ async def send_card_block_notification(recipient: str, name: str, card_last_four
             "card_last_four": card_last_four, 
             "reason": friendly_reason
         },
-        template_name="card_block_email.html",
+        template_name="card_block_notification.html",
     )
 
     

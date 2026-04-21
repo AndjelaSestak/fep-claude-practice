@@ -36,7 +36,7 @@ export function TransactionItem({ transaction, className }) {
     : transaction.recipient || "Unknown recipient";
 
   const displayType =
-    transaction.type === "recurring" ? "Recurring" : "Single";
+    transaction.type === "reccuring" ? "Recurring" : "Single";
 
   const formattedDate = new Date(transaction.created_at).toLocaleDateString(
     "sr-RS"

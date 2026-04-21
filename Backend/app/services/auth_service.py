@@ -129,49 +129,11 @@ def verify_user_email(db: Session, data: VerifyOTP,background_tasks: BackgroundT
 
     return {"message": "Email successfully verified!"}
 
-def resend_verification_email(db: Session, email: str,background_tasks: BackgroundTasks):
-    user = db.query(User).filter(User.email == email.lower()).first()
-    if not user:
-        raise UserNotFoundError("No user found with the provided email address")
-    if user.is_email_verified:
-        return {"message": "Email is already verified"}
-    
-    #Ukoliko neko klikne 10 puta resend otp token onda ce biti 10 aktivnih otp-ova,
-    #pa na ovaj nacin invalidiram sve prethpdne i pravim novi
-    db.query(EmailVerification).filter(
-        EmailVerification.user_id == user.id,
-        EmailVerification.purpose == VerificationPurpose.registration,
-        EmailVerification.is_used == False
-    ).update({"is_used": True})
-
-    otp_code = "".join(secrets.choice(string.digits) for _ in range(6))
-
-    new_verification = EmailVerification(
-        user_id=user.id,
-        token=otp_code,
-        purpose=VerificationPurpose.registration,
-        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10), #Istice za 10 min
-        is_used=False
-    )
-    db.add(new_verification)
-    db.commit()
-
-    background_tasks.add_task(
-        send_verification_email,
-        recipient=user.email,
-        name=user.name,
-        otp=otp_code
-    )
-
-    return {"message": "A new verification email has been sent."}
-
 def login_user(db: Session, email: str, password: str) -> dict:
-    user = db.query(User).filter(User.email == email.lower(), User.is_deleted == False).first()
+    user = db.query(User).filter(User.email == email.lower()).first()
 
     if not user or not verify_password(password, user.password_hash):
         raise UserNotFoundError("Invalid email or password")
-    if not user.is_email_verified:
-        raise UserNotFoundError("Email address has not been verified")
 
     jti = secrets.token_hex(32)
     access_token = create_access_token({"sub": str(user.id)})
@@ -268,43 +230,14 @@ def refresh_access_token(db: Session, refresh_token: str) -> str:
     except JWTError:
         raise InvalidTokenError("Refresh token is invalid or expired")
  
-    # 1. Pronalaženje starog tokena
-    old_db_token = db.query(RefreshToken).filter(
-        RefreshToken.jti == jti,
+    db_token = db.query(RefreshToken).filter(
+        RefreshToken.jti == jti, # type: ignore
         RefreshToken.revoked == False
     ).first()
-
-    if not old_db_token or not verify_password(refresh_token, old_db_token.token):  
+    if not db_token or not verify_password(refresh_token, db_token.token):  
         raise InvalidTokenError("Refresh token is invalid or revoked")
 
-    # 2. Generisanje novih identiteta
-    user_id = payload["sub"]
-    new_jti = secrets.token_hex(32)
-    new_access_token = create_access_token({"sub": user_id})
-    new_refresh_token = create_refresh_token({"sub": user_id, "jti": new_jti})
-
-    # 3. Upisivanje novog tokena koji će zameniti stari
-    new_db_token = RefreshToken(
-        user_id=int(user_id),
-        token=get_password_hash(new_refresh_token),
-        jti=new_jti,
-        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    )
-    
-    db.add(new_db_token)
-    db.flush() # Dobijamo ID novog tokena pre commita
-
-    # 4. KLJUČNI DEO: Povezivanje starog sa novim
-    old_db_token.revoked = True
-    old_db_token.replaced_by = new_db_token.id 
-    
-    db.commit()
-
-    # Vraćamo oba, ruter će ih staviti u cookies
-    return {
-        "access_token": new_access_token, 
-        "refresh_token": new_refresh_token
-    }
+    return create_access_token({"sub": payload["sub"]})
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     from jose import JWTError

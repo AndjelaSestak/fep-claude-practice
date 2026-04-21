@@ -1,8 +1,8 @@
 import api from "./api";
 
-export const updateCurrentUser = async (userData) => {
+export const updateCurrentUser = async (userId, userData) => {
     try {
-        const response = await api.patch('/users/me', userData);
+        const response = await api.patch(`/users/updateUserById/${userId}`, userData);
         return response.data;
     } catch (error) {
         console.error("Error updating user data:", error);
@@ -10,9 +10,9 @@ export const updateCurrentUser = async (userData) => {
     }
 };
 
-export const changePassword = async (passwordData) => {
+export const changePassword = async (userId, passwordData) => {
     try {
-        const response = await api.patch('/users/me/password', passwordData);
+        const response = await api.patch(`/users/changePassword/${userId}`, passwordData);
         return response.data;
     } catch (error) {
         console.error("Error updating password:", error);
@@ -20,12 +20,13 @@ export const changePassword = async (passwordData) => {
     }   
 }
 
-export const deleteUser = async () => {
+export const deleteUser = async (userId) => {
     try {
-        const response = await api.delete('/users/me');
+        const response = await api.delete(`/users/deleteUserById/${userId}`);
         return response.data;
     } catch (error) {
         console.error("Error deleting user:", error);
         throw error;
     }
 }
+

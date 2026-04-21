@@ -17,11 +17,9 @@ class EmailVerification(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id"), nullable=True)
     token: Mapped[str] = mapped_column(Text, unique=True)
     purpose: Mapped[VerificationPurpose] = mapped_column(Enum(VerificationPurpose))
     expires_at: Mapped[datetime] = mapped_column(nullable=False)
     is_used: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user: Mapped["User"] = relationship("User", back_populates="email_verifications")
-    card: Mapped["Card"] = relationship("Card", back_populates="email_verifications")

@@ -29,14 +29,8 @@ export const AuthProvider = ({ children }) => {
         setUser(null)
     }
 
-    const refreshUser = async () => {
-        const me = await getMe()
-        setUser(me)
-        return me
-    }
-
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, loading, refreshUser }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, loading }}>
             {children}
         </AuthContext.Provider>
     )

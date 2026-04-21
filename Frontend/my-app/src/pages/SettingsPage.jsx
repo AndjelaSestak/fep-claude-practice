@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import  Sidebar  from "../components/layout/SideBar";
 import NavBarAfterLogin from "../components/layout/NavBarAfterLogin";
 import FormWrapper from "../components/ui/FormWrapper";
@@ -20,6 +19,7 @@ import { updateCurrentUser, changePassword, deleteUser } from "../services/userS
 
 const SettingsPage = () => {
     const navigate = useNavigate();
+    const testUserId = 3;
     const [updateData, setUpdateData] = useState({
       name: "",
       city: "",
@@ -35,19 +35,6 @@ const SettingsPage = () => {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [alert, setAlert] = useState(null);
-    const { user, refreshUser } = useAuth();
-
-    useEffect(() => {
-      if (user) {
-        setUpdateData({
-          name: user.name || "",
-          email: user.email || "",
-          city: user.city || "",
-          address: user.address || "",
-          date_of_birth: user.date_of_birth || "",
-        });
-      }
-    }, [user]);
 
     const handleChange = (setter) => (event) => {
       const { name, value } = event.target;
@@ -63,8 +50,7 @@ const SettingsPage = () => {
       setIsSaving(true);
 
       try {
-        await updateCurrentUser(updateData);
-        await refreshUser();
+        await updateCurrentUser(testUserId, updateData);
         setAlert({
           title: "Profile updated",
           description: "Your personal details have been saved successfully.",
@@ -84,7 +70,7 @@ const SettingsPage = () => {
       setIsSaving(true);
 
       try {
-        await changePassword(passwordData);
+        await changePassword(testUserId, passwordData);
         setAlert({
           title: "Password updated",
           description: "Your password has been updated successfully.",
@@ -103,7 +89,7 @@ const SettingsPage = () => {
       setIsSaving(true);
       
       try {
-        await deleteUser();
+        await deleteUser(testUserId);
         setAlert({
           title: "Account deleted",
           description: "Your account has been deleted successfully.",
@@ -164,19 +150,8 @@ const SettingsPage = () => {
                   className="w-full"
                 />
               </FormField>
-
-              <FormField label="Email" required>
-                <Input
-                  name="email"
-                  value={updateData.email}
-                  onChange={handleChange(setUpdateData)}
-                  placeholder="john.doe@example.com"
-                  className="w-full"
-                  disabled
-                />
-              </FormField>
               
-              <FormField label="City">
+              <FormField label="City" required>
                 <Input
                   name="city"
                   type="text"
@@ -187,7 +162,7 @@ const SettingsPage = () => {
                 />
               </FormField>
 
-              <FormField label="Address">
+              <FormField label="Address" required>
                 <Input
                   name="address"
                   type="text"

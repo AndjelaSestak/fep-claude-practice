@@ -46,8 +46,6 @@ const LoginPage = () => {
         <p className="text-gray-500 text-sm mt-1 mb-6">
           Enter your email and password to access your account
         </p>
-        <label className="text-sm font-medium text-gray-700 mb-1 block">Email</label>
-
         {/* Error poruka */}
         {error && (
           <p className="text-red-500 text-sm mb-4">{error}</p>
@@ -77,7 +75,6 @@ const LoginPage = () => {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
           />
         </div>
 
