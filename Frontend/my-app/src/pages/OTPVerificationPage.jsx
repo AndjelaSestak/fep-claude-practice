@@ -61,7 +61,7 @@ const OTPVerificationPage = () => {
         email,
         otp_code: otp
       })
-      navigate('/dashboard')
+      navigate('/login')
     }
     
   } catch (err) {
