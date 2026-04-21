@@ -17,7 +17,6 @@ class CardReport(Base):
     card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id"))
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
     report_type: Mapped[ReportType] = mapped_column(Enum(ReportType))
-    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
 
     card: Mapped["Card"] = relationship("Card", back_populates="card_reports")

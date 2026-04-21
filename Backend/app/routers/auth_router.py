@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.schemas.user import UserCreate, UserResponse
 from app.dependencies import get_db
 from app.services import auth_service
-from app.schemas.auth import LoginRequest, TokenResponse, ForgotPasswordRequest, MessageResponse, ResetPasswordRequest, VerifyOTP
+from app.schemas.auth import LoginRequest, TokenResponse, ForgotPasswordRequest, MessageResponse,ResendEmailRequest, ResetPasswordRequest, VerifyOTP
 from app.utils.security import verify_password, create_access_token, create_refresh_token
 from app.config import settings
 from app.models.user import User
@@ -20,7 +20,6 @@ def register_user(user: UserCreate, background_tasks: BackgroundTasks, db: Annot
 @router.post("/verify-email", status_code=status.HTTP_200_OK)
 def verify_email(data: VerifyOTP, background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)]):
     return auth_service.verify_user_email(db=db, data=data, background_tasks=background_tasks)
-
 @router.post("/forgot-password_email")
 def forgot_password_email(request: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     return auth_service.forgot_password(db=db, email=request.email, background_tasks=background_tasks)
@@ -28,7 +27,11 @@ def forgot_password_email(request: ForgotPasswordRequest, background_tasks: Back
 @router.post("/reset-password")
 def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     return auth_service.reset_password(db=db, data=data)
-  
+
+@router.post("/resend-verification-email", status_code=status.HTTP_200_OK)
+def resend_verification_email(data: ResendEmailRequest, background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)]):
+    return auth_service.resend_verification_email(db=db, email=data.email, background_tasks=background_tasks)
+
 @router.post("/login", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 def login(request: LoginRequest, response: Response, db: Session = Depends(get_db)):
     tokens = auth_service.login_user(db=db, email=request.email, password=request.password)
@@ -49,13 +52,25 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token")
-    new_access = auth_service.refresh_access_token(db=db, refresh_token=refresh_token)
+    
+    # Servis sada vraća dict {"access_token": ..., "refresh_token": ...}
+    new_tokens = auth_service.refresh_access_token(db=db, refresh_token=refresh_token)
+    
+    # Postavi novi Access Token
     response.set_cookie(
-        key="access_token", value=new_access,
+        key="access_token", value=new_tokens["access_token"],
         httponly=True, samesite="lax", secure=False,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
-    return {"message": "Token refreshed"}
+    
+    # Postavi novi Refresh Token (rotacija)
+    response.set_cookie(
+        key="refresh_token", value=new_tokens["refresh_token"],
+        httponly=True, samesite="lax", secure=False,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400
+    )
+    
+    return {"message": "Token refreshed successfully"}
 
 @router.post("/logout", response_model=MessageResponse, status_code=status.HTTP_200_OK)
 def logout(request: Request, response: Response, db: Session = Depends(get_db)):

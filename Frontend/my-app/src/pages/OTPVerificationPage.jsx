@@ -5,6 +5,7 @@ import FormField from '../components/ui/FormField'
 import Input from '../components/ui/InputField'
 import FormWrapper from '../components/ui/FormWrapper'
 import { authService } from '../services/authService'
+import cardService from '../services/cardService'
 import AlertDialog, {
   AlertDialogHeader,
   AlertDialogTitle,
@@ -23,6 +24,8 @@ const OTPVerificationPage = () => {
   const [loading, setLoading] = useState(false)
 
   const email = location.state?.email || ""
+  const type = location.state?.type || ""
+  const cardId = location.state?.cardId || ""
 
     // ERROR DIALOG
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
@@ -41,34 +44,32 @@ const OTPVerificationPage = () => {
   }, [email, navigate])
 
   const handleVerify = async (e) => {
-    // Sprečavamo default-no osvežavanje stranice prilikom slanja forme
-    if (e) e.preventDefault()
-    
-    if (otp.length < 6) {
-      setError("Please enter the full 6-digit code.")
-      return
-    }
+  e.preventDefault()
 
-    try {
-      setLoading(true)
-      setError("")
-      
-    
-      await authService.verifyEmail({ 
-        email: email, 
-        otp_code: otp 
+  try {
+    setLoading(true)
+    setError("")
+
+    if (type === 'card') {
+      await cardService.verifyCard({
+        card_id: cardId,
+        otp_code: otp
       })
-      
-      setSuccessDialogOpen(true)
-      
-    } catch (err) {
-      const errorMessage = err.response?.data?.detail || "Invalid code or session expired."
-      setErrorMessage(errorMessage)
-      setErrorDialogOpen(true)
-    } finally {
-      setLoading(false)
+      navigate('/my-cards')
+    } else {
+      await authService.verifyEmail({
+        email,
+        otp_code: otp
+      })
+      navigate('/login')
     }
+    
+  } catch (err) {
+    setError(err.response?.data?.detail || "Invalid code")
+  } finally {
+    setLoading(false)
   }
+}
 
   const handleResend = async (e) => {
     e.preventDefault()
