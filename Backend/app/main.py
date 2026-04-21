@@ -5,7 +5,8 @@ from alembic import command
 from alembic.config import Config
 
 from app.routers.auth_router import router as auth_router
-from app.routers.user_router import router as user_router    
+from app.routers.user_router import router as user_router  
+from app.routers.card_router import router as card_router  
 from alembic.config import Config 
 from app.utils.errors import setup_exception_handlers
 from app.seed import seed
@@ -39,3 +40,4 @@ app.add_middleware(
 setup_exception_handlers(app)
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(card_router)

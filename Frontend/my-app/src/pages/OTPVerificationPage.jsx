@@ -5,6 +5,7 @@ import FormField from '../components/ui/FormField'
 import Input from '../components/ui/InputField'
 import FormWrapper from '../components/ui/FormWrapper'
 import { authService } from '../services/authService'
+import cardService from '../services/cardService'
 
 const OTPVerificationPage = () => {
   const location = useLocation()
@@ -15,6 +16,8 @@ const OTPVerificationPage = () => {
   const [loading, setLoading] = useState(false)
 
   const email = location.state?.email || ""
+  const type = location.state?.type || ""
+  const cardId = location.state?.cardId || ""
 
   // Zaštita: Ako nema email-a (npr. refresh stranice), vrati korisnika na registraciju
   useEffect(() => {
@@ -24,35 +27,32 @@ const OTPVerificationPage = () => {
   }, [email, navigate])
 
   const handleVerify = async (e) => {
-    // Sprečavamo default-no osvežavanje stranice prilikom slanja forme
-    if (e) e.preventDefault()
-    
-    if (otp.length < 6) {
-      setError("Please enter the full 6-digit code.")
-      return
-    }
+  e.preventDefault()
 
-    try {
-      setLoading(true)
-      setError("")
-      
-      // Poziv servisu sa objektom koji sadrži email i otp_code
-      await authService.verifyEmail({ 
-        email: email, 
-        otp_code: otp 
+  try {
+    setLoading(true)
+    setError("")
+
+    if (type === 'card') {
+      await cardService.verifyCard({
+        card_id: cardId,
+        otp_code: otp
       })
-      
-      // Možeš zameniti sa AlertDialog-om kasnije ako želiš
-      alert("Email verified successfully! Welcome to SecureBank.")
-      navigate('/dashboard') 
-      
-    } catch (err) {
-      const errorMessage = err.response?.data?.detail || "Invalid code or session expired."
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
+      navigate('/my-cards')
+    } else {
+      await authService.verifyEmail({
+        email,
+        otp_code: otp
+      })
+      navigate('/dashboard')
     }
+    
+  } catch (err) {
+    setError(err.response?.data?.detail || "Invalid code")
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center px-4 pt-12">
