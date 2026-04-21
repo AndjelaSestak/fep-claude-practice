@@ -8,6 +8,7 @@ from app.routers.auth_router import router as auth_router
 from app.routers.currency_router import router as currency_router
 from app.routers.user_router import router as user_router    
 from app.routers.wallet_router import router as wallet_router
+from app.routers.card_report_router import router as card_report_router
 from alembic.config import Config 
 from app.utils.errors import setup_exception_handlers
 from app.seed import seed
@@ -43,4 +44,5 @@ app.include_router(auth_router)
 app.include_router(currency_router)
 app.include_router(user_router)
 app.include_router(wallet_router)
+app.include_router(card_report_router)
 app.include_router(transaction_router)
