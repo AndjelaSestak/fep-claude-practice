@@ -12,7 +12,7 @@ import ProtectedRoute from './ProtectedRoute'
 import SettingsPage from '../pages/SettingsPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import ResetPasswordPage from '../pages/ResetPasswordPage'
-
+import TransactionsPage from '../pages/TransactionsPage'
 const router = createBrowserRouter([
     {
         path: '/',
@@ -69,7 +69,11 @@ const router = createBrowserRouter([
     {
         path: '/forgot-password',
         element: <ForgotPasswordPage />,
-    }
+    },
+    {
+        path: '/transactions',
+        element: (<TransactionsPage />)
+    },
     
 ])
 
