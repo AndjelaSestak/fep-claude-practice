@@ -67,6 +67,13 @@ def setup_exception_handlers(app: FastAPI):
                 "msg": err.get("msg"),
                 "input": err.get("input"),
             })
+            msg = err.get("msg", "Validation error")
+            # Clean up the "Value error, " prefix from model validators if it exists
+            if msg.startswith("Value error, "):
+                msg = msg.replace("Value error, ", "")
+            if msg not in error_messages:
+                error_messages.append(msg)  
+            
         return JSONResponse(
             status_code=422,
             headers={"Access-Control-Allow-Origin": "http://localhost:5173"},
