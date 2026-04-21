@@ -10,7 +10,7 @@ export function TransactionFilters({ onFilterChange, className }) {
     dateRange: "all",
   });
 
-  // Funkcija koja se poziva na svaku promenu i šalje ažurirane filtre roditelju
+  
   const updateFilters = (newFilters) => {
     setFilters(newFilters);
     onFilterChange(newFilters);

@@ -1,5 +1,7 @@
 import asyncio
 from sqlalchemy.orm import Session
+from typing import Optional
+from sqlalchemy import String
 from app.models.transaction import Transaction, TransactionStatus, TransactionDirection, TransactionType
 from app.models.card import Card, CardStatus
 from app.models.wallet import Wallet
@@ -9,7 +11,22 @@ from app.services.exchange_rate_service import convert_amount
 from app.database import SessionLocal
 from app.utils.errors import InvalidTokenError
 
+
 PENDING_DELAY_SECONDS = 180
+
+def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None, limit: int = 10, offset: int = 0,):
+    query = db.query(Transaction).filter(Transaction.user_id == user_id)
+
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            (Transaction.recipient.ilike(search_pattern)) |
+            (Transaction.sender.ilike(search_pattern)) |
+            (Transaction.reference.ilike(search_pattern))
+        )
+        
+
+    return query.order_by(Transaction.created_at.desc()).offset(offset).limit(limit).all()
 
 def create_transaction(db: Session, request: CreateTransactionRequest, current_user: User) -> Transaction:
     card = db.query(Card).filter(
