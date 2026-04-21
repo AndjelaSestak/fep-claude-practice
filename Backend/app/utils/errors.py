@@ -57,7 +57,8 @@ def setup_exception_handlers(app: FastAPI):
             # Clean up the "Value error, " prefix from model validators if it exists
             if msg.startswith("Value error, "):
                 msg = msg.replace("Value error, ", "")
-            error_messages.append(msg)  
+            if msg not in error_messages:
+                error_messages.append(msg)  
             
         return JSONResponse(
             status_code=422,
