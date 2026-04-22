@@ -80,3 +80,11 @@ def manual_unblock_card(db: Session, card_id: int) -> Card:
     db.commit()
     db.refresh(card)
     return card
+
+def get_card_reports(db: Session, card_id: int) -> list[CardReport]:
+    card = db.query(Card).filter(Card.id == card_id, Card.is_email_verified == True, Card.is_deleted == False).first()
+    if not card:
+        raise ValueError("Card not found")
+    
+    reports = db.query(CardReport).filter(CardReport.card_id == card_id).all()
+    return reports

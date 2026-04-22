@@ -38,5 +38,4 @@ def cancel_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return transaction_service.create_transaction(db=db, request=request, current_user=current_user)
     return transaction_service.cancel_transaction(db=db, transaction_id=transaction_id, current_user=current_user)
