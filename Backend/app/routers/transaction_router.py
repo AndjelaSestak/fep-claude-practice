@@ -2,18 +2,22 @@ from typing import Optional
 
 from fastapi import APIRouter, Query, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
-from fastapi import Depends
 from app.utils.errors import TransactionNotFoundError
 from app.models.user import User
 
 from app.dependencies import get_db
 from app.services import transaction_service
 from app.services.auth_service import get_current_user
+from app.services.exchange_rate_service import get_supported_currencies
 from sqlalchemy.orm import Session
 from app.schemas.transaction import CreateTransactionRequest, TransactionResponse
 
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
+
+@router.get("/currencies", status_code=status.HTTP_200_OK)
+def get_currencies():
+    return get_supported_currencies()
 
 @router.get("/all", status_code=status.HTTP_200_OK)
 def get_all_transactions_for_user(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), search: Optional[str] = Query(None),limit: int = 10, 

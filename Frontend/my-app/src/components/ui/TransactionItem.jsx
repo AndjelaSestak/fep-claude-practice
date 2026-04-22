@@ -1,35 +1,26 @@
+import { useState } from "react";
 import { cn } from "../../utils/cn";
-import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Clock, X } from "lucide-react";
+import Button from "./Button";
+import AlertDialog, {
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "./AlertDialog";
+import { cancelTransaction } from "../../services/transactionService";
 
+export function TransactionItem({ transaction, className, onCancel }) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-/*
-const transactions = [
-  {
-    id: 1,
-    direction: "outgoing",
-    recipient: "Amazon",
-    sender: null,
-    type: "single",
-    amount: 90,
-    currency: "RSD",
-    created_at: "2026-03-28T00:00:00Z",
-  },
-  {
-    id: 2,
-    direction: "incoming",
-    recipient: null,
-    sender: "Salary Deposit",
-    type: "single",
-    amount: 5000,
-    currency: "RSD",
-    created_at: "2026-03-25T00:00:00Z",
-  },
-];
-*\ */
-
-
-export function TransactionItem({ transaction, className }) {
   const isIncoming = transaction.direction === "incoming";
+  const status = transaction.status;
+  const isPending = status === "pending";
+  const isCancelled = status === "cancelled";
+  const isFailed = status === "failed";
 
   const displayName = isIncoming
     ? transaction.sender || "Unknown sender"
@@ -38,9 +29,7 @@ export function TransactionItem({ transaction, className }) {
   const displayType =
     transaction.type === "recurring" ? "Recurring" : "Single";
 
-  const formattedDate = new Date(transaction.created_at).toLocaleDateString(
-    "sr-RS"
-  );
+  const formattedDate = new Date(transaction.created_at).toLocaleDateString("sr-RS");
 
   const formattedAmount = `${isIncoming ? "+" : "-"}${transaction.currency} ${Number(
     transaction.amount
@@ -49,46 +38,130 @@ export function TransactionItem({ transaction, className }) {
     maximumFractionDigits: 2,
   })}`;
 
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between rounded-xl border border-gray-200 bg-surface px-4 py-3",
-        className
-      )}
-    >
-      <div className="flex items-center gap-4">
-        <div
-          className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-full",
-            isIncoming
-              ? "bg-green-100 text-primary-dark"
-              : "bg-red-100 text-red-500"
-          )}
-        >
-          {isIncoming ? (
-            <ArrowDownLeft className="h-4 w-4" />
-          ) : (
-            <ArrowUpRight className="h-4 w-4" />
-          )}
-        </div>
+  const handleCancel = async () => {
+    setLoading(true);
+    try {
+      await cancelTransaction(transaction.id);
+      setConfirmOpen(false);
+      onCancel?.();
+    } catch {
+      setConfirmOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        <div>
-          <p className="text-base font-medium text-gray-900">{displayName}</p>
-          <p className="text-sm text-gray-500">{formattedDate}</p>
+  const renderIcon = () => {
+    if (isPending) {
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100 text-yellow-500">
+          <Clock className="h-4 w-4" />
         </div>
+      );
+    }
+    if (isCancelled || isFailed) {
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+          <X className="h-4 w-4" />
+        </div>
+      );
+    }
+    return (
+      <div
+        className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-full",
+          isIncoming ? "bg-green-100 text-primary-dark" : "bg-red-100 text-red-500"
+        )}
+      >
+        {isIncoming ? (
+          <ArrowDownLeft className="h-4 w-4" />
+        ) : (
+          <ArrowUpRight className="h-4 w-4" />
+        )}
       </div>
+    );
+  };
 
+  const renderRight = () => {
+    if (isCancelled) {
+      return (
+        <div className="text-right">
+          <p className="text-base font-medium text-gray-400 line-through">{formattedAmount}</p>
+          <p className="text-sm font-medium text-gray-400">Cancelled</p>
+        </div>
+      );
+    }
+    if (isFailed) {
+      return (
+        <div className="text-right">
+          <p className="text-base font-medium text-gray-400 line-through">{formattedAmount}</p>
+          <p className="text-sm font-medium text-red-400">Failed</p>
+        </div>
+      );
+    }
+    if (isPending) {
+      return (
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-base font-medium text-gray-900">{formattedAmount}</p>
+            <p className="text-sm text-yellow-500 font-medium">Pending</p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setConfirmOpen(true)}
+          >
+            Cancel
+          </Button>
+        </div>
+      );
+    }
+    return (
       <div className="text-right">
-        <p
-          className={cn(
-            "text-base font-medium",
-            isIncoming ? "text-primary" : "text-gray-900"
-          )}
-        >
+        <p className={cn("text-base font-medium", isIncoming ? "text-primary" : "text-gray-900")}>
           {formattedAmount}
         </p>
         <p className="text-sm text-gray-500">{displayType}</p>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <>
+      <div
+        className={cn(
+          "flex items-center justify-between rounded-xl border border-gray-200 bg-surface px-4 py-3",
+          (isCancelled || isFailed) && "opacity-60",
+          className
+        )}
+      >
+        <div className="flex items-center gap-4">
+          {renderIcon()}
+          <div>
+            <p className="text-base font-medium text-gray-900">{displayName}</p>
+            <p className="text-sm text-gray-500">{formattedDate}</p>
+          </div>
+        </div>
+
+        {renderRight()}
+      </div>
+
+      <AlertDialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancel transaction?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to cancel this transaction? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setConfirmOpen(false)}>
+            Keep it
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleCancel} disabled={loading}>
+            {loading ? "Cancelling..." : "Yes, cancel"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialog>
+    </>
   );
 }
