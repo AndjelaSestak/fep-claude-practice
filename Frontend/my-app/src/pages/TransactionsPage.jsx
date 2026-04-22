@@ -7,7 +7,6 @@ import { TransactionFilters } from "../components/ui/TransactionFilters";
 import Button from "../components/ui/Button";
 import { getTransactionById, getTransactionsForUser } from "../services/transactionService";
 import NewTransactionModal from "../components/ui/NewTransactionModal";
-import { getTransactionsForUser } from "../services/transactionService";
 
 
 const TransactionsPage = () => {
