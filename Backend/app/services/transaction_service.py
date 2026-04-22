@@ -105,6 +105,11 @@ async def process_transaction(transaction_id: int) -> None:
     finally:
         db.close()
 
+def get_transaction_by_id(db: Session, transaction_id: int, user_id: int):
+    return db.query(Transaction).filter(
+        Transaction.id == transaction_id,
+        Transaction.user_id == user_id
+    ).first()
 
 def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> Transaction:
     transaction = db.query(Transaction).filter(

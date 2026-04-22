@@ -14,3 +14,13 @@ export const getTransactionsForUser = async (search, limit, offset) => {
         throw error;
     }
 };
+
+export const getTransactionById = async (transactionId) => {
+    try {
+        const response = await api.get(`/transactions/${transactionId}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching transaction with ID ${transactionId}:`, error);
+        throw error;
+    }
+};
