@@ -2,6 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Query, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
+from app.utils.errors import TransactionNotFoundError
 from app.models.user import User
 
 from app.dependencies import get_db
@@ -35,6 +36,19 @@ def create_transaction(
     background_tasks.add_task(transaction_service.process_transaction, transaction.id)
     return transaction
 
+@router.get("/{transaction_id}", response_model=TransactionResponse)
+def read_transaction(
+    transaction_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    db_transaction = transaction_service.get_transaction_by_id(
+        db, transaction_id=transaction_id, user_id=current_user.id
+    )
+    if not db_transaction:
+        raise TransactionNotFoundError("Transaction not found or access denied")
+    return db_transaction
+
 
 @router.delete("/{transaction_id}", response_model=TransactionResponse)
 def cancel_transaction(
@@ -42,4 +56,4 @@ def cancel_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-   return transaction_service.cancel_transaction(db=db, transaction_id=transaction_id, current_user=current_user)
+    return transaction_service.cancel_transaction(db=db, transaction_id=transaction_id, current_user=current_user)

@@ -3,46 +3,74 @@ import Sidebar from "../components/layout/SideBar";
 import NavBarAfterLogin from "../components/layout/NavBarAfterLogin";
 import InfoCard from "../components/ui/InfoCard";
 import Select from "../components/ui/Select";
+import Button from "../components/ui/Button";
 import { TransactionItem } from "../components/ui/TransactionItem";
 import { ItemList } from "../components/ui/ItemList";
 import { TransactionFilters } from "../components/ui/TransactionFilters";
 import { getCurrencies, getExchangeRate, getWalletBalance } from "../services/walletService";
-
-// Privremeni podaci (dok ne povežeš pravi API poziv za transakcije)
-const mockTransactions = [
-  {
-    id: 1,
-    direction: "outgoing",
-    recipient: "Amazon",
-    sender: null,
-    type: "single",
-    amount: 90,
-    currency: "RSD",
-    created_at: "2026-03-28T14:30:00Z",
-  },
-  {
-    id: 2,
-    direction: "incoming",
-    recipient: null,
-    sender: "Salary Deposit",
-    type: "recurring",
-    amount: 5000,
-    currency: "RSD",
-    created_at: "2026-03-25T09:00:00Z",
-  },
-];
+import { getTransactionById, getTransactionsForUser } from "../services/transactionService";
 
 const DashboardPage = () => {
-  // State za balans i valute
   const [walletBalance, setWalletBalance] = useState(null);
   const [walletCurrency, setWalletCurrency] = useState("");
   const [currencies, setCurrencies] = useState([]);
   const [selectedCurrency, setSelectedCurrency] = useState("");
   const [displayBalance, setDisplayBalance] = useState(null);
 
-  // State za transakcije (originalni i filtrirani niz)
-  const [allTransactions, setAllTransactions] = useState(mockTransactions);
-  const [filteredTransactions, setFilteredTransactions] = useState(mockTransactions);
+  // Promenjen state: inicijalno prazan niz umesto mock-a
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({ search: "", type: "all", direction: "all" });
+
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+
+  // --- LOGIKA ZA DOHVATANJE SVIH TRANSAKCIJA (API) ---
+  const fetchTransactions = useCallback(async () => {
+  setLoading(true);
+  try {
+    // 1. Povuci podatke sa backenda (filtrirano po search)
+    const data = await getTransactionsForUser(filters.search, 10, 0); 
+    
+    let result = data;
+    
+    // 2. Filtriranje po Tipu (Single / Recurring)
+    if (filters.type !== "all") {
+      result = result.filter(t => t.type === filters.type);
+    }
+
+    // 3. Filtriranje po Smeru (Incoming / Outgoing)
+    if (filters.direction !== "all") {
+      result = result.filter(t => t.direction === filters.direction);
+    }
+
+    setTransactions(result);
+  } catch (error) {
+    console.error("Greška pri učitavanju transakcija:", error);
+  } finally {
+    setLoading(false);
+  }
+}, [filters]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  // --- LOGIKA ZA DETALJE ---
+  const handleTransactionClick = async (id) => {
+    setDetailsLoading(true);
+    setIsModalOpen(true);
+    try {
+      const data = await getTransactionById(id);
+      setSelectedTransaction(data);
+    } catch (error) {
+      console.error("Neuspešno učitavanje detalja:", error);
+      setIsModalOpen(false);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
 
   // --- LOGIKA ZA BALANS ---
   useEffect(() => {
@@ -64,6 +92,7 @@ const DashboardPage = () => {
     loadData();
   }, []);
 
+  // Konverzija balansa
   useEffect(() => {
     const convertBalance = async () => {
       if (walletBalance === null || !walletCurrency || !selectedCurrency) return;
@@ -81,49 +110,6 @@ const DashboardPage = () => {
     convertBalance();
   }, [selectedCurrency, walletBalance, walletCurrency]);
 
-  // --- LOGIKA ZA FILTRIRANJE ---
-  const handleFilterChange = useCallback((activeFilters) => {
-    let result = [...allTransactions];
-
-    // 1. Search filter
-    if (activeFilters.search.trim() !== "") {
-      const term = activeFilters.search.toLowerCase();
-      result = result.filter(t => 
-        (t.recipient && t.recipient.toLowerCase().includes(term)) ||
-        (t.sender && t.sender.toLowerCase().includes(term))
-      );
-    }
-
-    // 2. Type filter (income/outgoing)
-    if (activeFilters.type !== "all") {
-      result = result.filter(t => t.direction === activeFilters.type);
-    }
-
-    // 3. Date range filter
-    if (activeFilters.dateRange !== "all") {
-      const now = new Date();
-      result = result.filter(t => {
-        const tDate = new Date(t.created_at);
-        if (activeFilters.dateRange === "today") {
-          return tDate.toDateString() === now.toDateString();
-        }
-        if (activeFilters.dateRange === "last7") {
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(now.getDate() - 7);
-          return tDate >= sevenDaysAgo;
-        }
-        if (activeFilters.dateRange === "last30") {
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(now.getDate() - 30);
-          return tDate >= thirtyDaysAgo;
-        }
-        return true;
-      });
-    }
-
-    setFilteredTransactions(result);
-  }, [allTransactions]);
-
   const formattedBalance = displayBalance !== null
     ? `${selectedCurrency} ${displayBalance.toLocaleString("sr-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : "Loading...";
@@ -138,7 +124,6 @@ const DashboardPage = () => {
         <main className="p-8 overflow-y-auto">
           <div className="max-w-6xl mx-auto space-y-10">
             
-            {/* Header i Balans */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -162,32 +147,86 @@ const DashboardPage = () => {
               </div>
             </header>
 
-            {/* Filteri i Search */}
             <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-              <TransactionFilters onFilterChange={handleFilterChange} />
+              <TransactionFilters onFilterChange={setFilters} />
             </div>
 
-            {/* Lista transakcija */}
             <div className="space-y-4">
               <ItemList 
                 title="Transactions" 
-                description={`Showing ${filteredTransactions.length} results`}
-                emptyMessage="No transactions found matching your filters."
+                description={loading ? "Loading..." : `Showing ${transactions.length} results`}
+                emptyMessage="No transactions found."
               >
                 <div className="grid gap-3">
-                  {filteredTransactions.map((transaction) => (
-                    <TransactionItem 
+                  {transactions.map((transaction) => (
+                    <div 
                       key={transaction.id} 
-                      transaction={transaction} 
-                    />
+                      onClick={() => handleTransactionClick(transaction.id)}
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                    >
+                      <TransactionItem transaction={transaction} />
+                    </div>
                   ))}
                 </div>
               </ItemList>
             </div>
-
           </div>
         </main>
       </div>
+
+      {/* MODAL ZA DETALJE */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl m-4">
+             <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Transaction Details</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            {detailsLoading ? (
+              <p className="text-center py-10">Loading data...</p>
+            ) : selectedTransaction ? (
+              <div className="space-y-4">
+                 <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-500">Status:</span>
+                  <span className={`font-bold ${selectedTransaction.status === 'completed' ? 'text-green-600' : 'text-orange-500'}`}>
+                    {selectedTransaction.status.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-500">Amount:</span>
+                  <span className="font-bold">{selectedTransaction.currency} {selectedTransaction.amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-500">Recipient:</span>
+                  <span className="font-semibold">{selectedTransaction.recipient || "N/A"}</span>
+                </div>
+                 <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-500">Acc. Number:</span>
+                  <span className="text-sm font-mono">{selectedTransaction.recipient_account_number || "N/A"}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-500">Reference:</span>
+                  <span className="italic">{selectedTransaction.reference || "None"}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-500">Date:</span>
+                  <span>{new Date(selectedTransaction.created_at).toLocaleString("sr-RS")}</span>
+                </div>
+                <Button
+                     className="w-full"
+                     size="lg"
+                     onClick={() => setIsModalOpen(false)}
+                      disabled={loading}
+                     >
+                     Close
+                </Button>
+              </div>
+            ) : (
+              <p className="text-red-500 text-center">Error while loading.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
