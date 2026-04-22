@@ -5,12 +5,14 @@ import { TransactionItem } from "../components/ui/TransactionItem";
 import { ItemList } from "../components/ui/ItemList";
 import { TransactionFilters } from "../components/ui/TransactionFilters";
 import Button from "../components/ui/Button";
+import NewTransactionModal from "../components/ui/NewTransactionModal";
 import { getTransactionsForUser } from "../services/transactionService";
 
 
 const TransactionsPage = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [newTransactionOpen, setNewTransactionOpen] = useState(false);
   
 
   const [page, setPage] = useState(1);
@@ -45,10 +47,21 @@ const TransactionsPage = () => {
         
         <main className="p-8 overflow-y-auto">
           <div className="max-w-5xl mx-auto space-y-6">
-            <header>
-              <h1 className="text-3xl font-bold text-gray-900">All Transactions</h1>
-              <p className="text-gray-500">View and manage your full transaction history.</p>
+            <header className="flex items-start justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
+                <p className="text-gray-500">View and manage your transactions</p>
+              </div>
+              <Button onClick={() => setNewTransactionOpen(true)}>
+                + New Transaction
+              </Button>
             </header>
+
+            <NewTransactionModal
+              open={newTransactionOpen}
+              onClose={() => setNewTransactionOpen(false)}
+              onSuccess={fetchTransactions}
+            />
 
             {/* Reusable Filteri */}
             <TransactionFilters 
@@ -66,7 +79,7 @@ const TransactionsPage = () => {
               <div className="grid gap-3">
                 {transactions.length > 0 ? (
                   transactions.map((t) => (
-                    <TransactionItem key={t.id} transaction={t} />
+                    <TransactionItem key={t.id} transaction={t} onCancel={fetchTransactions} />
                   ))
                 ) : (
                   !loading && <p className="text-center py-10 text-gray-500">No transactions found.</p>
