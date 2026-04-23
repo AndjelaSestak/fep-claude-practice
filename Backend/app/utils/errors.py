@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
-from Backend import app
+
 
 class EmailAlreadyRegisteredError(Exception):
     pass
