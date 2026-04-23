@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 
-
 class EmailAlreadyRegisteredError(Exception):
     pass
 
