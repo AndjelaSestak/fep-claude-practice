@@ -35,6 +35,12 @@ class CardTypeNotFoundError(Exception):
 class WalletNotFoundError(Exception):
     pass
 
+class TemplateNotFoundError(Exception):
+    pass
+
+class TemplateExecutionError(Exception):
+    pass
+  
 class TransactionNotFoundError(Exception):
     pass
 
@@ -145,6 +151,21 @@ def setup_exception_handlers(app: FastAPI):
             status_code=400,
             content={"detail": str(exc)}
         )
+
+    @app.exception_handler(TemplateNotFoundError)
+    async def template_not_found_handler(request: Request, exc: TemplateNotFoundError):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": str(exc)}
+        )
+
+    @app.exception_handler(TemplateExecutionError)
+    async def template_execution_error_handler(request: Request, exc: TemplateExecutionError):
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(exc)}
+        )
+      
     @app.exception_handler(TransactionNotFoundError)
     async def transaction_not_found_handler(request: Request, exc: TransactionNotFoundError):
         return JSONResponse(
