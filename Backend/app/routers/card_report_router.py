@@ -1,12 +1,13 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
 from app.dependencies import get_db
-from app.schemas.card_report import CardStatusResponse
+from app.schemas.card_report import CardReportRequest, CardStatusResponse
 from app.services.card_report_service import (
     manual_block_card,
     manual_unblock_card,
     report_lost_card,
     report_stolen_card,
+    get_card_reports,
 )
 
 
@@ -44,3 +45,10 @@ def unblock_card_route(
     db: Session = Depends(get_db),
 ):
     return manual_unblock_card(db, card_id)
+
+@router.get("/{card_id}/card_reports", response_model=list[CardReportRequest], status_code=status.HTTP_200_OK)
+def get_card_reports_route(
+    card_id: int,
+    db: Session = Depends(get_db),
+):
+    return get_card_reports(db, card_id)
