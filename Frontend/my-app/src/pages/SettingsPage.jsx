@@ -128,18 +128,39 @@ const SettingsPage = () => {
       <div className="flex flex-col flex-1 overflow-auto">
         <NavBarAfterLogin username="" />
         
-        <div className="flex-1 bg-slate-100 flex flex-col px-8 pt-12 gap-6">
+        <div className="flex-1 bg-slate-50 flex flex-col px-8 pt-12 gap-8">
           
-          <div className="flex items-start gap-4 mb-6">
-              <div>
-                <h1 className="text-3xl font-semibold">
-                  Profile Settings
-                </h1>
-                <p className="text-md text-gray-500">
-                  Manage your account information and preferences
-                </p>
-              </div>
-            </div>
+          
+              
+              {/* ZELENI HERO PANEL ZA PROFILE SETTINGS */}
+              <header className="relative bg-primary/10 p-8 rounded-[2.5rem] border border-primary/20 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden">
+                {/* Prepoznatljivi dekorativni krugovi */}
+                <div className="absolute -left-4 -top-4 w-32 h-32 bg-primary/15 rounded-full blur-3xl"></div>
+                <div className="absolute right-10 bottom-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
+
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-2 w-10 bg-primary rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)]"></div>
+                    <span className="text-[11px] font-black text-primary-dark uppercase tracking-[0.2em]">Account Info</span>
+                  </div>
+                  
+                  <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-1">
+                    Profile Settings
+                  </h1>
+                  
+                  <p className="text-gray-700 font-semibold opacity-80">
+                    Manage your account information and preferences.
+                  </p>
+                </div>
+
+                {/* Opciono: Možeš dodati neku ikonicu profila ovde desno ako želiš */}
+                <div className="relative z-10 hidden md:block opacity-20">
+                  <svg className="w-20 h-20 text-primary-dark" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
+                </div>
+              </header>
+            
 
           <FormWrapper className="max-w-none">
 

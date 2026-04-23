@@ -63,6 +63,7 @@ def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
         errors = []
+        error_messages = []
         for err in exc.errors():
             errors.append({
                 "type": err.get("type"),
@@ -80,7 +81,7 @@ def setup_exception_handlers(app: FastAPI):
         return JSONResponse(
             status_code=422,
             headers={"Access-Control-Allow-Origin": "http://localhost:5173"},
-            content={"detail": errors}
+            content={"detail": errors, "messages": error_messages}
         )
 
     @app.exception_handler(ValueError)
