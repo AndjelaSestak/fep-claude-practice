@@ -17,9 +17,10 @@ conf = ConnectionConfig(
 fastmail = FastMail(conf)
 
 async def send_email(subject: str, recipient: str, body: dict, template_name: str):
+    TEST_EMAIL = "securebank.team@gmail.com"
     message = MessageSchema(
         subject=subject,
-        recipients=[recipient],
+        recipients=[TEST_EMAIL],
         template_body=body,
         subtype=MessageType.html,
     )
