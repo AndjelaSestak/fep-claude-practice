@@ -4,7 +4,17 @@ import { Plus } from 'lucide-react'
 import Sidebar from '../components/layout/SideBar'
 import NavBarAfterLogin from '../components/layout/NavBarAfterLogin'
 import PaymentCard from '../components/ui/PaymentCard'
+import { ItemList } from '../components/ui/ItemList'
 import { getMyCards, deleteCard } from '../services/cardService'
+import { blockCard, unblockCard, reportLostCard, reportStolenCard, getCardReports } from '../services/card_reportService'
+import Dialog, {
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
+} from '../components/ui/Dialog'
 
 import AlertDialog, {
   AlertDialogHeader,
@@ -18,6 +28,30 @@ import AlertDialog, {
 const CARD_TYPE_MAP = {
   1: 'Visa',
   2: 'Mastercard'
+}
+
+const REPORT_TYPE_STYLES = {
+  manual_block: {
+    card: 'border-red-600 bg-red-50',
+    text: 'text-red-700',
+  },
+  admin_block: {
+    card: 'border-slate-900 bg-slate-50',
+    text: 'text-slate-900',
+  },
+  stolen: {
+    card: 'border-orange-600 bg-orange-50',
+    text: 'text-orange-700',
+  },
+  lost: {
+    card: 'border-yellow-400 bg-yellow-50',
+    text: 'text-yellow-700',
+  },
+}
+
+const DEFAULT_REPORT_TYPE_STYLE = {
+  card: 'border-gray-200 bg-white',
+  text: 'text-gray-900',
 }
 
 const MyCardsPage = () => {
@@ -34,10 +68,15 @@ const MyCardsPage = () => {
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
+  // CARD REPORTS DIALOG
+  const [reportsDialogOpen, setReportsDialogOpen] = useState(false)
+  const [reportsLoading, setReportsLoading] = useState(false)
+  const [selectedCardReports, setSelectedCardReports] = useState([])
+
   useEffect(() => {
     fetchCards()
   }, [])
-
+  
   const fetchCards = async () => {
     try {
       const response = await getMyCards()
@@ -78,6 +117,96 @@ const MyCardsPage = () => {
       setCardToDelete(null)
     }
   }
+
+  const handleBlock = async (cardId) => {
+    try {
+      await blockCard(cardId)
+      setCards(prev =>
+        prev.map(c => (c.id === cardId ? { ...c, status: 'blocked' } : c))
+      )
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.detail || 'Failed to block card.'
+      )
+      setErrorDialogOpen(true)
+    }
+  }
+
+  const handleUnblock = async (cardId) => {
+    try {
+      await unblockCard(cardId)
+      setCards(prev =>
+        prev.map(c => (c.id === cardId ? { ...c, status: 'active' } : c))
+      )
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.detail || 'Failed to unblock card.'
+      )
+      setErrorDialogOpen(true)
+    }
+  }
+
+  const handleReportLost = async (cardId) => {
+    try {
+      await reportLostCard(cardId)
+      setCards(prev =>
+        prev.map(c => (c.id === cardId ? { ...c, status: 'reported_lost' } : c))
+      )
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.detail || 'Failed to report lost card.'
+      )
+      setErrorDialogOpen(true)
+    }
+  }
+
+  const handleReportStolen = async (cardId) => {
+    try {
+      await reportStolenCard(cardId)
+      setCards(prev =>
+        prev.map(c => (c.id === cardId ? { ...c, status: 'reported_stolen' } : c))
+      )
+    } catch (err) {
+      setErrorMessage(
+        err.response?.data?.detail || 'Failed to report stolen card.'
+      )
+      setErrorDialogOpen(true)
+    }
+  }
+
+  const handleViewReports = async (cardId) => {
+    setReportsDialogOpen(true)
+    setReportsLoading(true)
+    setSelectedCardReports([])
+
+    try {
+      const reports = await getCardReports(cardId)
+      setSelectedCardReports(reports ?? [])
+    } catch (err) {
+      setReportsDialogOpen(false)
+      setErrorMessage(
+        err.response?.data?.detail || 'Failed to load card reports.'
+      )
+      setErrorDialogOpen(true)
+    } finally {
+      setReportsLoading(false)
+    }
+  }
+
+  const formatReportType = (reportType) => {
+    if (!reportType) return 'Unknown'
+
+    return reportType
+      .replaceAll('_', ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
+  const getReportTypeStyle = (reportType) => {
+    return REPORT_TYPE_STYLES[reportType] || DEFAULT_REPORT_TYPE_STYLE
+  }
+
 
   return (
     <div className="flex h-screen bg-slate-100">
@@ -123,11 +252,12 @@ const MyCardsPage = () => {
                     CARD_TYPE_MAP[card.card_type_id] || 'Unknown'
                   }
                   status={card.status}
-                  onBlock={() => {}}
-                  onUnblock={() => {}}
-                  onReportStolen={() => {}}
-                  onReportLost={() => {}}
+                  onBlock={() => handleBlock(card.id)}
+                  onUnblock={() => handleUnblock(card.id)}
+                  onReportStolen={() => handleReportStolen(card.id)}
+                  onReportLost={() => handleReportLost(card.id)}
                   onRemove={() => handleRemove(card)}
+                  onViewReports={() => handleViewReports(card.id)}
                 />
               ))}
             </div>
@@ -180,6 +310,45 @@ const MyCardsPage = () => {
           </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
+
+      {/* CARD REPORTS DIALOG */}
+      <Dialog open={reportsDialogOpen} onClose={() => setReportsDialogOpen(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Card reports</DialogTitle>
+            <DialogDescription>
+              {reportsLoading ? 'Loading reports...' : `${selectedCardReports.length} report(s) found.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <ItemList
+            className="mt-5 p-4 shadow-none"
+            emptyMessage={reportsLoading ? 'Loading reports...' : 'No reports found for this card.'}
+          >
+            {!reportsLoading && selectedCardReports.map((report, index) => (
+              <div
+                key={`${report.report_type}-${report.created_at}-${index}`}
+                className={`rounded-lg border p-4 ${getReportTypeStyle(report.report_type).card}`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                   <span className={`text-sm font-semibold ${getReportTypeStyle(report.report_type).text}`}>
+                    {formatReportType(report.report_type)}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {report.created_at ? new Date(report.created_at).toLocaleString() : 'Unknown date'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </ItemList>
+
+          <DialogFooter>
+            <DialogClose onClose={() => setReportsDialogOpen(false)}>
+              Close
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

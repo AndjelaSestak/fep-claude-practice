@@ -1,4 +1,4 @@
-import { CreditCard, Lock, AlertTriangle, Trash2 } from "lucide-react";
+import { CreditCard, Lock, AlertTriangle, Trash2, FileText } from "lucide-react";
 import Button from "./Button";
 
 const PaymentCard = ({
@@ -10,8 +10,13 @@ const PaymentCard = ({
   onReportStolen,
   onReportLost,
   onRemove,
+  onViewReports,
 }) => {
-  const isBlocked = status === "blocked";
+  const isBlocked =
+    status === "blocked" ||
+    status === "reported_lost" ||
+    status === "reported_stolen";
+
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden w-80">
@@ -67,13 +72,23 @@ const PaymentCard = ({
           )}
 
           {/* Remove Card */}
-          <button
+          <Button
+            variant="destructive"
             onClick={onRemove}
-            className="flex items-center justify-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
+            className="w-full gap-2 text-slate-600 hover:text-primary"
           >
             <Trash2 className="w-4 h-4" />
             Remove Card
-          </button>
+          </Button>
+
+          <Button
+            variant="default"
+            onClick={onViewReports}
+            className="w-full gap-2 text-slate-600 hover:text-primary"
+          >
+            <FileText className="w-4 h-4" />
+            View Card reports
+          </Button>
 
         </div>
       </div>

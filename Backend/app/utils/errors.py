@@ -40,6 +40,9 @@ class TemplateNotFoundError(Exception):
 
 class TemplateExecutionError(Exception):
     pass
+  
+class TransactionNotFoundError(Exception):
+    pass
 
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(EmailAlreadyRegisteredError)
@@ -161,4 +164,11 @@ def setup_exception_handlers(app: FastAPI):
         return JSONResponse(
             status_code=400,
             content={"detail": str(exc)}
+        )
+      
+    @app.exception_handler(TransactionNotFoundError)
+    async def transaction_not_found_handler(request: Request, exc: TransactionNotFoundError):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": str(exc)},
         )
