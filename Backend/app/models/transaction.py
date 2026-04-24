@@ -5,7 +5,7 @@ import enum
 from app.database import Base
 
 class TransactionType(str, enum.Enum):
-   reccuring = "reccuring"
+   recurring = "recurring"
    single = "single"
 
 class TransactionStatus(str, enum.Enum):

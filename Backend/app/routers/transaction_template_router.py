@@ -12,7 +12,7 @@ from app.schemas.transaction_template import (
     TransactionTemplateUpdate
 )
 
-router = APIRouter(prefix="/api/templates", tags=["Transaction Templates"])
+router = APIRouter(prefix="/templates", tags=["Transaction Templates"])
 
 @router.post("/CreateTemplate", response_model=TransactionTemplateResponse, status_code=status.HTTP_201_CREATED)
 def create_template(

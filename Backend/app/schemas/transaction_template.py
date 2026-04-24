@@ -24,7 +24,7 @@ class TransactionTemplateCreate(TransactionTemplateBase):
 
     @model_validator(mode="after")
     def validate_recurring_fields(self):
-        if self.type == TransactionType.reccuring:
+        if self.type == TransactionType.recurring:
             if not self.frequency or not self.start_date:
                 raise ValueError("Frequency and start date are required for recurring transactions.")
         return self
@@ -44,10 +44,17 @@ class TransactionTemplateUpdate(BaseModel):
     end_date: Optional[date] = None
 
 
+class CardTypeSummary(BaseModel):
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class CardSummary(BaseModel):
     id: int
     card_number_masked: str
     card_type_id: int
+    card_type: Optional[CardTypeSummary] = None
 
     model_config = ConfigDict(from_attributes=True)
 
