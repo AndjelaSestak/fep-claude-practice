@@ -12,6 +12,10 @@ import ProtectedRoute from './ProtectedRoute'
 import SettingsPage from '../pages/SettingsPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import ResetPasswordPage from '../pages/ResetPasswordPage'
+import TransactionsPage from '../pages/TransactionsPage'
+import AddCardPage from '../pages/AddCardPage'
+import MyCardsPage from '../pages/MyCardsPage'
+import TemplatesPage from '../pages/TemplatesPage'
 
 const router = createBrowserRouter([
     {
@@ -69,8 +73,23 @@ const router = createBrowserRouter([
     {
         path: '/forgot-password',
         element: <ForgotPasswordPage />,
-    }
-    
+    },
+    {
+        path: '/transactions',
+        element: <TransactionsPage />,
+    },
+    {
+        path: '/add-card',
+        element: <AddCardPage />,
+    },
+    {
+        path: '/my-cards',
+        element: <MyCardsPage />,
+    },
+    {
+        path: '/templates',
+        element: <TemplatesPage />,
+    },
 ])
 
 export default router
