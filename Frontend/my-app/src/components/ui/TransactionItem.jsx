@@ -109,7 +109,10 @@ export function TransactionItem({ transaction, className, onCancel }) {
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => setConfirmOpen(true)}
+            onClick={(e) => {
+              e.stopPropagation(); // Zaustavlja otvaranje TransactionDetails modala
+              setConfirmOpen(true);
+            }}
           >
             Cancel
           </Button>
