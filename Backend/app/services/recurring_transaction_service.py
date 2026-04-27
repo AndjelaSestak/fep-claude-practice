@@ -1,6 +1,10 @@
-from datetime import date, timedelta
-
+from datetime import date, timedelta, datetime, timezone
+import asyncio
 from sqlalchemy.orm import Session
+from app.models import transaction
+from app.services.transaction_service import create_transaction, process_transaction
+from app.models.transaction import TransactionType
+from app.schemas.transaction import CreateTransactionRequest
 from app.models.recurring_transaction import Frequency, RecurringTransaction
 from app.models.transaction_template import TransactionTemplate
 
@@ -16,16 +20,16 @@ def create_recurring_transaction(
     db: Session,
     template: TransactionTemplate,
     frequency: Frequency,
-    end_date: date | None = None,
+    end_date: date,
+    start_date: datetime | None = None
 ) -> RecurringTransaction:
-    next_run_at = template.created_at + FREQUENCY_DELTAS[frequency]
 
     recurring_transaction = RecurringTransaction(
-        transaction_template_id=template.id,
-        frequency=frequency,
-        next_run_at=next_run_at,  
-        end_date=end_date,
-        start_date=template.created_at.date(),
+        transaction_template_id = template.id,
+        frequency = frequency,
+        next_run_at = start_date,  
+        end_date = end_date,
+        start_date = start_date.date(),
     )
     db.add(recurring_transaction)
     db.commit()
@@ -41,3 +45,51 @@ def cancel_recurring_transaction(db: Session, recurring_transaction_id: int):
         recurring_transaction.is_active = False
         db.commit()
     
+async def run_due_recurring_transactions(db: Session):
+    now = datetime.now(timezone.utc)
+
+    due_transactions = db.query(RecurringTransaction).filter(
+        RecurringTransaction.next_run_at <= now,
+        RecurringTransaction.is_active == True
+    ).all()
+
+    for recurring_transaction in due_transactions:
+        template = recurring_transaction.transaction_template
+
+        if template.is_deleted:
+            recurring_transaction.is_active = False
+            db.commit()
+            continue
+
+        if recurring_transaction.end_date and recurring_transaction.next_run_at.date() > recurring_transaction.end_date:
+            recurring_transaction.is_active = False
+            db.commit()
+            continue
+
+        transaction_request = CreateTransactionRequest(
+            card_id=template.card_id,
+            amount=float(template.amount),
+            currency=template.currency,
+            recipient=template.recipient,
+            recipient_account_number=template.recipient_account_number,
+            reference=template.reference,
+        )
+        try:
+
+            transaction = create_transaction(db, transaction_request, template.user)
+            transaction.type = TransactionType.recurring
+            transaction.recurring_transaction_id = recurring_transaction.id
+
+            recurring_transaction.next_run_at += FREQUENCY_DELTAS[recurring_transaction.frequency]
+            db.commit()
+        except Exception as e:
+            print(f"Failed to create recurring transaction id={recurring_transaction.id}: {e}")
+            db.rollback()
+            continue
+
+        asyncio.create_task(process_transaction(transaction.id))
+
+        
+
+
+

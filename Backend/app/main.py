@@ -14,6 +14,7 @@ from app.routers.transaction_template_router import router as transaction_templa
 from alembic.config import Config 
 from app.utils.errors import setup_exception_handlers
 from app.seed import seed
+from app.jobs.scheduler import start_scheduler, stop_scheduler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,9 +27,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Failed to seed data: {e}")
         
+    start_scheduler()
     
     yield 
     
+    stop_scheduler()
 
 
 app = FastAPI(lifespan=lifespan)
