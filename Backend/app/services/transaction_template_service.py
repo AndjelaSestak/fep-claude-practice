@@ -6,7 +6,7 @@ from app.models.transaction import TransactionType
 from app.utils.errors import TemplateNotFoundError, TemplateExecutionError
 from fastapi import BackgroundTasks
 from app.schemas.transaction import CreateTransactionRequest
-from app.services import transaction_service
+from app.services import recurring_transaction_service, transaction_service
 
 def create_template(db: Session, request: TransactionTemplateCreate, current_user: User) -> TransactionTemplate:
     template = TransactionTemplate(
@@ -24,21 +24,13 @@ def create_template(db: Session, request: TransactionTemplateCreate, current_use
     db.commit()
     db.refresh(template)
 
-    # ---------------------------------------------------------------------------
-    # TODO: Uncomment when colleague implements recurring transaction service
-    #
-    # If the template is of type "recurring", create a recurring schedule in the DB:
-    #
-    # if template.type == TransactionType.recurring:
-    #     from app.services import recurring_transaction_service
-    #     recurring_transaction_service.create_recurring_schedule(
-    #         db=db,
-    #         template=template,                      # Pass the full object
-    #         frequency=request.frequency,            # daily/weekly/monthly/yearly
-    #         start_date=request.start_date,          # initial execution date
-    #         end_date=request.end_date               # optional - when it ends
-    #     )
-    # ---------------------------------------------------------------------------
+    if template.type == TransactionType.reccuring:
+        recurring_transaction_service.create_recurring_transaction(
+            db=db,
+            template=template,
+            frequency=request.frequency,
+            end_date=request.end_date,
+        )
 
     return template
 
