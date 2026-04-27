@@ -76,7 +76,7 @@ def update_template(db: Session, template_id: int, request: TransactionTemplateU
     # recurring_update = {k: v for k, v in update_data.items() if k in RECURRING_FIELDS}
     #
     # If the template is "recurring" and recurring fields are provided, update the schedule:
-    # if template.type == TransactionType.reccuring and recurring_update:
+    # if template.type == TransactionType.recurring and recurring_update:
     #     from app.services import recurring_transaction_service
     #     recurring_transaction_service.update_recurring_schedule(
     #         db=db,
@@ -98,7 +98,7 @@ def delete_template(db: Session, template_id: int, current_user: User):
 def execute_template(db: Session, template_id: int, current_user: User, background_tasks: BackgroundTasks):
     template = get_template_by_id(db, template_id, current_user)
 
-    if template.type == TransactionType.reccuring:
+    if template.type == TransactionType.recurring:
         raise TemplateExecutionError("Recurring templates are executed automatically via scheduler.")
 
     transaction_request = CreateTransactionRequest(

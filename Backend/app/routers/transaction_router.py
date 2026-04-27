@@ -1,6 +1,8 @@
+from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Query, BackgroundTasks, Depends, status
+from fastapi import APIRouter, Query, BackgroundTasks, Depends, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from app.utils.errors import TransactionNotFoundError
 from app.models.user import User
@@ -36,6 +38,40 @@ def create_transaction(
     background_tasks.add_task(transaction_service.process_transaction, transaction.id)
     return transaction
 
+@router.get("/export")
+async def export_transactions(
+    format: str = Query(..., pattern="^(csv|pdf)$"),
+    search: str = None,
+    type: str = None,
+    direction: str = None,
+    period: str = None,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    # 1. Pozivamo servis da nam dohvati podatke
+    transactions = transaction_service.get_filtered_transactions(
+        db, current_user.id, search, type, direction, period
+    )
+
+    filename_base = f"izvestaj_{date.today()}"
+
+    # 2. Generisanje odgovora zavisno od formata
+    if format == "csv":
+        csv_data = transaction_service.generate_csv_report(transactions)
+        return StreamingResponse(
+            iter([csv_data]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename_base}.csv"}
+        )
+
+    if format == "pdf":
+        pdf_data = transaction_service.generate_pdf_report(transactions, current_user.email)
+        return Response(
+            content=pdf_data,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename_base}.pdf"}
+        )
+
 @router.get("/{transaction_id}", response_model=TransactionResponse)
 def read_transaction(
     transaction_id: int, 
@@ -57,3 +93,5 @@ def cancel_transaction(
     current_user: User = Depends(get_current_user)
 ):
     return transaction_service.cancel_transaction(db=db, transaction_id=transaction_id, current_user=current_user)
+
+

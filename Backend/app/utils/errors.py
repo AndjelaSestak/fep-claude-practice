@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
+
 class EmailAlreadyRegisteredError(Exception):
     pass
 
@@ -69,6 +70,7 @@ def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
         errors = []
+        error_messages = []
         for err in exc.errors():
             errors.append({
                 "type": err.get("type"),
@@ -86,7 +88,7 @@ def setup_exception_handlers(app: FastAPI):
         return JSONResponse(
             status_code=422,
             headers={"Access-Control-Allow-Origin": "http://localhost:5173"},
-            content={"detail": errors}
+            content={"detail": errors, "messages": error_messages}
         )
 
     @app.exception_handler(ValueError)
@@ -151,11 +153,26 @@ def setup_exception_handlers(app: FastAPI):
             status_code=400,
             content={"detail": str(exc)}
         )
+  
     @app.exception_handler(TransactionNotFoundError)
     async def transaction_not_found_handler(request: Request, exc: TransactionNotFoundError):
         return JSONResponse(
             status_code=404,
-            content={"detail": str(exc)},
+            content={"detail": str(exc)}
+        )
+
+    @app.exception_handler(TemplateNotFoundError)
+    async def template_not_found_handler(request: Request, exc: TemplateNotFoundError):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": str(exc)}
+        )
+
+    @app.exception_handler(TemplateExecutionError)
+    async def template_execution_error_handler(request: Request, exc: TemplateExecutionError):
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(exc)}
         )
 
     @app.exception_handler(TemplateNotFoundError)

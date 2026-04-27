@@ -1,4 +1,8 @@
 import asyncio
+from datetime import date
+import io
+import csv
+from weasyprint import HTML
 from sqlalchemy.orm import Session
 from typing import Optional
 from sqlalchemy import String
@@ -128,3 +132,104 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
     db.refresh(transaction)
 
     return transaction
+
+
+def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None):
+    print(f"--- DEBUG: Početak filtriranja za korisnika {user_id} ---")
+    try:
+        query = db.query(Transaction).filter(Transaction.user_id == user_id)
+
+        # 1. Filter za Period (Dashboard)
+        if period == "current_month":
+            from datetime import datetime, timezone
+            # Preporuka: Koristi timezone.utc ako ti je i model takav
+            today = datetime.now(timezone.utc)
+            start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            print(f"--- DEBUG: Filtriram od datuma: {start_of_month} ---")
+            query = query.filter(Transaction.created_at >= start_of_month)
+
+        # 2. Filter za Search (Pretraga po recipientu, senderu ili referenci)
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                (Transaction.recipient.ilike(search_pattern)) |
+                (Transaction.sender.ilike(search_pattern)) |
+                (Transaction.reference.ilike(search_pattern))
+            )
+
+        # 3. Filter za Type (single / reccuring)
+        if type and type != "all":
+            # SQLAlchemy dozvoljava poređenje sa stringom ako je Enum tipa (str, enum.Enum)
+            # ali je sigurnije ovako zbog tvoje specifične definicije:
+            query = query.filter(Transaction.type == type)
+
+        # 4. Filter za Direction (incoming / outgoing)
+        if direction and direction != "all":
+            query = query.filter(Transaction.direction == direction)
+
+        results = query.order_by(Transaction.created_at.desc()).all()
+        print(f"--- DEBUG: Pronađeno {len(results)} transakcija ---")
+        return results
+
+    except Exception as e:
+        print(f"--- DEBUG ERROR u get_filtered_transactions: {str(e)} ---")
+        raise e
+
+def generate_csv_report(transactions):
+    try:
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Datum", "Primalac", "Iznos", "Valuta", "Tip", "Smer"])
+        
+        for t in transactions:
+            date_str = t.created_at.strftime("%d.%m.%Y") if t.created_at else "N/A"
+            
+            writer.writerow([date_str, t.recipient, t.amount, t.currency, t.type.value, t.direction.value])
+        
+        return output.getvalue()
+    except Exception as e:
+        print(f"ERROR u CSV: {str(e)}")
+        raise e
+    
+def generate_pdf_report(transactions, user_email):
+    if not transactions:
+        # Vraćamo jednostavan PDF ili poruku ako nema podataka
+        html_content = f"<html><body><h1>Nema transakcija za izabrani period</h1></body></html>"
+        return HTML(string=html_content).write_pdf()
+    total_in = sum(float(t.amount) for t in transactions if t.direction.value == "incoming")
+    total_out = sum(float(t.amount) for t in transactions if t.direction.value == "outgoing")
+
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            body {{ font-family: sans-serif; padding: 20px; color: #333; }}
+            .header {{ border-bottom: 2px solid #4f46e5; margin-bottom: 20px; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+            th {{ background: #f3f4f6; text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }}
+            td {{ padding: 10px; border-bottom: 1px solid #eee; }}
+            .summary {{ margin-top: 30px; border-top: 2px solid #eee; padding-top: 10px; text-align: right; }}
+            .income {{ color: green; }} .expense {{ color: red; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Izveštaj transakcija</h1>
+            <p>Korisnik: {user_email} | Datum: {date.today().strftime("%d.%m.%Y")}</p>
+        </div>
+        <table>
+            <thead><tr><th>Datum</th><th>Primalac</th><th>Tip</th><th>Iznos</th></tr></thead>
+            <tbody>
+                {"".join([f'<tr><td>{t.created_at.strftime("%d.%m.%Y")}</td><td>{t.recipient if t.recipient else (t.sender if t.sender else "N/A")}</td><td>{t.type.value}</td><td class="{"income" if t.direction.value == "incoming" else "expense"}">{"+" if t.direction.value == "incoming" else "-"}{t.amount} {t.currency}</td></tr>' for t in transactions])}
+            </tbody>
+        </table>
+        <div class="summary">
+            <p>Ukupno uplate: <span class="income">+{total_in:.2f}</span></p>
+            <p>Ukupno isplate: <span class="expense">-{total_out:.2f}</span></p>
+            <p><strong>Neto razlika: {total_in - total_out:.2f}</strong></p>
+        </div>
+    </body>
+    </html>
+    """
+    return HTML(string=html_content).write_pdf()
