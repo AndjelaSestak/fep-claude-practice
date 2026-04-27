@@ -25,16 +25,14 @@ const DashboardPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [accountNumber, setAccountNumber] = useState("");
 
 
   // --- LOGIKA ZA EXPORT (Download) ---
   const handleMonthlyExport = (format) => {
-    // Koristimo VITE_ env varijablu ili localhost
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    // period=current_month pokreće biznis logiku na backendu koju smo napisali
     const url = `${baseUrl}/transactions/export?format=${format}&period=current_month`;
     
-    // Otvaramo u novom tabu, backend vraća "attachment", pa brauzer pokreće download
     window.open(url, "_blank");
   };
 
@@ -42,17 +40,17 @@ const DashboardPage = () => {
   const fetchTransactions = useCallback(async () => {
   setLoading(true);
   try {
-    // 1. Povuci podatke sa backenda (filtrirano po search)
+   
     const data = await getTransactionsForUser(filters.search, 10, 0); 
     
     let result = data;
     
-    // 2. Filtriranje po Tipu (Single / Recurring)
+    
     if (filters.type !== "all") {
       result = result.filter(t => t.type === filters.type);
     }
 
-    // 3. Filtriranje po Smeru (Incoming / Outgoing)
+   
     if (filters.direction !== "all") {
       result = result.filter(t => t.direction === filters.direction);
     }
@@ -93,6 +91,7 @@ const DashboardPage = () => {
           getCurrencies()
         ]);
         setWalletBalance(wallet.balance);
+        setAccountNumber(wallet.account_number);
         setWalletCurrency(wallet.currency);
         setSelectedCurrency(wallet.currency);
         setDisplayBalance(wallet.balance);
@@ -156,11 +155,17 @@ const DashboardPage = () => {
                 <p className="text-gray-700 font-semibold opacity-90">
                     Welcome back! Here's what's happening with your money.
                 </p>
+
+               
+                <p className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
+                    <span className="font-mono text-sm font-black text-gray-400 tracking-[0.2em]">
+                            {accountNumber.match(/.{1,4}/g)?.join(' ') || accountNumber}
+                        </span>
+          </p>
                 </div>
             </div>
             
             {/* DESNI PANEL: InfoCard */}
-            {/* Povećao sam širinu na md:w-96 da bi stala sva slova, i dodao flex da bi InfoCard mogla da se rastegne */}
             <div className="w-full md:w-96 flex">
                 <InfoCard
                 title="Total Balance"
@@ -186,7 +191,7 @@ const DashboardPage = () => {
             <div className="space-y-4">
 
                 <div className="flex justify-end w-full">
-                {/* Dodata sekcija sa dugmićima za export iznad liste */}
+                
               <div className="flex bg-primary/20 p-1 rounded-2xl backdrop-blur-sm border border-white/50">
                                   <Button 
                                       variant="ghost" 
