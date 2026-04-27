@@ -42,6 +42,18 @@ class CardVerify(BaseModel):
         return v
 
 
+class CardPinVerify(BaseModel):
+    card_id: int = Field(..., gt=0)
+    pin: str = Field(..., min_length=4, max_length=4)
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, v):
+        if not v.isdigit():
+            raise ValueError("PIN must contain only digits")
+        return v
+
+
 class CardResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -9,10 +9,10 @@ from app.models.card_type import CardType
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
 from app.models.wallet import Wallet
-from app.schemas.card import CardCreate, CardVerify
+from app.schemas.card import CardCreate, CardVerify, CardPinVerify
 from app.services.email_types import send_card_verification_email, send_card_details_email
-from app.utils.security import get_password_hash
-from app.utils.errors import CardNotFoundError, CardTypeNotFoundError, DatabaseTransactionError, InvalidOTPError, OTPExpiredError, WalletNotFoundError
+from app.utils.security import get_password_hash, verify_password
+from app.utils.errors import CardNotFoundError, CardTypeNotFoundError, DatabaseTransactionError, InvalidOTPError, InvalidPinError, OTPExpiredError, WalletNotFoundError
 
 # Plain card values keyed by card_id, kept only until OTP verification succeeds.
 # Avoids storing plain text in the DB; values are deleted immediately after the
@@ -159,6 +159,20 @@ def verify_card(db: Session, data: CardVerify, background_tasks, current_user: U
         )
 
     return {"message": "Card successfully verified!"}
+
+def verify_card_pin(db: Session, data: CardPinVerify, current_user: User) -> dict:
+    card = db.query(Card).filter(
+        Card.id == data.card_id,
+        Card.user_id == current_user.id,
+        Card.is_deleted == False
+    ).first()
+    if not card:
+        raise CardNotFoundError("Card not found")
+
+    if not verify_password(data.pin, card.card_pin):
+        raise InvalidPinError("Incorrect PIN")
+
+    return {"message": "PIN verified"}
 
 def get_user_cards(db: Session, current_user: User) -> list[Card]:
     return db.query(Card).filter(
