@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import enum
 from app.database import Base
 
+
 class CardStatus(str, enum.Enum):
     active = "active"
     blocked = "blocked"
