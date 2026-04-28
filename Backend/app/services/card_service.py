@@ -14,6 +14,7 @@ from app.schemas.card import CardCreate, CardVerify
 from app.services.email_types import send_card_verification_email
 from app.utils.security import get_password_hash
 from app.utils.errors import CardNotFoundError, CardTypeNotFoundError, DatabaseTransactionError, InvalidOTPError, OTPExpiredError, UserNotFoundError, WalletNotFoundError
+from app.utils.datetime import ensure_utc
 
 def validate_card_details(card_data: CardCreate, db: Session):
     # Checking if card_type exists 
@@ -107,7 +108,7 @@ def verify_card(db: Session, data: CardVerify):
     if not verification:
         raise InvalidOTPError("Invalid OTP code provided")
 
-    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("OTP code has expired")
 
     try:

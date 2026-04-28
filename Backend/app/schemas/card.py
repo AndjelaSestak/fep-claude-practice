@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict, model_validator
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.card import CardStatus
 
 
@@ -43,7 +43,7 @@ class CardCreate(BaseModel):
     @field_validator("expiry_year")
     @classmethod
     def validate_expiry_year(cls, v):
-        current_year = datetime.now().year
+        current_year = datetime.now(timezone.utc).year
 
         if v < current_year:
             raise ValueError("Expiry year cannot be in the past")
@@ -70,7 +70,7 @@ class CardCreate(BaseModel):
     def validate_expiry_date(self):
         if self.expiry_year is None or self.expiry_month is None:
             return self
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if self.expiry_year < now.year or (self.expiry_year == now.year and self.expiry_month < now.month):
             raise ValueError("Card has expired")
         return self

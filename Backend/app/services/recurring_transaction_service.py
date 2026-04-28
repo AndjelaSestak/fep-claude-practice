@@ -1,12 +1,12 @@
-from datetime import date, timedelta, datetime, timezone
+from datetime import date, timedelta, datetime
 import asyncio
 from sqlalchemy.orm import Session
-from app.models import transaction
 from app.services.transaction_service import create_transaction, process_transaction
 from app.models.transaction import TransactionType
 from app.schemas.transaction import CreateTransactionRequest
 from app.models.recurring_transaction import Frequency, RecurringTransaction
 from app.models.transaction_template import TransactionTemplate
+from app.utils.datetime import ensure_utc, utc_now
 
 
 FREQUENCY_DELTAS = {
@@ -20,16 +20,17 @@ def create_recurring_transaction(
     db: Session,
     template: TransactionTemplate,
     frequency: Frequency,
-    end_date: date,
-    start_date: datetime | None = None
+    start_date: datetime,
+    end_date: date | None = None,
 ) -> RecurringTransaction:
+    start_date_utc = ensure_utc(start_date)
 
     recurring_transaction = RecurringTransaction(
-        transaction_template_id = template.id,
-        frequency = frequency,
-        next_run_at = start_date,  
-        end_date = end_date,
-        start_date = start_date.date(),
+        transaction_template_id=template.id,
+        frequency=frequency,
+        next_run_at=start_date_utc,
+        end_date=end_date,
+        start_date=start_date_utc.date(),
     )
     db.add(recurring_transaction)
     db.commit()
@@ -46,7 +47,7 @@ def cancel_recurring_transaction(db: Session, recurring_transaction_id: int):
         db.commit()
     
 async def run_due_recurring_transactions(db: Session):
-    now = datetime.now(timezone.utc)
+    now = utc_now()
 
     due_transactions = db.query(RecurringTransaction).filter(
         RecurringTransaction.next_run_at <= now,
@@ -90,6 +91,4 @@ async def run_due_recurring_transactions(db: Session):
         asyncio.create_task(process_transaction(transaction.id))
 
         
-
-
 

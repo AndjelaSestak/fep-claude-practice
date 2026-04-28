@@ -21,6 +21,7 @@ from app.config import settings
 from app.dependencies import get_db
 
 from app.utils.errors import EmailAlreadyRegisteredError, InvalidOTPError, InvalidTokenError, NotAuthenticatedError, OTPExpiredError, RoleNotFoundError, DatabaseTransactionError, UserNotFoundError
+from app.utils.datetime import ensure_utc
 
 def register_user(db: Session, user_data: UserCreate,background_tasks: BackgroundTasks) -> User:
     existing_user = db.query(User).filter(
@@ -109,7 +110,7 @@ def verify_user_email(db: Session, data: VerifyOTP,background_tasks: BackgroundT
     if not verification:
         raise InvalidOTPError("Invalid OTP code provided")
 
-    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("OTP code has expired")
 
     
@@ -228,7 +229,7 @@ def reset_password(db: Session, data: ResetPasswordRequest):
     if not verification:
         raise InvalidOTPError("Invalid or expired reset link")
 
-    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("Reset link has expired")
 
     user = db.query(User).filter(
