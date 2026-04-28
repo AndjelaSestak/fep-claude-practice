@@ -199,9 +199,18 @@ const AddCardPage = () => {
               </div>
             </FormField>
 
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col gap-2">
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Creating card...' : 'Create card'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate('/my-cards')}
+                disabled={loading}
+              >
+                Cancel
               </Button>
             </div>
 

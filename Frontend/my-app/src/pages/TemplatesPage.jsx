@@ -89,8 +89,6 @@ const TemplatesPage = () => {
 
               <div className="relative z-10">
                 <Button
-                  variant="default"
-                  size="md"
                   onClick={() => setNewTemplateOpen(true)}
                   className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
                 >

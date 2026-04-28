@@ -237,13 +237,12 @@ const MyCardsPage = () => {
             </div>
 
             <div className="relative z-10">
-              <button
+              <Button
                 onClick={() => navigate('/add-card')}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
               >
-                <Plus size={16} />
-                Add Card
-              </button>
+                + New Card
+              </Button>
             </div>
           </header>
 
@@ -253,7 +252,7 @@ const MyCardsPage = () => {
           ) : (cards?.length ?? 0) === 0 ? (
             <p className="text-slate-500">You have no cards yet.</p>
           ) : (
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap justify-center gap-6">
               {cards.map(card => (
                 <PaymentCard
                   key={card.id}
