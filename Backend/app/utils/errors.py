@@ -1,3 +1,4 @@
+import traceback
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -183,4 +184,12 @@ def setup_exception_handlers(app: FastAPI):
         return JSONResponse(
             status_code=401,
             content={"detail": str(exc)}
+        )
+
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception):
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal error: {str(exc)}"}
         )
