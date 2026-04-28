@@ -35,6 +35,7 @@ const OTPVerificationPage = () => {
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
 
   const [resendDialogOpen, setResendDialogOpen] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   // Zaštita: Ako nema email-a (npr. refresh stranice), vrati korisnika na registraciju
   useEffect(() => {
@@ -42,6 +43,12 @@ const OTPVerificationPage = () => {
       navigate('/register')
     }
   }, [email, navigate])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setTimeout(() => setResendCooldown(prev => prev - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [resendCooldown])
 
   const handleVerify = async (e) => {
   e.preventDefault()
@@ -77,6 +84,7 @@ const OTPVerificationPage = () => {
     try{
          setLoading(true)
         await authService.resendVerificationEmail(email)
+        setResendCooldown(60)
         setResendDialogOpen(true)
     }
     catch(err){
@@ -195,17 +203,28 @@ const OTPVerificationPage = () => {
             >
               {loading ? 'Verifying...' : 'Verify Email'}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full"
+              onClick={() => navigate(-1)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
           </form>
 
           <div className="mt-8 space-y-4">
             <p className="text-center text-sm text-slate-600">
               Didn't receive the code?{' '}
-              <button 
+              <button
                 type="button"
-                className="font-medium text-primary hover:underline transition-all"
+                className="font-medium text-primary hover:underline transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
                 onClick={handleResend}
+                disabled={resendCooldown > 0 || loading}
               >
-                Resend code
+                {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : 'Resend code'}
               </button>
             </p>
 
