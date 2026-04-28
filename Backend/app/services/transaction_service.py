@@ -78,68 +78,84 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
     return transaction
 
 
+def _process_sender(db: Session, transaction: Transaction) -> bool:
+    sender_wallet = db.query(Wallet).filter(
+        Wallet.user_id == transaction.user_id,
+        Wallet.is_active == True
+    ).first()
+
+    if not sender_wallet:
+        transaction.status = TransactionStatus.failed
+        db.commit()
+        return False
+
+    if float(sender_wallet.balance) < float(transaction.amount):
+        transaction.status = TransactionStatus.failed
+        db.commit()
+        return False
+
+    sender_wallet.balance = float(sender_wallet.balance) - float(transaction.amount)
+    transaction.status = TransactionStatus.completed
+    return True
+
+
+def _process_recipient(db: Session, transaction: Transaction) -> None:
+    recipient_wallet = db.query(Wallet).filter(
+        Wallet.account_number == transaction.recipient_account_number,
+        Wallet.is_active == True
+    ).first()
+
+    if not recipient_wallet:
+        return
+
+    converted_amount = convert_amount(
+        float(transaction.amount),
+        transaction.currency,
+        recipient_wallet.currency
+    )
+    recipient_wallet.balance = float(recipient_wallet.balance) + converted_amount
+
+    recipient_card = db.query(Card).filter(
+        Card.wallet_id == recipient_wallet.id,
+        Card.status == CardStatus.active
+    ).first()
+
+    if not recipient_card:
+        return
+
+    incoming_txn = Transaction(
+        user_id=recipient_wallet.user_id,
+        card_id=recipient_card.id,
+        type=transaction.type,
+        amount=converted_amount,
+        currency=recipient_wallet.currency,
+        recipient=transaction.recipient,
+        recipient_account_number=transaction.recipient_account_number,
+        sender=transaction.sender,
+        sender_account_number=transaction.sender_account_number,
+        reference=transaction.reference,
+        status=TransactionStatus.completed,
+        direction=TransactionDirection.incoming
+    )
+    db.add(incoming_txn)
+
+
 async def process_transaction(transaction_id: int) -> None:
     await asyncio.sleep(PENDING_DELAY_SECONDS)
 
     db: Session = SessionLocal()
     try:
-        transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
+        transaction = db.query(Transaction).filter(
+            Transaction.id == transaction_id
+        ).first()
 
         if not transaction or transaction.status != TransactionStatus.pending:
             return
 
-        sender_wallet = db.query(Wallet).filter(
-            Wallet.user_id == transaction.user_id,
-            Wallet.is_active == True
-        ).first()
+        success = _process_sender(db, transaction)
 
-        if not sender_wallet:
-            transaction.status = TransactionStatus.failed
-            db.commit()
-            return
-
-        if float(sender_wallet.balance) < float(transaction.amount):
-            transaction.status = TransactionStatus.failed
-            db.commit()
-            return
-
-        sender_wallet.balance = float(sender_wallet.balance) - float(transaction.amount)
-        transaction.status = TransactionStatus.completed
-
-        recipient_wallet = db.query(Wallet).filter(
-            Wallet.account_number == transaction.recipient_account_number,
-            Wallet.is_active == True
-        ).first()
-
-        if recipient_wallet:
-            converted_amount = convert_amount(
-                float(transaction.amount),
-                transaction.currency,
-                recipient_wallet.currency
-            )
-            recipient_wallet.balance = float(recipient_wallet.balance) + converted_amount
-
-            recipient_card = db.query(Card).filter(
-                Card.wallet_id == recipient_wallet.id,
-                Card.status == CardStatus.active
-            ).first()
-
-            if recipient_card:
-                incoming_txn = Transaction(
-                    user_id=recipient_wallet.user_id,
-                    card_id=recipient_card.id,
-                    type=transaction.type,
-                    amount=converted_amount,
-                    currency=recipient_wallet.currency,
-                    recipient=transaction.recipient,
-                    recipient_account_number=transaction.recipient_account_number,
-                    sender=transaction.sender,
-                    sender_account_number=transaction.sender_account_number,
-                    reference=transaction.reference,
-                    status=TransactionStatus.completed,
-                    direction=TransactionDirection.incoming
-                )
-                db.add(incoming_txn)
+        if success:
+            _process_recipient(db, transaction)
 
         db.commit()
     finally:
