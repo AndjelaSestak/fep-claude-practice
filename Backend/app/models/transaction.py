@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, Numeric, String, Text, ForeignKey, Enum
+from sqlalchemy import Integer, Numeric, String, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
 import enum
@@ -33,7 +33,7 @@ class Transaction(Base):
     sender_account_number: Mapped[str] = mapped_column(Text, nullable=True)
     reference: Mapped[str] = mapped_column(Text, nullable=True)
     status: Mapped[TransactionStatus] = mapped_column(Enum(TransactionStatus), default=TransactionStatus.pending)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     direction: Mapped[TransactionDirection] = mapped_column(Enum(TransactionDirection))
     recurring_transaction_id: Mapped[int] = mapped_column(Integer, ForeignKey("recurring_transactions.id"), nullable=True)
 

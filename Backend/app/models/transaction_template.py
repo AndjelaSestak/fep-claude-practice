@@ -1,5 +1,5 @@
 from decimal import Decimal
-from sqlalchemy import Integer, Numeric, String, Text, ForeignKey, Boolean, Enum
+from sqlalchemy import Integer, Numeric, String, Text, DateTime, ForeignKey, Boolean, Enum
 from app.models.transaction import TransactionType
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
@@ -19,8 +19,8 @@ class TransactionTemplate(Base):
     recipient_account_number: Mapped[str] = mapped_column(Text)
     reference: Mapped[str] = mapped_column(Text, nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     user: Mapped["User"] = relationship("User", back_populates="transaction_templates")
     card: Mapped["Card"] = relationship("Card", back_populates="transaction_templates")

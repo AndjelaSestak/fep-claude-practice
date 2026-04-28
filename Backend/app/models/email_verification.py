@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, Boolean, Text, ForeignKey, Enum
+from sqlalchemy import Integer, Boolean, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 import enum
@@ -20,7 +20,7 @@ class EmailVerification(Base):
     card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id"), nullable=True)
     token: Mapped[str] = mapped_column(Text, unique=True)
     purpose: Mapped[VerificationPurpose] = mapped_column(Enum(VerificationPurpose))
-    expires_at: Mapped[datetime] = mapped_column(nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     is_used: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user: Mapped["User"] = relationship("User", back_populates="email_verifications")

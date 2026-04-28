@@ -62,7 +62,7 @@ class CardSummary(BaseModel):
 class RecurringTransactionSummary(BaseModel):
     id: int
     frequency: Frequency
-    start_date: Optional[datetime] = None
+    start_date: Optional[date] = None
     next_run_at: Optional[datetime] = None
     end_date: Optional[date] = None
     is_active: bool

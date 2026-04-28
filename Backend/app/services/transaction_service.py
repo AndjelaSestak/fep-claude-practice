@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date
+from datetime import date, timedelta
 import io
 import csv
 from weasyprint import HTML
@@ -13,6 +13,7 @@ from app.models.user import User
 from app.schemas.transaction import CreateTransactionRequest
 from app.services.exchange_rate_service import convert_amount
 from app.database import SessionLocal
+from app.utils.datetime import utc_now
 from app.utils.errors import InvalidTokenError
 
 
@@ -78,6 +79,30 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
     return transaction
 
 
+def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
+    if transaction.status != TransactionStatus.pending:
+        return
+
+    wallet = db.query(Wallet).filter(
+        Wallet.user_id == transaction.user_id,
+        Wallet.is_active == True
+    ).first()
+
+    if not wallet:
+        transaction.status = TransactionStatus.failed
+        db.commit()
+        return
+
+    if float(wallet.balance) < float(transaction.amount):
+        transaction.status = TransactionStatus.failed
+        db.commit()
+        return
+
+    wallet.balance = float(wallet.balance) - float(transaction.amount)
+    transaction.status = TransactionStatus.completed
+    db.commit()
+
+
 async def process_transaction(transaction_id: int) -> None:
     await asyncio.sleep(PENDING_DELAY_SECONDS)
 
@@ -85,29 +110,26 @@ async def process_transaction(transaction_id: int) -> None:
     try:
         transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
 
-        if not transaction or transaction.status != TransactionStatus.pending:
+        if not transaction:
             return
 
-        wallet = db.query(Wallet).filter(
-            Wallet.user_id == transaction.user_id,
-            Wallet.is_active == True
-        ).first()
-
-        if not wallet:
-            transaction.status = TransactionStatus.failed
-            db.commit()
-            return
-
-        if float(wallet.balance) < float(transaction.amount):
-            transaction.status = TransactionStatus.failed
-            db.commit()
-            return
-
-        wallet.balance = float(wallet.balance) - float(transaction.amount)
-        transaction.status = TransactionStatus.completed
-        db.commit()
+        complete_pending_transaction(db, transaction)
     finally:
         db.close()
+
+
+def process_expired_pending_transactions(db: Session) -> None:
+    cutoff = utc_now() - timedelta(seconds=PENDING_DELAY_SECONDS)
+
+    transactions = db.query(Transaction).filter(
+        Transaction.status == TransactionStatus.pending,
+        Transaction.created_at <= cutoff,
+    ).all()
+
+    for transaction in transactions:
+        complete_pending_transaction(db, transaction)
+
+    
 
 def get_transaction_by_id(db: Session, transaction_id: int, user_id: int):
     return db.query(Transaction).filter(
