@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 
-import random
+from app.services.card_service import generate_iban
 from app.schemas.auth import TokenResponse, VerifyOTP, ResetPasswordRequest
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
@@ -62,16 +62,10 @@ def register_user(db: Session, user_data: UserCreate,background_tasks: Backgroun
         )
         db.add(new_verification)
 
-        # Create a wallet for the new user automatically
-        while True:
-            account_number = "".join([str(random.randint(0, 9)) for _ in range(16)])
-            existing = db.query(Wallet).filter(Wallet.account_number == account_number).first()
-            if not existing:
-                break
         new_wallet = Wallet(
             user_id=new_user.id,
             balance=0,
-            account_number=account_number,
+            account_number=generate_iban(db),
             currency="RSD"
         )
         db.add(new_wallet)

@@ -173,9 +173,20 @@ const RegistrationPage = () => {
               <Input type="password" name="confirm_password" value={formData.confirm_password} onChange={handleChange} />
             </FormField>
 
-            <Button type="submit" className="w-full mt-4" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create account'}
-            </Button>
+            <div className="flex flex-col gap-2 mt-4">
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Creating account...' : 'Create account'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate('/')}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+            </div>
 
           </form>
 

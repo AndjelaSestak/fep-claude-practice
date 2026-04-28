@@ -35,6 +35,7 @@ const OTPVerificationPage = () => {
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
 
   const [resendDialogOpen, setResendDialogOpen] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   // Zaštita: Ako nema email-a (npr. refresh stranice), vrati korisnika na registraciju
   useEffect(() => {
@@ -42,6 +43,12 @@ const OTPVerificationPage = () => {
       navigate('/register')
     }
   }, [email, navigate])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setTimeout(() => setResendCooldown(prev => prev - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [resendCooldown])
 
   const handleVerify = async (e) => {
   e.preventDefault()
@@ -55,7 +62,7 @@ const OTPVerificationPage = () => {
         card_id: cardId,
         otp_code: otp
       })
-      navigate('/my-cards')
+      setSuccessDialogOpen(true)
     } else {
       await authService.verifyEmail({
         email,
@@ -63,7 +70,7 @@ const OTPVerificationPage = () => {
       })
       navigate('/login')
     }
-    
+
   } catch (err) {
     setError(err.response?.data?.detail || "Invalid code")
   } finally {
@@ -77,6 +84,7 @@ const OTPVerificationPage = () => {
     try{
          setLoading(true)
         await authService.resendVerificationEmail(email)
+        setResendCooldown(60)
         setResendDialogOpen(true)
     }
     catch(err){
@@ -92,17 +100,22 @@ const OTPVerificationPage = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center px-4 pt-12">
 
-        {/* SUCCESS DIALOG - Nakon uspešne verifikacije */}
+        {/* SUCCESS DIALOG - shown after successful card OTP verification */}
     <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
       <AlertDialogHeader>
-        <AlertDialogTitle>Email Verified!</AlertDialogTitle>
+        <AlertDialogTitle>Card Verified!</AlertDialogTitle>
         <AlertDialogDescription>
-          Your email has been successfully verified. You can now access your dashboard.
+          Your card has been successfully verified. Your card details have been sent to your
+          registered email address. Please delete the email once you have noted
+          your details.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogAction onClick={() => navigate('/dashboard')}>
-          Go to Dashboard
+        <AlertDialogAction onClick={() => {
+          setSuccessDialogOpen(false)
+          navigate('/my-cards')
+        }}>
+          Go to My Cards
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialog>
@@ -190,17 +203,28 @@ const OTPVerificationPage = () => {
             >
               {loading ? 'Verifying...' : 'Verify Email'}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full"
+              onClick={() => navigate(-1)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
           </form>
 
           <div className="mt-8 space-y-4">
             <p className="text-center text-sm text-slate-600">
               Didn't receive the code?{' '}
-              <button 
+              <button
                 type="button"
-                className="font-medium text-primary hover:underline transition-all"
+                className="font-medium text-primary hover:underline transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
                 onClick={handleResend}
+                disabled={resendCooldown > 0 || loading}
               >
-                Resend code
+                {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : 'Resend code'}
               </button>
             </p>
 

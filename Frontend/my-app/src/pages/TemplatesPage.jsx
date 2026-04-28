@@ -13,10 +13,12 @@ import AlertDialog, {
 } from "../components/ui/AlertDialog";
 import NewTemplateModal from "../components/ui/NewTemplateModal";
 import { getTemplates, deleteTemplate, executeTemplate } from "../services/templateService";
+import { deactivateRecurringTransaction } from "../services/recurringTransactionService";
 
 const TemplatesPage = () => {
   const [templates, setTemplates] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deactivateTarget, setDeactivateTarget] = useState(null);
   const [newTemplateOpen, setNewTemplateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [executeSuccessOpen, setExecuteSuccessOpen] = useState(false);
@@ -58,6 +60,21 @@ const TemplatesPage = () => {
     }
   };
 
+  const handleDeactivate = async () => {
+    try {
+      
+      const recurringId = deactivateTarget.recurring_transactions?.[0]?.id;
+      if (recurringId) {
+        await deactivateRecurringTransaction(recurringId);
+        await fetchTemplates(); 
+      }
+    } catch (err) {
+      console.error("Failed to deactivate", err);
+    } finally {
+      setDeactivateTarget(null);
+    }
+  };
+
   const singleTemplates = templates.filter((t) => t.type === "single");
   const recurringTemplates = templates.filter((t) => t.type === "recurring");
 
@@ -68,16 +85,33 @@ const TemplatesPage = () => {
         <NavBarAfterLogin />
 
         <main className="p-8 overflow-y-auto">
-          <div className="max-w-5xl mx-auto space-y-10">
+          <div className="max-w-5xl mx-auto space-y-6">
 
-            <header className="flex items-start justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Transaction Templates</h1>
-                <p className="text-gray-500">Save and reuse transaction details</p>
+            <header className="relative bg-primary/10 p-8 rounded-[2.5rem] border border-primary/20 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden">
+              <div className="absolute -left-4 -top-4 w-32 h-32 bg-primary/15 rounded-full blur-3xl"></div>
+              <div className="absolute right-10 bottom-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
+
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-2 w-10 bg-primary rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)]"></div>
+                  <span className="text-[11px] font-black text-primary-dark uppercase tracking-[0.2em]">Save & Reuse</span>
+                </div>
+                <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-1">
+                  Transaction Templates
+                </h1>
+                <p className="text-gray-700 font-semibold opacity-80">
+                  Save and reuse transaction details.
+                </p>
               </div>
-              <Button onClick={() => setNewTemplateOpen(true)}>
-                + New Template
-              </Button>
+
+              <div className="relative z-10">
+                <Button
+                  onClick={() => setNewTemplateOpen(true)}
+                  className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
+                >
+                  + New Template
+                </Button>
+              </div>
             </header>
 
             {/* Single Templates */}
@@ -121,9 +155,11 @@ const TemplatesPage = () => {
                       cardType={t.card?.card_type?.name}
                       cardNumber={t.card?.card_number_masked}
                       isRecurring={true}
+                      isActive={t.recurring_transactions?.[0]?.is_active}
                       frequency={t.recurring_transactions?.[0]?.frequency}
                       onEdit={() => setEditTarget(t)}
                       onDelete={() => setDeleteTarget(t)}
+                      onDeactivate={() => setDeactivateTarget(t)}
                     />
                   ))}
                 </div>
@@ -181,6 +217,23 @@ const TemplatesPage = () => {
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Keep it</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialog>
+
+
+      <AlertDialog open={!!deactivateTarget} onClose={() => setDeactivateTarget(null)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Deactivate Subscription?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to stop future payments for "{deactivateTarget?.name}"? 
+            This will not delete the template, but payments will no longer trigger automatically.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setDeactivateTarget(null)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDeactivate} className="bg-orange-600 hover:bg-orange-700">
+            Deactivate
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialog>
     </div>

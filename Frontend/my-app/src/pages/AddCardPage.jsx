@@ -16,50 +16,27 @@ import AlertDialog, {
   AlertDialogCancel
 } from '../components/ui/AlertDialog'
 
-const formatCardNumber = (value) => {
-  return value
-    .replace(/\D/g, '')
-    .match(/.{1,4}/g)
-    ?.join('-')
-    .slice(0, 19) || ''
-}
-
 const AddCardPage = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [formData, setFormData] = useState({
-    card_number: '',
     cardholder_name: '',
-    expiry_month: '',
-    expiry_year: '',
     card_type_id: '',
-    cvv: '',
-    card_pin: ''
   })
 
   const [loading, setLoading] = useState(false)
   const [cardTypeOpen, setCardTypeOpen] = useState(false)
-
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
-
-  const { user } = useAuth()
   const [createdCardId, setCreatedCardId] = useState(null)
 
   useEffect(() => {
     if (user?.name) {
-      setFormData(prev => ({
-        ...prev,
-        cardholder_name: user.name.toUpperCase()
-      }))
+      setFormData(prev => ({ ...prev, cardholder_name: user.name.toUpperCase() }))
     }
   }, [user])
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -67,39 +44,25 @@ const AddCardPage = () => {
 
     try {
       const response = await createCard({
-      card_number: formData.card_number,
-      cardholder_name: user?.name?.toUpperCase() || '',
-      expiry_month: parseInt(formData.expiry_month) || 0,
-      expiry_year: parseInt(formData.expiry_year) || 0,
-      card_type_id: parseInt(formData.card_type_id) || 0,
-      cvv: formData.cvv,
-      card_pin: formData.card_pin
-    })
+        cardholder_name: user?.name?.toUpperCase() || '',
+        card_type_id: parseInt(formData.card_type_id) || 0,
+      })
 
-      setSuccessDialogOpen(true)
       setCreatedCardId(response.id)
+      setSuccessDialogOpen(true)
 
     } catch (err) {
       const data = err.response?.data
       let message = 'Something went wrong. Please try again.'
 
       const FIELD_LABELS = {
-        card_number: 'Card Number',
         cardholder_name: 'Cardholder Name',
-        expiry_month: 'Expiry Month',
-        expiry_year: 'Expiry Year',
         card_type_id: 'Card Type',
-        cvv: 'CVV',
-        card_pin: 'Card PIN',
       }
 
       if (Array.isArray(data?.detail)) {
         const emptyFields = data.detail
-          .filter(e =>
-            e.type === 'string_too_short' ||
-            e.type === 'missing' ||
-            e.type === 'int_parsing_error'
-          )
+          .filter(e => e.type === 'string_too_short' || e.type === 'missing' || e.type === 'int_parsing_error')
           .map(e => FIELD_LABELS[e.loc?.[1]] || e.loc?.[1])
           .filter(Boolean)
 
@@ -118,7 +81,6 @@ const AddCardPage = () => {
 
       setErrorMessage(message)
       setErrorDialogOpen(true)
-
     } finally {
       setLoading(false)
     }
@@ -127,13 +89,13 @@ const AddCardPage = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center px-4 pt-12 pb-12">
 
-      {/* SUCCESS DIALOG */}
+      {/* SUCCESS DIALOG — simple confirmation, details come after OTP */}
       <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Card created</AlertDialogTitle>
+          <AlertDialogTitle>Card Created!</AlertDialogTitle>
           <AlertDialogDescription>
-            Your card has been successfully created.
-            You will now be redirected to verification.
+            Your card has been created. Please verify your email with the OTP
+            code we just sent you to complete the process.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -145,7 +107,7 @@ const AddCardPage = () => {
               })
             }}
           >
-            Continue
+            Verify Now
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialog>
@@ -159,9 +121,7 @@ const AddCardPage = () => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>
-            Close
-          </AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>Close</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
 
@@ -182,86 +142,20 @@ const AddCardPage = () => {
 
           <div className="mb-8">
             <h2 className="text-4xl font-bold text-slate-900">Add a new card</h2>
-            <p className="mt-2 text-lg text-slate-600">Enter your card details</p>
+            <p className="mt-2 text-lg text-slate-600">
+              Card details are generated automatically and sent to your email.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
 
-            {/* Card Number */}
-            <FormField label="Card Number" required>
-              <Input
-                name="card_number"
-                value={formatCardNumber(formData.card_number)}
-                onChange={(e) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    card_number: e.target.value.replace(/\D/g, '').slice(0, 16)
-                  }))
-                }
-                placeholder="1234-5678-9012-3456"
-                maxLength={19}
-              />
-            </FormField>
-
-            {/* Cardholder Name */}
-            <FormField label="Cardholder Name" required>
+            {/* Cardholder Name — read-only, filled from account */}
+            <FormField label="Cardholder Name">
               <Input
                 name="cardholder_name"
                 value={formData.cardholder_name}
-                onChange={handleChange}
-                placeholder="JOHN DOE"
                 disabled
                 className="bg-slate-50 cursor-not-allowed opacity-70"
-              />
-            </FormField>
-
-            {/* Expiry */}
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <FormField label="Expiry Month" required>
-                  <Input
-                    name="expiry_month"
-                    value={formData.expiry_month}
-                    onChange={(e) =>
-                      setFormData(prev => ({
-                        ...prev,
-                        expiry_month: e.target.value.replace(/\D/g, '').slice(0, 2)
-                      }))
-                    }
-                    placeholder="MM"
-                  />
-                </FormField>
-              </div>
-              <div className="flex-1">
-                <FormField label="Expiry Year" required>
-                  <Input
-                    name="expiry_year"
-                    value={formData.expiry_year}
-                    onChange={(e) =>
-                      setFormData(prev => ({
-                        ...prev,
-                        expiry_year: e.target.value.replace(/\D/g, '').slice(0, 4)
-                      }))
-                    }
-                    placeholder="YYYY"
-                  />
-                </FormField>
-              </div>
-            </div>
-
-            {/* CVV */}
-            <FormField label="CVV" required>
-              <Input
-                name="cvv"
-                value={formData.cvv}
-                onChange={(e) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    cvv: e.target.value.replace(/\D/g, '').slice(0, 3)
-                  }))
-                }
-                type="password"
-                placeholder="123"
               />
             </FormField>
 
@@ -305,25 +199,18 @@ const AddCardPage = () => {
               </div>
             </FormField>
 
-            {/* Card PIN */}
-            <FormField label="Card PIN" required>
-              <Input
-                name="card_pin"
-                value={formData.card_pin}
-                onChange={(e) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    card_pin: e.target.value.replace(/\D/g, '').slice(0, 4)
-                  }))
-                }
-                type="password"
-                placeholder="4-digit PIN"
-              />
-            </FormField>
-
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col gap-2">
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Creating card...' : 'Create card'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate('/my-cards')}
+                disabled={loading}
+              >
+                Cancel
               </Button>
             </div>
 

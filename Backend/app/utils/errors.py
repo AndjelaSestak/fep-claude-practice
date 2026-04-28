@@ -45,6 +45,9 @@ class TemplateNotFoundError(Exception):
 class TemplateExecutionError(Exception):
     pass
 
+class InvalidPinError(Exception):
+    pass
+
 def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(EmailAlreadyRegisteredError)
     async def email_registered_handler(request: Request, exc: EmailAlreadyRegisteredError):
@@ -175,16 +178,9 @@ def setup_exception_handlers(app: FastAPI):
             content={"detail": str(exc)}
         )
 
-    @app.exception_handler(TemplateNotFoundError)
-    async def template_not_found_handler(request: Request, exc: TemplateNotFoundError):
+    @app.exception_handler(InvalidPinError)
+    async def invalid_pin_handler(request: Request, exc: InvalidPinError):
         return JSONResponse(
-            status_code=404,
-            content={"detail": str(exc)}
-        )
-
-    @app.exception_handler(TemplateExecutionError)
-    async def template_execution_error_handler(request: Request, exc: TemplateExecutionError):
-        return JSONResponse(
-            status_code=400,
+            status_code=401,
             content={"detail": str(exc)}
         )

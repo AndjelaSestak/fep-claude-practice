@@ -35,6 +35,29 @@ async def send_card_verification_email(recipient: str, name: str, card_last_four
         template_name="card_verification_email.html",
     )
 
+async def send_card_details_email(
+    recipient: str,
+    name: str,
+    card_number: str,
+    card_pin: str,
+    expiry_month: int,
+    expiry_year: int,
+    account_number: str,
+):
+    await send_email(
+        subject="Your new SecureBank card details",
+        recipient=recipient,
+        body={
+            "name": name,
+            "card_number": card_number,
+            "card_pin": card_pin,
+            "expiry": f"{expiry_month:02d}/{expiry_year}",
+            "account_number": account_number,
+        },
+        template_name="card_details_email.html",
+    )
+
+
 async def send_card_block_notification(recipient: str, name: str, card_last_four: str, reason: str):
     # Mapiramo ReportType na lepše poruke za korisnika
     reason_messages = {
@@ -57,4 +80,16 @@ async def send_card_block_notification(recipient: str, name: str, card_last_four
         template_name="card_block_email.html",
     )
 
-    
+async def send_message_from_contact_us(sender: str, subject: str, sender_email: str, message: str):
+    await send_email(
+        subject="Message from visitor on Contact Us page",
+        recipient="support@securebank.com",
+        body={
+            "sender": sender,
+            "subject": subject,
+            "sender_email": sender_email,
+            "message": message
+        },
+        template_name="message_from_visitor.html",
+
+    )

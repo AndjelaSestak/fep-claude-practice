@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from alembic import command
 from alembic.config import Config
+
+from app.routers.visitor_router import router as visitor_router
 from app.routers.transaction_router import router as transaction_router
 from app.routers.auth_router import router as auth_router
 from app.routers.user_router import router as user_router  
@@ -46,10 +48,11 @@ app.add_middleware(
 
 setup_exception_handlers(app)
 app.include_router(auth_router)
-app.include_router(currency_router)
 app.include_router(user_router)
 app.include_router(card_router)
 app.include_router(wallet_router)
 app.include_router(card_report_router)
 app.include_router(transaction_router)
 app.include_router(transaction_template_router)
+app.include_router(visitor_router)
+app.include_router(currency_router)
