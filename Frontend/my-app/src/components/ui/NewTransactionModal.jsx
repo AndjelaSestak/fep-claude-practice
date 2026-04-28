@@ -20,7 +20,7 @@ import AlertDialog, {
   AlertDialogAction,
   AlertDialogCancel,
 } from './AlertDialog'
-import { getMyCards } from '../../services/cardService'
+import { getMyCards, verifyCardPin } from '../../services/cardService'
 import { getSupportedCurrencies, createTransaction } from '../../services/transactionService'
 
 const EMPTY_FORM = {
@@ -40,6 +40,11 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
+
+  const [pinDialogOpen, setPinDialogOpen] = useState(false)
+  const [pin, setPin] = useState('')
+  const [pinError, setPinError] = useState('')
+  const [pendingFormData, setPendingFormData] = useState(null)
 
   useEffect(() => {
     if (!open) return
@@ -72,23 +77,45 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
+    setPendingFormData(formData)
+    setPin('')
+    setPinError('')
+    setPinDialogOpen(true)
+  }
+
+  const handlePinConfirm = async () => {
+    if (pin.length < 4) {
+      setPinError('Please enter your 4-digit PIN.')
+      return
+    }
     setLoading(true)
+    setPinError('')
+    try {
+      await verifyCardPin(parseInt(pendingFormData.card_id), pin)
+    } catch (err) {
+      const detail = err.response?.data?.detail
+      setPinError(typeof detail === 'string' ? detail : 'Incorrect PIN. Please try again.')
+      setLoading(false)
+      return
+    }
+
     try {
       await createTransaction({
-        card_id: parseInt(formData.card_id),
-        amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        recipient: formData.recipient,
-        recipient_account_number: formData.recipient_account_number,
-        reference: formData.reference || null,
+        card_id: parseInt(pendingFormData.card_id),
+        amount: parseFloat(pendingFormData.amount),
+        currency: pendingFormData.currency,
+        recipient: pendingFormData.recipient,
+        recipient_account_number: pendingFormData.recipient_account_number,
+        reference: pendingFormData.reference || null,
       })
+      setPinDialogOpen(false)
       setSuccessDialogOpen(true)
     } catch (err) {
+      setPinDialogOpen(false)
       const data = err.response?.data
       let message = 'Something went wrong. Please try again.'
-
       if (Array.isArray(data?.detail)) {
         const seen = new Set()
         message = data.detail
@@ -98,7 +125,6 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
       } else if (typeof data?.detail === 'string') {
         message = data.detail
       }
-
       setErrorMessage(message)
       setErrorDialogOpen(true)
     } finally {
@@ -194,6 +220,39 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* PIN VERIFICATION */}
+      <AlertDialog open={pinDialogOpen} onClose={() => setPinDialogOpen(false)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Enter Card PIN</AlertDialogTitle>
+          <AlertDialogDescription>
+            Please enter your 4-digit card PIN to confirm the transaction.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="px-1 pb-2">
+          <Input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="••••"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            className="text-center text-2xl tracking-[0.5em] font-mono"
+            autoFocus
+          />
+          {pinError && (
+            <p className="mt-2 text-sm text-red-600 text-center">{pinError}</p>
+          )}
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setPinDialogOpen(false)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handlePinConfirm} disabled={loading || pin.length < 4}>
+            {loading ? 'Verifying...' : 'Confirm'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialog>
 
       {/* SUCCESS */}
       <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>

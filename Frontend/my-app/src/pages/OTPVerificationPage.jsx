@@ -55,7 +55,7 @@ const OTPVerificationPage = () => {
         card_id: cardId,
         otp_code: otp
       })
-      navigate('/my-cards')
+      setSuccessDialogOpen(true)
     } else {
       await authService.verifyEmail({
         email,
@@ -63,7 +63,7 @@ const OTPVerificationPage = () => {
       })
       navigate('/login')
     }
-    
+
   } catch (err) {
     setError(err.response?.data?.detail || "Invalid code")
   } finally {
@@ -92,17 +92,22 @@ const OTPVerificationPage = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center px-4 pt-12">
 
-        {/* SUCCESS DIALOG - Nakon uspešne verifikacije */}
+        {/* SUCCESS DIALOG - shown after successful card OTP verification */}
     <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
       <AlertDialogHeader>
-        <AlertDialogTitle>Email Verified!</AlertDialogTitle>
+        <AlertDialogTitle>Card Verified!</AlertDialogTitle>
         <AlertDialogDescription>
-          Your email has been successfully verified. You can now access your dashboard.
+          Your card has been successfully verified. Your card details have been sent to your
+          registered email address. Please delete the email once you have noted
+          your details.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogAction onClick={() => navigate('/dashboard')}>
-          Go to Dashboard
+        <AlertDialogAction onClick={() => {
+          setSuccessDialogOpen(false)
+          navigate('/my-cards')
+        }}>
+          Go to My Cards
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialog>
