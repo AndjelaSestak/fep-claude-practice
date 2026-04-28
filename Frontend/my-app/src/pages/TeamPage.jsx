@@ -2,9 +2,6 @@ import Navbar from '../components/layout/NavBar'
 import Footer from '../components/layout/Footer'
 import TeamCard from '../components/ui/TeamCardWrapper'
 
-
-
-
 const TeamPage = () => {
   return (
     <div>
@@ -35,96 +32,95 @@ const TeamPage = () => {
             </div>
 
             <div className="mt-14 grid gap-8 xl:grid-cols-2">
-              <div >
-                <TeamCard hover>
-                  <div className="flex flex-col items-center">
-                    <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 text-3xl font-semibold text-white">
-                      SD
-                    </div>
 
-                    <h3 className="text-2xl font-semibold text-slate-900">
-                      Stasa Dragovic
-                    </h3>
-                    <p className="mt-2 text-lg text-green-500">
-                      CEO, Co-Founder & Developer
-                    </p>
-                  </div>
+              
+              <TeamCard hover>
+                <div className="flex flex-col items-center">
+                  <img
+                    src="/images/stasa.png"  
+                    alt="Stasa Dragovic"
+                    className="mb-6 h-24 w-24 rounded-full object-cover"
+                  />
+                  <h3 className="text-2xl font-semibold text-slate-900">Stasa Dragovic</h3>
+                  <p className="mt-2 text-lg text-green-500">Full Stack Developer</p>
+                </div>
+                <p className="mt-6 text-base leading-7 text-slate-500">
+                  A confident and outspoken leader with outstanding organizational abilities and strong development expertise built from an early start in high school, further refined through academic experience at university in the capital.
+                </p>
+              </TeamCard>
 
-                  <p className="mt-6 text-base leading-7 text-slate-500">
-                    A confident and outspoken leader with outstanding organizational abilities and strong development expertise built from an early start in high school, further refined through academic experience at university in the capital.
-                  </p>
-                </TeamCard>
+              
+              <TeamCard hover>
+                <div className="flex flex-col items-center">
+                  <img
+                    src="/images/andjela.png"  
+                    alt="Andjela Sestak"
+                    className="mb-6 h-24 w-24 rounded-full object-cover"
+                  />
+                  <h3 className="text-2xl font-semibold text-slate-900">Andjela Sestak</h3>
+                  <p className="mt-2 text-lg text-green-500">Full Stack Developer</p>
+                </div>
+                <p className="mt-6 text-base leading-7 text-slate-500">
+                  A highly adaptable developer with a keen eye for detail, known for deep, in-depth work and playing a key role in maintaining team balance and cohesion.
+                </p>
+              </TeamCard>
+
+             
+              <TeamCard hover>
+                <div className="flex flex-col items-center">
+                  <img
+                    src="/images/lazar.png"  
+                    alt="Lazar Mrdjenovic"
+                    className="mb-6 h-24 w-24 rounded-full object-cover"
+                  />
+                  <h3 className="text-2xl font-semibold text-slate-900">Lazar Mrdjenovic</h3>
+                  <p className="mt-2 text-lg text-green-500">Full Stack Developer</p>
+                </div>
+                <p className="mt-6 text-base leading-7 text-slate-500">
+                  A highly efficient, reliable developer and an ideal teammate, whose experience in the gaming industry was instrumental in designing this platform.
+                </p>
+              </TeamCard>
+
+             
+              <TeamCard hover>
+                <div className="flex flex-col items-center">
+                  <img
+                    src="/images/vladimir.png"  
+                    alt="Vladimir Josic"
+                    className="mb-6 h-24 w-24 rounded-full object-cover"
+                  />
+                  <h3 className="text-2xl font-semibold text-slate-900">Vladimir Josic</h3>
+                  <p className="mt-2 text-lg text-green-500">Full Stack Developer</p>
+                </div>
+                <p className="mt-6 text-base leading-7 text-slate-500">
+                  A dedicated and versatile developer with a strong focus on building well-structured solutions, while fostering a positive team atmosphere and keeping morale high.
+                </p>
+              </TeamCard>
+
+          
+              <div className="xl:col-span-2 flex justify-center">
+              <div className="xl:w-1/2">
+              <TeamCard hover>
+                <div className="flex flex-col items-center">
+                  <img
+                    src="/images/visnja.png"
+                    alt="Visnja Stojsin"
+                    className="mb-6 h-24 w-24 rounded-full object-cover"
+                  />
+                  <h3 className="text-2xl font-semibold text-slate-900">Visnja Stojsin</h3>
+                  <p className="mt-2 text-lg text-green-500">ML Engineer</p>
+                </div>
+                <p className="mt-6 text-base leading-7 text-slate-500">
+                  A passionate machine learning engineer with a strong analytical mindset, bringing data-driven insights and intelligent solutions to the platform while bridging the gap between engineering and innovation.
+                </p>
+              </TeamCard>
               </div>
-
-              <div >
-                {/* Reusable leadership card component ide ovde */}
-                <TeamCard hover>
-                  <div className="flex flex-col items-center">
-                    <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 text-3xl font-semibold text-white">
-                      AS
-                    </div>
-
-                    <h3 className="text-2xl font-semibold text-slate-900">
-                      Andjela Sestak
-                    </h3>
-                    <p className="mt-2 text-lg text-green-500">
-                      CEO, Co-Founder & Developer
-                    </p>
-                  </div>
-
-                  <p className="mt-6 text-base leading-7 text-slate-500">
-                    A highly adaptable developer with a keen eye for detail, known for deep, in-depth work and playing a key role in maintaining team balance and cohesion.
-                  </p>
-                </TeamCard>
-              </div>
-
-              <div >
-                <TeamCard hover>
-                  <div className="flex flex-col items-center">
-                    <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 text-3xl font-semibold text-white">
-                      LM
-                    </div>
-
-                    <h3 className="text-2xl font-semibold text-slate-900">
-                      Lazar Mrdjenovic
-                    </h3>
-                    <p className="mt-2 text-lg text-green-500">
-                      CEO, Co-Founder & Developer
-                    </p>
-                  </div>
-
-                  <p className="mt-6 text-base leading-7 text-slate-500">
-                    A highly efficient, reliable developer and an ideal teammate, whose experience in the gaming industry was instrumental in designing this platform.
-                  </p>
-                </TeamCard>
-              </div>
-
-              <div >
-                <TeamCard hover>
-                  <div className="flex flex-col items-center">
-                    <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500 text-3xl font-semibold text-white">
-                      VJ
-                    </div>
-
-                    <h3 className="text-2xl font-semibold text-slate-900">
-                      Vladimir Josic
-                    </h3>
-                    <p className="mt-2 text-lg text-green-500">
-                      CEO, Co-Founder & Developer
-                    </p>
-                  </div>
-
-                  <p className="mt-6 text-base leading-7 text-slate-500">
-                    A dedicated and versatile developer with a strong focus on building well-structured solutions, while fostering a positive team atmosphere and keeping morale high.
-                  </p>
-                </TeamCard>
               </div>
 
             </div>
           </div>
         </section>
       </main>
-
       <Footer />
     </div>
   );
