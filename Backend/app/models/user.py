@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Text, Boolean, Date, ForeignKey
+from sqlalchemy import Integer, String, Text, Boolean, Date, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, date, timezone
 from app.database import Base
@@ -14,7 +14,7 @@ class User(Base):
     city: Mapped[str] = mapped_column(String, nullable=True)
     address: Mapped[str] = mapped_column(Text, nullable=True)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id"), nullable=True)
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, Boolean, Date, ForeignKey, Enum
+from sqlalchemy import Integer, Boolean, Date, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, date
 import enum
@@ -16,7 +16,7 @@ class RecurringTransaction(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     transaction_template_id: Mapped[int] = mapped_column(Integer, ForeignKey("transaction_templates.id"))
     frequency: Mapped[Frequency] = mapped_column(Enum(Frequency))
-    next_run_at: Mapped[datetime] = mapped_column(nullable=True)
+    next_run_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     end_date: Mapped[date] = mapped_column(Date, nullable=True)
     start_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

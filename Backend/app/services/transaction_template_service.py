@@ -30,6 +30,8 @@ def create_template(db: Session, request: TransactionTemplateCreate, current_use
             template=template,
             frequency=request.frequency,
             end_date=request.end_date,
+            start_date=request.start_date
+
         )
 
     return template

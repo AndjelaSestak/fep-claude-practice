@@ -134,7 +134,7 @@ def verify_card(db: Session, data: CardVerify, background_tasks, current_user: U
     if not verification:
         raise InvalidOTPError("Invalid OTP code provided")
 
-    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("OTP code has expired")
 
     try:

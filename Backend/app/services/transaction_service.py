@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date
+from datetime import date, timedelta
 import io
 import csv
 from weasyprint import HTML
@@ -13,6 +13,7 @@ from app.models.user import User
 from app.schemas.transaction import CreateTransactionRequest
 from app.services.exchange_rate_service import convert_amount
 from app.database import SessionLocal
+from app.utils.datetime import utc_now
 from app.utils.errors import InvalidTokenError
 
 
@@ -140,6 +141,15 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
     db.add(incoming_txn)
 
 
+def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
+    if transaction.status != TransactionStatus.pending:
+        return
+    success = _process_sender(db, transaction)
+    if success:
+        _process_recipient(db, transaction)
+    db.commit()
+
+
 async def process_transaction(transaction_id: int) -> None:
     await asyncio.sleep(PENDING_DELAY_SECONDS)
 
@@ -149,17 +159,26 @@ async def process_transaction(transaction_id: int) -> None:
             Transaction.id == transaction_id
         ).first()
 
-        if not transaction or transaction.status != TransactionStatus.pending:
+        if not transaction:
             return
 
-        success = _process_sender(db, transaction)
-
-        if success:
-            _process_recipient(db, transaction)
-
-        db.commit()
+        complete_pending_transaction(db, transaction)
     finally:
         db.close()
+
+
+def process_expired_pending_transactions(db: Session) -> None:
+    cutoff = utc_now() - timedelta(seconds=PENDING_DELAY_SECONDS)
+
+    transactions = db.query(Transaction).filter(
+        Transaction.status == TransactionStatus.pending,
+        Transaction.created_at <= cutoff,
+    ).all()
+
+    for transaction in transactions:
+        complete_pending_transaction(db, transaction)
+
+    
 
 def get_transaction_by_id(db: Session, transaction_id: int, user_id: int):
     return db.query(Transaction).filter(

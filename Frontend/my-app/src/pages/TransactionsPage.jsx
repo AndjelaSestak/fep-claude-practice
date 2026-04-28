@@ -138,13 +138,11 @@ const TransactionsPage = () => {
                     </Button>
                     </div>
                     
-                    <Button 
-                    variant = "default"
-                    size="md"
-                    onClick={() => setNewTransactionOpen(true)}
-                    className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
+                    <Button
+                      onClick={() => setNewTransactionOpen(true)}
+                      className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
                     >
-                    + New Transaction
+                      + New Transaction
                     </Button>
                 </div>
                 </header>
