@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3 style="color: #0f172a; margin-bottom: 4px;">Your New Card Details</h3>
+<p>Hi {{ name }},</p>
+<p>
+    Your new SecureBank card has been successfully created.
+    Below are your card details. Please store them safely and
+    <strong>delete this email once you have memorized your PIN.</strong>
+</p>
+
+<!-- Card details table -->
+<table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 15px;">
+
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+        <td style="padding: 12px 8px; color: #64748b; width: 40%;">Cardholder Name</td>
+        <td style="padding: 12px 8px; color: #0f172a; font-weight: 600;">{{ name }}</td>
+    </tr>
+
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+        <td style="padding: 12px 8px; color: #64748b;">Card Number</td>
+        <td style="padding: 12px 8px; color: #0f172a; font-weight: 600; letter-spacing: 2px; font-family: monospace;">
+            {{ card_number[:4] }} {{ card_number[4:8] }} {{ card_number[8:12] }} {{ card_number[12:] }}
+        </td>
+    </tr>
+
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+        <td style="padding: 12px 8px; color: #64748b;">Expiry Date</td>
+        <td style="padding: 12px 8px; color: #0f172a; font-weight: 600; font-family: monospace;">{{ expiry }}</td>
+    </tr>
+
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+        <td style="padding: 12px 8px; color: #64748b;">Account Number (IBAN)</td>
+        <td style="padding: 12px 8px; color: #0f172a; font-weight: 600; font-family: monospace;">{{ account_number }}</td>
+    </tr>
+
+</table>
+
+<!-- PIN box — highlighted separately to make it stand out -->
+<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; text-align: center; margin: 24px 0;">
+    <p style="margin: 0 0 6px 0; color: #15803d; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+        Your Card PIN
+    </p>
+    <p style="margin: 0; font-size: 32px; font-weight: 700; color: #166534; letter-spacing: 10px; font-family: monospace;">
+        {{ card_pin }}
+    </p>
+</div>
+
+<!-- Security warning -->
+<div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin-top: 8px;">
+    <p style="margin: 0; color: #9a3412; font-size: 13px; line-height: 1.6;">
+        <strong>&#9888; Security notice:</strong>
+        Never share your PIN or card number with anyone, including SecureBank staff.
+        Please delete this email once you have noted your details.
+    </p>
+</div>
+{% endblock %}

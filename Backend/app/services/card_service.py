@@ -2,7 +2,6 @@ import secrets
 import string
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.card import Card, CardStatus
@@ -10,10 +9,29 @@ from app.models.card_type import CardType
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
 from app.models.wallet import Wallet
-from app.schemas.card import CardCreate, CardVerify
-from app.services.email_types import send_card_verification_email
-from app.utils.security import get_password_hash
-from app.utils.errors import CardNotFoundError, CardTypeNotFoundError, DatabaseTransactionError, InvalidOTPError, OTPExpiredError, UserNotFoundError, WalletNotFoundError
+from app.schemas.card import CardCreate, CardVerify, CardPinVerify
+from app.services.email_types import send_card_verification_email, send_card_details_email
+from app.utils.security import get_password_hash, verify_password
+from app.utils.errors import CardNotFoundError, CardTypeNotFoundError, DatabaseTransactionError, InvalidOTPError, InvalidPinError, OTPExpiredError, WalletNotFoundError
+
+# Plain card values keyed by card_id, kept only until OTP verification succeeds.
+# Avoids storing plain text in the DB; values are deleted immediately after the
+# details email is dispatched.
+_pending_card_details: dict = {}
+
+def generate_iban(db: Session) -> str:
+    """
+    Structure:
+        RS35  – Country code (Serbia) + fixed check digits
+        908   – Internal bank/service code for Commit-Pray
+        XXXXX – 13 random digits, uniqueness guaranteed against the wallets table
+    """
+    while True:
+        sequence = "".join(secrets.choice(string.digits) for _ in range(13))
+        iban = f"RS35908{sequence}"
+        if not db.query(Wallet).filter(Wallet.account_number == iban).first():
+            return iban
+
 
 def validate_card_details(card_data: CardCreate, db: Session):
     # Checking if card_type exists 
@@ -24,37 +42,37 @@ def validate_card_details(card_data: CardCreate, db: Session):
     return True
 
 async def create_card(db: Session, current_user: User, card_data: CardCreate, background_tasks) -> Card:
-    # Validating card details
     validate_card_details(card_data, db)
 
-    # Geting user and wallet
-    user = current_user
-    wallet = user.wallet
+    wallet = current_user.wallet
     if not wallet:
         raise WalletNotFoundError("User has no wallet")
 
-    # Masking all but the last 4 digits of the card number
-    suffix = card_data.card_number[-4:]
-    masked_prefix = "*" * (len(card_data.card_number) - 4)
-    card_number_masked = " ".join(masked_prefix[i:i+4] for i in range(0, len(masked_prefix), 4))
-    card_number_masked = f"{card_number_masked} {suffix}" if card_number_masked else suffix
+    # Auto-generate a 16-digit card number; only the last 4 are stored in plain text
+    raw_number = "".join(secrets.choice(string.digits) for _ in range(16))
+    card_number_masked = f"**** **** **** {raw_number[-4:]}"
 
-    # Creating card
+    # Cards are valid for 4 years from the issue month
+    now = datetime.now(timezone.utc)
+    expiry_month = now.month
+    expiry_year = now.year + 4
+
+    plain_pin = "".join(secrets.choice(string.digits) for _ in range(4))
+
     new_card = Card(
         user_id=current_user.id,
         card_type_id=card_data.card_type_id,
         wallet_id=wallet.id,
         card_number_masked=card_number_masked,
         cardholder_name=card_data.cardholder_name,
-        expiry_month=card_data.expiry_month,
-        expiry_year=card_data.expiry_year,
-        status=CardStatus.blocked,  # Blocked until verified
+        expiry_month=expiry_month,
+        expiry_year=expiry_year,
+        status=CardStatus.blocked,
         is_email_verified=False,
         is_deleted=False,
-        card_pin=get_password_hash(card_data.card_pin)
+        card_pin=get_password_hash(plain_pin)
     )
 
-    # Generating OTP
     otp_code = "".join(secrets.choice(string.digits) for _ in range(6))
 
     try:
@@ -75,12 +93,21 @@ async def create_card(db: Session, current_user: User, card_data: CardCreate, ba
         db.commit()
         db.refresh(new_card)
 
-        # Schedule verification email
+        # Keep plain values in memory until OTP verification succeeds.
+        # After verification the entry is consumed and the email is dispatched.
+        _pending_card_details[new_card.id] = {
+            "card_number": raw_number,
+            "card_pin": plain_pin,
+            "expiry_month": expiry_month,
+            "expiry_year": expiry_year,
+            "account_number": wallet.account_number,
+        }
+
         background_tasks.add_task(
             send_card_verification_email,
             recipient=current_user.email,
             name=current_user.name,
-            card_last_four=card_data.card_number[-4:],
+            card_last_four=raw_number[-4:],
             otp=otp_code
         )
 
@@ -89,7 +116,7 @@ async def create_card(db: Session, current_user: User, card_data: CardCreate, ba
         db.rollback()
         raise DatabaseTransactionError("An error occurred while creating the card. Please try again.")
 
-def verify_card(db: Session, data: CardVerify):
+def verify_card(db: Session, data: CardVerify, background_tasks, current_user: User):
     card = db.query(Card).filter(
         Card.id == data.card_id,
         Card.is_deleted == False
@@ -111,7 +138,6 @@ def verify_card(db: Session, data: CardVerify):
         raise OTPExpiredError("OTP code has expired")
 
     try:
-        #card.status = CardStatus.active
         card.is_email_verified = True
         verification.is_used = True
         db.commit()
@@ -119,7 +145,34 @@ def verify_card(db: Session, data: CardVerify):
         db.rollback()
         raise DatabaseTransactionError("An error occurred while verifying the card. Please try again.")
 
+    details = _pending_card_details.pop(card.id, None)
+    if details:
+        background_tasks.add_task(
+            send_card_details_email,
+            recipient=current_user.email,
+            name=current_user.name,
+            card_number=details["card_number"],
+            card_pin=details["card_pin"],
+            expiry_month=details["expiry_month"],
+            expiry_year=details["expiry_year"],
+            account_number=details["account_number"],
+        )
+
     return {"message": "Card successfully verified!"}
+
+def verify_card_pin(db: Session, data: CardPinVerify, current_user: User) -> dict:
+    card = db.query(Card).filter(
+        Card.id == data.card_id,
+        Card.user_id == current_user.id,
+        Card.is_deleted == False
+    ).first()
+    if not card:
+        raise CardNotFoundError("Card not found")
+
+    if not verify_password(data.pin, card.card_pin):
+        raise InvalidPinError("Incorrect PIN")
+
+    return {"message": "PIN verified"}
 
 def get_user_cards(db: Session, current_user: User) -> list[Card]:
     return db.query(Card).filter(

@@ -55,9 +55,21 @@ export const deleteCard = async (cardId) => {
     }
 };
 
+// VERIFY CARD PIN
+export const verifyCardPin = async (cardId, pin) => {
+    try {
+        const response = await api.post("/cards/VerifyPin", { card_id: cardId, pin });
+        return response.data;
+    } catch (error) {
+        console.error("Error verifying card PIN:", error);
+        throw error;
+    }
+};
+
 const cardService = {
     createCard,
     verifyCard,
+    verifyCardPin,
     getMyCards,
     getCardById,
     deleteCard
