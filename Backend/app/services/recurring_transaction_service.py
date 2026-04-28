@@ -32,12 +32,18 @@ def create_recurring_transaction(
     db.refresh(recurring_transaction)
     return recurring_transaction    
 
-def cancel_recurring_transaction(db: Session, recurring_transaction_id: int):
+def cancel_recurring_transaction(db: Session, recurring_transaction_id: int, user_id: int):
     recurring_transaction = db.query(RecurringTransaction).filter(
         RecurringTransaction.id == recurring_transaction_id,
+        RecurringTransaction.user_id == user_id,
         RecurringTransaction.is_active == True
     ).first()
-    if recurring_transaction:
-        recurring_transaction.is_active = False
-        db.commit()
+
+    if not recurring_transaction:
+        return None 
+
+    recurring_transaction.is_active = False
+    db.commit()
+    db.refresh(recurring_transaction)
+    return recurring_transaction
     

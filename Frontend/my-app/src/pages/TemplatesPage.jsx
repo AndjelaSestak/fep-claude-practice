@@ -13,10 +13,12 @@ import AlertDialog, {
 } from "../components/ui/AlertDialog";
 import NewTemplateModal from "../components/ui/NewTemplateModal";
 import { getTemplates, deleteTemplate, executeTemplate } from "../services/templateService";
+import { deactivateRecurringTransaction } from "../services/recurringTransactionService";
 
 const TemplatesPage = () => {
   const [templates, setTemplates] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deactivateTarget, setDeactivateTarget] = useState(null);
   const [newTemplateOpen, setNewTemplateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [executeSuccessOpen, setExecuteSuccessOpen] = useState(false);
@@ -55,6 +57,21 @@ const TemplatesPage = () => {
       // TODO: error handling
     } finally {
       setDeleteTarget(null);
+    }
+  };
+
+  const handleDeactivate = async () => {
+    try {
+      
+      const recurringId = deactivateTarget.recurring_transactions?.[0]?.id;
+      if (recurringId) {
+        await deactivateRecurringTransaction(recurringId);
+        await fetchTemplates(); 
+      }
+    } catch (err) {
+      console.error("Failed to deactivate", err);
+    } finally {
+      setDeactivateTarget(null);
     }
   };
 
@@ -140,9 +157,11 @@ const TemplatesPage = () => {
                       cardType={t.card?.card_type?.name}
                       cardNumber={t.card?.card_number_masked}
                       isRecurring={true}
+                      isActive={t.recurring_transactions?.[0]?.is_active}
                       frequency={t.recurring_transactions?.[0]?.frequency}
                       onEdit={() => setEditTarget(t)}
                       onDelete={() => setDeleteTarget(t)}
+                      onDeactivate={() => setDeactivateTarget(t)}
                     />
                   ))}
                 </div>
@@ -200,6 +219,23 @@ const TemplatesPage = () => {
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Keep it</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialog>
+
+
+      <AlertDialog open={!!deactivateTarget} onClose={() => setDeactivateTarget(null)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Deactivate Subscription?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to stop future payments for "{deactivateTarget?.name}"? 
+            This will not delete the template, but payments will no longer trigger automatically.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setDeactivateTarget(null)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDeactivate} className="bg-orange-600 hover:bg-orange-700">
+            Deactivate
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialog>
     </div>
