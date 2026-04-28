@@ -24,7 +24,7 @@ def create_template(db: Session, request: TransactionTemplateCreate, current_use
     db.commit()
     db.refresh(template)
 
-    if template.type == TransactionType.reccuring:
+    if template.type == TransactionType.recurring:
         recurring_transaction_service.create_recurring_transaction(
             db=db,
             template=template,

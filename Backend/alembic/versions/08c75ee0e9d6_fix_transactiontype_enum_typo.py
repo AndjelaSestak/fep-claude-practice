@@ -23,4 +23,3 @@ def upgrade():
 
 def downgrade():
     op.execute("ALTER TYPE transactiontype RENAME VALUE 'recurring' TO 'reccuring'")
-
