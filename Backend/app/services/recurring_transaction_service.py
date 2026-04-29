@@ -3,8 +3,10 @@ import asyncio
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.errors import DatabaseTransactionError, TransactionNotFoundError
+from app.models.user import User
+from app.schemas.recurring_transaction import RecurringTransactionUpdate
 from app.services.transaction_service import create_transaction, process_transaction
-from app.models.transaction import TransactionType
+from app.models.transaction import Transaction, TransactionType
 from app.schemas.transaction import CreateTransactionRequest
 from app.models.recurring_transaction import Frequency, RecurringTransaction
 from app.models.transaction_template import TransactionTemplate
@@ -110,4 +112,37 @@ async def run_due_recurring_transactions(db: Session):
         asyncio.create_task(process_transaction(transaction.id))
 
         
+def update_recurring_schedule(db: Session, recurring_transaction_id: int, request: RecurringTransactionUpdate, current_user: User):
+    recurring_transaction = db.query(RecurringTransaction).filter(
+        RecurringTransaction.id == recurring_transaction_id,
+        RecurringTransaction.is_active == True
+    ).join(TransactionTemplate).filter(
+        TransactionTemplate.user_id == current_user.id
+    ).first()
 
+    if not recurring_transaction:
+        return None
+
+    update_data = request.model_dump(exclude_unset=True)
+
+    if "frequency" in update_data:
+        recurring_transaction.frequency = update_data["frequency"]
+
+    if "end_date" in update_data:
+        recurring_transaction.end_date = update_data["end_date"]
+
+    if "start_date" in update_data:
+        has_executed_transactions = db.query(Transaction.id).filter(
+            Transaction.recurring_transaction_id == recurring_transaction.id
+        ).first() is not None
+
+        if has_executed_transactions:
+            raise ValueError("Start date cannot be changed after the recurring transaction has been executed.")
+
+        start_date_utc = ensure_utc(update_data["start_date"])
+        recurring_transaction.next_run_at = start_date_utc
+        recurring_transaction.start_date = start_date_utc.date()
+
+    return recurring_transaction
+
+   

@@ -23,3 +23,7 @@ class RecurringTransaction(Base):
 
     transaction_template: Mapped["TransactionTemplate"] = relationship("TransactionTemplate", back_populates="recurring_transactions")
     transactions: Mapped[list["Transaction"]] = relationship("Transaction", back_populates="recurring_transaction")
+
+    @property
+    def has_executed_transactions(self) -> bool:
+        return bool(self.transactions)

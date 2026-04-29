@@ -40,7 +40,7 @@ def get_all_templates(
 ):
     return transaction_template_service.get_templates(db, current_user)
 
-@router.put("/UpdateTemplate/{template_id}", response_model=TransactionTemplateResponse)
+@router.patch("/UpdateTemplate/{template_id}", response_model=TransactionTemplateResponse)
 def update_template(
     template_id: int,
     request: TransactionTemplateUpdate,

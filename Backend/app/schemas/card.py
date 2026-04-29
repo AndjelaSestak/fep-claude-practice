@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field, computed_field, field_validator, ConfigDict, model_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict, computed_field
 from datetime import datetime, timezone
 from app.models.card import CardStatus
 
