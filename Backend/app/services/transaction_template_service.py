@@ -69,42 +69,43 @@ def update_template(db: Session, template_id: int, request: TransactionTemplateU
 
     update_data = request.model_dump(exclude_unset=True)
 
-    try:
-        # Update fields on the template itself
-        for key, value in update_data.items():
-            if key in TEMPLATE_FIELDS:
-                setattr(template, key, value)
+    # Update fields on the template itself
+    for key, value in update_data.items():
+        if key in TEMPLATE_FIELDS:
+            setattr(template, key, value)
 
-        #Recurring schedule fields from the update request:
-        recurring_update = {k: v for k, v in update_data.items() if k in RECURRING_FIELDS}
+    #Recurring schedule fields from the update request:
+    recurring_update = {k: v for k, v in update_data.items() if k in RECURRING_FIELDS}
+    
+    if template.type == TransactionType.recurring and recurring_update:
+        recurring_transactions = db.query(RecurringTransaction).filter(
+            RecurringTransaction.transaction_template_id == template.id,
+            RecurringTransaction.is_active == True
+        ).all()
+
+        if not recurring_transactions:
+            raise TemplateNotFoundError("Recurring schedule not found")
+
+        if len(recurring_transactions) > 1:
+            raise TemplateExecutionError("Multiple active recurring schedules found for this template")
+
+        recurring_transaction = recurring_transactions[0]
         
-        if template.type == TransactionType.recurring and recurring_update:
-            recurring_transactions = db.query(RecurringTransaction).filter(
-                RecurringTransaction.transaction_template_id == template.id,
-                RecurringTransaction.is_active == True
-            ).all()
+        recurring_transaction_service.update_recurring_schedule(
+            db=db,
+            recurring_transaction_id=recurring_transaction.id,
+            request=RecurringTransactionUpdate(**recurring_update),
+            current_user=current_user
+        )
 
-            if not recurring_transactions:
-                raise TemplateNotFoundError("Recurring schedule not found")
-
-            if len(recurring_transactions) > 1:
-                raise TemplateExecutionError("Multiple active recurring schedules found for this template")
-
-            recurring_transaction = recurring_transactions[0]
-            
-            recurring_transaction_service.update_recurring_schedule(
-                db=db,
-                recurring_transaction_id=recurring_transaction.id,
-                request=RecurringTransactionUpdate(**recurring_update),
-                current_user=current_user
-            )
-
+    try:
         db.commit()
         db.refresh(template)
-        return template
-    except Exception:
-        db.rollback()
-        raise
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("Failed to update template due to a database error.")
+
+    return template
+
 
 def delete_template(db: Session, template_id: int, current_user: User):
     template = get_template_by_id(db, template_id, current_user)
