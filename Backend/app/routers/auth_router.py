@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request,
 from typing import Annotated
 from sqlalchemy.orm import Session
 
+from app.utils.permissions import RequireRole
 from app.schemas.user import UserCreate, UserResponse
 from app.dependencies import get_db
 from app.services import auth_service
@@ -12,6 +13,8 @@ from app.models.user import User
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+require_user = RequireRole(["user"])
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: UserCreate, background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)]):
@@ -81,5 +84,5 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     return {"message": "Logged out successfully"}
 
 @router.get("/me", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def get_me(request: Request, db: Session = Depends(get_db)):
-    return auth_service.get_current_user(request=request, db=db)
+def get_me(current_user: User = Depends(require_user)):
+    return current_user
