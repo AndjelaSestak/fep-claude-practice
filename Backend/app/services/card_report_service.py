@@ -1,8 +1,11 @@
 from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
+from app.utils.errors import DatabaseTransactionError
+from app.models.user import User
 from app.services.email_types import send_card_block_notification
 from app.models.card import Card, CardStatus
 from app.models.card_report import CardReport, ReportType
+from sqlalchemy.exc import SQLAlchemyError
 
 def _report_and_block_card(
     db: Session,
@@ -10,8 +13,9 @@ def _report_and_block_card(
     background_tasks: BackgroundTasks,
     report_type: ReportType,
     new_status: CardStatus,
+    current_user: User
 ) -> Card:
-    card = db.query(Card).filter(Card.id == card_id).first()
+    card = db.query(Card).filter(Card.id == card_id, Card.user_id == current_user.id).first()
     if not card:
         raise ValueError("Card not found")
     if card.status != CardStatus.active:
@@ -22,11 +26,16 @@ def _report_and_block_card(
         user_id=card.user_id,
         report_type=report_type,
     )
-    db.add(card_report)
-    
-    card.status = new_status
-    db.commit()
-    db.refresh(card)
+
+    try:
+        db.add(card_report)
+        
+        card.status = new_status
+        db.commit()
+        db.refresh(card)
+                         
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while reporting or blocking the card. Please try again.")
 
     background_tasks.add_task(
         send_card_block_notification,
@@ -39,50 +48,57 @@ def _report_and_block_card(
     return card
 
 
-def manual_block_card(db: Session, card_id: int, background_tasks: BackgroundTasks) -> Card:
+def manual_block_card(db: Session, card_id: int, background_tasks: BackgroundTasks,current_user: User) -> Card:
     return _report_and_block_card(
         db=db,
         card_id=card_id,
         background_tasks=background_tasks,
         report_type=ReportType.manual_block, 
         new_status=CardStatus.blocked,
+        current_user = current_user,
     )
 
 
-def report_lost_card(db: Session, card_id: int, background_tasks: BackgroundTasks) -> Card:
+def report_lost_card(db: Session, card_id: int, background_tasks: BackgroundTasks,current_user: User) -> Card:
     return _report_and_block_card(
         db=db,
         card_id=card_id,
         background_tasks=background_tasks,
         report_type=ReportType.lost,
         new_status=CardStatus.reported_lost,
+        current_user = current_user,
     )
 
 
-def report_stolen_card(db: Session, card_id: int, background_tasks: BackgroundTasks) -> Card:
+def report_stolen_card(db: Session, card_id: int, background_tasks: BackgroundTasks,current_user: User) -> Card:
     return _report_and_block_card(
         db=db,
         card_id=card_id,
         background_tasks=background_tasks,
         report_type=ReportType.stolen,
         new_status=CardStatus.reported_stolen,
+        current_user = current_user,
     )
 
 
-def manual_unblock_card(db: Session, card_id: int) -> Card:
-    card = db.query(Card).filter(Card.id == card_id).first()
+def manual_unblock_card(db: Session, card_id: int, current_user: User) -> Card:
+    card = db.query(Card).filter(Card.id == card_id, Card.user_id == current_user.id).first()
     if not card:
         raise ValueError("Card not found")
     if card.status == CardStatus.active:
         raise ValueError("Card is already active")
     
     card.status = CardStatus.active
-    db.commit()
-    db.refresh(card)
+    try:
+        db.commit()
+        db.refresh(card)                   
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while unblocking the card. Please try again.")
+
     return card
 
-def get_card_reports(db: Session, card_id: int) -> list[CardReport]:
-    card = db.query(Card).filter(Card.id == card_id, Card.is_email_verified == True, Card.is_deleted == False).first()
+def get_card_reports(db: Session, card_id: int, current_user: User) -> list[CardReport]:
+    card = db.query(Card).filter(Card.id == card_id,Card.user_id == current_user.id, Card.is_email_verified == True, Card.is_deleted == False).first()
     if not card:
         raise ValueError("Card not found")
     

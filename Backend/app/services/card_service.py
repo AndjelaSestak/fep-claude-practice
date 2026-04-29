@@ -80,7 +80,10 @@ async def create_card(db: Session, current_user: User, card_data: CardCreate, ba
         db.add(new_card)
         db.flush() 
 
-        new_verification = EmailVerification(
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while creating the card. Please try again.")
+    
+    new_verification = EmailVerification(
             user_id=current_user.id,
             card_id=new_card.id,
             token=otp_code,
@@ -88,37 +91,39 @@ async def create_card(db: Session, current_user: User, card_data: CardCreate, ba
             expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
             is_used=False
         )
-        
+    try:    
         db.add(new_verification)
         db.commit()
         db.refresh(new_card)
 
-        # Keep plain values in memory until OTP verification succeeds.
-        # After verification the entry is consumed and the email is dispatched.
-        _pending_card_details[new_card.id] = {
-            "card_number": raw_number,
-            "card_pin": plain_pin,
-            "expiry_month": expiry_month,
-            "expiry_year": expiry_year,
-            "account_number": wallet.account_number,
-        }
-
-        background_tasks.add_task(
-            send_card_verification_email,
-            recipient=current_user.email,
-            name=current_user.name,
-            card_last_four=raw_number[-4:],
-            otp=otp_code
-        )
-
-        return new_card
     except SQLAlchemyError:
-        db.rollback()
         raise DatabaseTransactionError("An error occurred while creating the card. Please try again.")
+
+            # Keep plain values in memory until OTP verification succeeds.
+            # After verification the entry is consumed and the email is dispatched.
+    _pending_card_details[new_card.id] = {
+                "card_number": raw_number,
+                "card_pin": plain_pin,
+                "expiry_month": expiry_month,
+                "expiry_year": expiry_year,
+                "account_number": wallet.account_number,
+            }
+
+    background_tasks.add_task(
+                send_card_verification_email,
+                recipient=current_user.email,
+                name=current_user.name,
+                card_last_four=raw_number[-4:],
+                otp=otp_code
+            )
+
+    return new_card
+   
 
 def verify_card(db: Session, data: CardVerify, background_tasks, current_user: User):
     card = db.query(Card).filter(
         Card.id == data.card_id,
+        #Card.user_id == current_user.id,
         Card.is_deleted == False
     ).first()
     if not card:
@@ -137,12 +142,11 @@ def verify_card(db: Session, data: CardVerify, background_tasks, current_user: U
     if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("OTP code has expired")
 
+    card.is_email_verified = True
+    verification.is_used = True
     try:
-        card.is_email_verified = True
-        verification.is_used = True
         db.commit()
-    except Exception:
-        db.rollback()
+    except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while verifying the card. Please try again.")
 
     details = _pending_card_details.pop(card.id, None)
@@ -198,11 +202,10 @@ def soft_delete_card(db: Session, current_user: User, card_id: int):
     ).first()
     if not card:
         raise CardNotFoundError("Card not found")
-
+    card.is_deleted = True
+    
     try:
-        card.is_deleted = True
         db.commit()
         return {"message": "Card deleted successfully"}
     except SQLAlchemyError:
-        db.rollback()
         raise DatabaseTransactionError("An error occurred while deleting the card. Please try again.")

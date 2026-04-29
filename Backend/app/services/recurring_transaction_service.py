@@ -1,6 +1,8 @@
 from datetime import date, timedelta, datetime
 import asyncio
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from app.utils.errors import DatabaseTransactionError, TransactionNotFoundError
 from app.services.transaction_service import create_transaction, process_transaction
 from app.models.transaction import TransactionType
 from app.schemas.transaction import CreateTransactionRequest
@@ -32,9 +34,12 @@ def create_recurring_transaction(
         end_date=end_date,
         start_date=start_date_utc.date(),
     )
-    db.add(recurring_transaction)
-    db.commit()
-    db.refresh(recurring_transaction)
+    try:
+        db.add(recurring_transaction)
+        db.commit()
+        db.refresh(recurring_transaction)
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while creating the recurring transaction. Please try again.")
     return recurring_transaction    
 
 def cancel_recurring_transaction(db: Session, recurring_transaction_id: int, user_id: int):
@@ -45,11 +50,15 @@ def cancel_recurring_transaction(db: Session, recurring_transaction_id: int, use
     ).first()
 
     if not recurring_transaction:
-        return None 
+        raise TransactionNotFoundError("Recurring transaction not found or already cancelled.")
 
     recurring_transaction.is_active = False
-    db.commit()
-    db.refresh(recurring_transaction)
+    try:
+        db.commit()
+        db.refresh(recurring_transaction)                    
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while cancelling the recurring transaction. Please try again.")
+
     return recurring_transaction
     
 async def run_due_recurring_transactions(db: Session):
@@ -65,12 +74,18 @@ async def run_due_recurring_transactions(db: Session):
 
         if template.is_deleted:
             recurring_transaction.is_active = False
-            db.commit()
+            try:
+                db.commit()
+            except SQLAlchemyError:
+                db.rollback()
             continue
 
         if recurring_transaction.end_date and recurring_transaction.next_run_at.date() > recurring_transaction.end_date:
             recurring_transaction.is_active = False
-            db.commit()
+            try:
+                db.commit()
+            except SQLAlchemyError:
+                db.rollback()
             continue
 
         transaction_request = CreateTransactionRequest(
@@ -81,16 +96,14 @@ async def run_due_recurring_transactions(db: Session):
             recipient_account_number=template.recipient_account_number,
             reference=template.reference,
         )
-        try:
 
+        try:
             transaction = create_transaction(db, transaction_request, template.user)
             transaction.type = TransactionType.recurring
             transaction.recurring_transaction_id = recurring_transaction.id
-
             recurring_transaction.next_run_at += FREQUENCY_DELTAS[recurring_transaction.frequency]
             db.commit()
         except Exception as e:
-            print(f"Failed to create recurring transaction id={recurring_transaction.id}: {e}")
             db.rollback()
             continue
 

@@ -3,10 +3,11 @@ from app.models.transaction_template import TransactionTemplate
 from app.models.user import User
 from app.schemas.transaction_template import TransactionTemplateCreate, TransactionTemplateUpdate
 from app.models.transaction import TransactionType
-from app.utils.errors import TemplateNotFoundError, TemplateExecutionError
+from app.utils.errors import DatabaseTransactionError, TemplateNotFoundError, TemplateExecutionError
 from fastapi import BackgroundTasks
 from app.schemas.transaction import CreateTransactionRequest
 from app.services import recurring_transaction_service, transaction_service
+from sqlalchemy.exc import SQLAlchemyError
 
 def create_template(db: Session, request: TransactionTemplateCreate, current_user: User) -> TransactionTemplate:
     template = TransactionTemplate(
@@ -20,9 +21,12 @@ def create_template(db: Session, request: TransactionTemplateCreate, current_use
         card_id=request.card_id,
         reference=request.reference
     )
-    db.add(template)
-    db.commit()
-    db.refresh(template)
+    try:
+        db.add(template)
+        db.commit()
+        db.refresh(template)
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while creating template. Please try again.")
 
     if template.type == TransactionType.recurring:
         recurring_transaction_service.create_recurring_transaction(
@@ -94,8 +98,12 @@ def update_template(db: Session, template_id: int, request: TransactionTemplateU
 def delete_template(db: Session, template_id: int, current_user: User):
     template = get_template_by_id(db, template_id, current_user)
     template.is_deleted = True
-    db.commit()
-    db.refresh(template)
+
+    try:
+        db.commit()
+        db.refresh(template)
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while deleting template. Please try again.")
 
 def execute_template(db: Session, template_id: int, current_user: User, background_tasks: BackgroundTasks):
     template = get_template_by_id(db, template_id, current_user)
