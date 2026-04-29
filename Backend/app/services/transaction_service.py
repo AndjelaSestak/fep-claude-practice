@@ -144,10 +144,14 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
 def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
     if transaction.status != TransactionStatus.pending:
         return
-    success = _process_sender(db, transaction)
-    if success:
-        _process_recipient(db, transaction)
-    db.commit()
+    try:
+        success = _process_sender(db, transaction)
+        if success:
+            _process_recipient(db, transaction)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
 
 async def process_transaction(transaction_id: int) -> None:
@@ -163,6 +167,8 @@ async def process_transaction(transaction_id: int) -> None:
             return
 
         complete_pending_transaction(db, transaction)
+    except Exception:
+        db.rollback()
     finally:
         db.close()
 
