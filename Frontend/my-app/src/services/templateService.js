@@ -50,9 +50,9 @@ export const deleteTemplate = async (templateId) => {
     }
 };
 
-export const executeTemplate = async (templateId) => {
+export const executeTemplate = async (templateId, pin) => {
     try {
-        const response = await api.post(`/templates/ExecuteTemplate/${templateId}`);
+        const response = await api.post(`/templates/${templateId}/execute`, { pin });
         return response.data;
     } catch (error) {
         console.error("Error executing template:", error);

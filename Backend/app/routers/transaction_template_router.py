@@ -9,7 +9,8 @@ from app.models.user import User
 from app.schemas.transaction_template import (
     TransactionTemplateCreate,
     TransactionTemplateResponse,
-    TransactionTemplateUpdate
+    TransactionTemplateUpdate,
+    ExecuteTemplateRequest
 )
 
 router = APIRouter(prefix="/templates", tags=["Transaction Templates"])
@@ -55,11 +56,12 @@ def delete_template(
     transaction_template_service.delete_template(db, template_id, current_user)
     return None
 
-@router.post("/ExecuteTemplate/{template_id}", status_code=status.HTTP_201_CREATED)
+@router.post("/{template_id}/execute", status_code=status.HTTP_201_CREATED)
 def execute_template(
     template_id: int,
+    data: ExecuteTemplateRequest,
     background_tasks: BackgroundTasks,
     db: Annotated[Session, Depends(get_db)],
     current_user: User = Depends(get_current_user)
 ):
-    return transaction_template_service.execute_template(db, template_id, current_user, background_tasks)
+    return transaction_template_service.execute_template(db, template_id, current_user, background_tasks, data.pin)
