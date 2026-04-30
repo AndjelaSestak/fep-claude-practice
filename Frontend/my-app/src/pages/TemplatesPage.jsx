@@ -13,7 +13,7 @@ import AlertDialog, {
 } from "../components/ui/AlertDialog";
 import NewTemplateModal from "../components/ui/NewTemplateModal";
 import { getTemplates, deleteTemplate, executeTemplate } from "../services/templateService";
-import { deactivateRecurringTransaction } from "../services/recurringTransactionService";
+import { activateRecurringTransaction, deactivateRecurringTransaction } from "../services/recurringTransactionService";
 
 const TemplatesPage = () => {
   const [templates, setTemplates] = useState([]);
@@ -72,6 +72,18 @@ const TemplatesPage = () => {
       console.error("Failed to deactivate", err);
     } finally {
       setDeactivateTarget(null);
+    }
+  };
+
+  const handleActivate = async (template) => {
+    try {
+      const recurringId = template.recurring_transactions?.[0]?.id;
+      if (recurringId) {
+        await activateRecurringTransaction(recurringId);
+        await fetchTemplates();
+      }
+    } catch (err) {
+      console.error("Failed to activate", err);
     }
   };
 
@@ -160,6 +172,7 @@ const TemplatesPage = () => {
                       onEdit={() => setEditTarget(t)}
                       onDelete={() => setDeleteTarget(t)}
                       onDeactivate={() => setDeactivateTarget(t)}
+                      onActivate={() => handleActivate(t)}
                     />
                   ))}
                 </div>

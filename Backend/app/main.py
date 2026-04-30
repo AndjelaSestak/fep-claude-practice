@@ -13,6 +13,7 @@ from app.routers.currency_router import router as currency_router
 from app.routers.wallet_router import router as wallet_router
 from app.routers.card_report_router import router as card_report_router
 from app.routers.transaction_template_router import router as transaction_template_router
+from app.routers.recurring_transaction_router import router as recurring_transaction_router
 from alembic.config import Config 
 from app.utils.errors import setup_exception_handlers
 from app.seed import seed
@@ -54,5 +55,6 @@ app.include_router(wallet_router)
 app.include_router(card_report_router)
 app.include_router(transaction_router)
 app.include_router(transaction_template_router)
+app.include_router(recurring_transaction_router)
 app.include_router(visitor_router)
 app.include_router(currency_router)
