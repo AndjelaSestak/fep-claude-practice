@@ -184,3 +184,4 @@ def setup_exception_handlers(app: FastAPI):
             status_code=401,
             content={"detail": str(exc)}
         )
+

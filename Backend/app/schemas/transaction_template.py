@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from decimal import Decimal
 from typing import Optional, List
 from datetime import datetime, date
@@ -28,6 +28,17 @@ class TransactionTemplateCreate(TransactionTemplateBase):
             if not self.frequency or not self.start_date:
                 raise ValueError("Frequency and start date are required for recurring transactions.")
         return self
+
+
+class ExecuteTemplateRequest(BaseModel):
+    pin: str = Field(..., min_length=4, max_length=4)
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, v):
+        if not v.isdigit():
+            raise ValueError("PIN must contain only digits")
+        return v
 
 
 class TransactionTemplateUpdate(BaseModel):
