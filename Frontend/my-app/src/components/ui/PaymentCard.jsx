@@ -11,9 +11,9 @@ import {
 import Button from "./Button";
 import { Visa as VisaLogo, Mastercard as MastercardLogo } from "react-payment-logos/dist/flat";
 
-const maskIban = (iban) => {
-  if (!iban || iban.length < 8) return iban;
-  return `${iban.slice(0, 4)} •••• •••• ${iban.slice(-4)}`;
+const maskAccountNumber = (accountNumber) => {
+  if (!accountNumber || accountNumber.length < 8) return accountNumber;
+  return `${accountNumber.slice(0, 4)} •••• •••• ${accountNumber.slice(-4)}`;
 };
 
 // Logo rendered in original colours on a small white pill so it stays legible
@@ -122,19 +122,19 @@ const PaymentCard = ({
             •••• &nbsp;•••• &nbsp;•••• &nbsp;{cardNumber}
           </p>
 
-          {/* BOTTOM ROW: IBAN pill + status badge */}
+          {/* BOTTOM ROW: account number pill + status badge */}
           <div className="flex items-end justify-between gap-2">
 
             {accountNumber ? (
               <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5 min-w-0">
                 <span className="text-white/60 text-[9px] font-bold uppercase tracking-wider flex-shrink-0">
-                  IBAN
+                  ACC
                 </span>
                 <span
                   className="text-white/85 text-[11px] truncate"
                   style={{ fontFamily: "'Courier New', Courier, monospace" }}
                 >
-                  {maskIban(accountNumber)}
+                  {maskAccountNumber(accountNumber)}
                 </span>
                 <button
                   onClick={handleCopy}

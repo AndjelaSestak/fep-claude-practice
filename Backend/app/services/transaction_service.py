@@ -18,7 +18,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.utils.errors import DatabaseTransactionError, InvalidTokenError
 
 
-PENDING_DELAY_SECONDS = 180
+PENDING_DELAY_SECONDS = 10
 
 def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None, limit: int = 10, offset: int = 0,):
     query = db.query(Transaction).filter(Transaction.user_id == user_id)

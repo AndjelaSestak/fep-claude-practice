@@ -45,6 +45,14 @@ const EMPTY_FORM = {
   end_date: '',
 }
 
+const ACCOUNT_NUMBER_LENGTH = 16
+
+const getAccountNumberDigits = (value) =>
+  String(value ?? '').replace(/\D/g, '').slice(0, ACCOUNT_NUMBER_LENGTH)
+
+const formatAccountNumber = (value) =>
+  getAccountNumberDigits(value).replace(/(.{4})/g, '$1 ').trim()
+
 const padDatePart = (value) => String(value).padStart(2, '0')
 
 const toDatetimeLocalValue = (value) => {
@@ -73,7 +81,7 @@ const templateToForm = (t) => ({
   name: t.name ?? '',
   type: t.type ?? 'single',
   recipient: t.recipient ?? '',
-  recipient_account_number: t.recipient_account_number ?? '',
+  recipient_account_number: formatAccountNumber(t.recipient_account_number),
   amount: t.amount ?? '',
   currency: t.currency ?? '',
   card_id: t.card_id ? String(t.card_id) : '',
@@ -123,7 +131,10 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'recipient_account_number' ? formatAccountNumber(value) : value,
+    }))
   }
 
   const isRecurring = formData.type === 'recurring'
@@ -131,12 +142,19 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const recipientAccountNumber = getAccountNumberDigits(formData.recipient_account_number)
+    if (recipientAccountNumber.length !== ACCOUNT_NUMBER_LENGTH) {
+      setErrorMessage('Recipient account number must contain exactly 16 digits.')
+      setErrorDialogOpen(true)
+      return
+    }
+
     setLoading(true)
     try {
       const payload = {
         name: formData.name,
         recipient: formData.recipient,
-        recipient_account_number: formData.recipient_account_number,
+        recipient_account_number: recipientAccountNumber,
         amount: parseFloat(formData.amount),
         currency: formData.currency,
         card_id: parseInt(formData.card_id),
@@ -240,7 +258,9 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                 name="recipient_account_number"
                 value={formData.recipient_account_number}
                 onChange={handleChange}
-                placeholder="e.g. RS35105008123456789"
+                placeholder="1234 5678 9012 3456"
+                inputMode="numeric"
+                maxLength={19}
                 required
               />
             </FormField>

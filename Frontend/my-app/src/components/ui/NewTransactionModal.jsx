@@ -33,6 +33,14 @@ const EMPTY_FORM = {
   reference: '',
 }
 
+const ACCOUNT_NUMBER_LENGTH = 16
+
+const getAccountNumberDigits = (value) =>
+  value.replace(/\D/g, '').slice(0, ACCOUNT_NUMBER_LENGTH)
+
+const formatAccountNumber = (value) =>
+  getAccountNumberDigits(value).replace(/(.{4})/g, '$1 ').trim()
+
 const NewTransactionModal = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState(EMPTY_FORM)
   const [cards, setCards] = useState([])
@@ -73,11 +81,21 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'recipient_account_number' ? formatAccountNumber(value) : value,
+    }))
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const recipientAccountNumber = getAccountNumberDigits(formData.recipient_account_number)
+    if (recipientAccountNumber.length !== ACCOUNT_NUMBER_LENGTH) {
+      setErrorMessage('Recipient account number must contain exactly 16 digits.')
+      setErrorDialogOpen(true)
+      return
+    }
+
     setPendingFormData(formData)
     setPinDialogOpen(true)
   }
@@ -92,7 +110,7 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
         amount: parseFloat(pendingFormData.amount),
         currency: pendingFormData.currency,
         recipient: pendingFormData.recipient,
-        recipient_account_number: pendingFormData.recipient_account_number,
+        recipient_account_number: getAccountNumberDigits(pendingFormData.recipient_account_number),
         reference: pendingFormData.reference || null,
       })
       setSuccessDialogOpen(true)
@@ -181,7 +199,9 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
                 name="recipient_account_number"
                 value={formData.recipient_account_number}
                 onChange={handleChange}
-                placeholder="e.g. RS35105008123456789"
+                placeholder="1234 5678 9012 3456"
+                inputMode="numeric"
+                maxLength={19}
                 required
               />
             </FormField>

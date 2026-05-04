@@ -20,18 +20,14 @@ from app.utils.errors import CardNotFoundError, CardTypeNotFoundError, DatabaseT
 # details email is dispatched.
 _pending_card_details: dict = {}
 
-def generate_iban(db: Session) -> str:
+def generate_account_number(db: Session) -> str:
     """
-    Structure:
-        RS35  – Country code (Serbia) + fixed check digits
-        908   – Internal bank/service code for Commit-Pray
-        XXXXX – 13 random digits, uniqueness guaranteed against the wallets table
+    Generate a unique 16-digit wallet account number.
     """
     while True:
-        sequence = "".join(secrets.choice(string.digits) for _ in range(13))
-        iban = f"RS35908{sequence}"
-        if not db.query(Wallet).filter(Wallet.account_number == iban).first():
-            return iban
+        account_number = "".join(secrets.choice(string.digits) for _ in range(16))
+        if not db.query(Wallet).filter(Wallet.account_number == account_number).first():
+            return account_number
 
 
 def validate_card_details(card_data: CardCreate, db: Session):

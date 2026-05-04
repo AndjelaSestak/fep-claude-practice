@@ -24,6 +24,14 @@ class CreateTransactionRequest(BaseModel):
             raise ValueError(f"Currency {v} is not supported")
         return v.upper()
 
+    @field_validator("recipient_account_number")
+    def recipient_account_number_must_be_16_digits(cls, v):
+        if not v.isdigit():
+            raise ValueError("Recipient account number must contain only digits")
+        if len(v) != 16:
+            raise ValueError("Recipient account number must contain exactly 16 digits")
+        return v
+
 
 class TransactionResponse(BaseModel):
     id: int

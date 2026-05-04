@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 
-from app.services.card_service import generate_iban
+from app.services.card_service import generate_account_number
 from app.schemas.auth import TokenResponse, VerifyOTP, ResetPasswordRequest
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
@@ -65,7 +65,7 @@ def register_user(db: Session, user_data: UserCreate,background_tasks: Backgroun
         new_wallet = Wallet(
             user_id=new_user.id,
             balance=0,
-            account_number=generate_iban(db),
+            account_number=generate_account_number(db),
             currency="RSD"
         )
         db.add(new_wallet)
@@ -329,4 +329,3 @@ def refresh_access_token(db: Session, refresh_token: str) -> str:
         "access_token": new_access_token, 
         "refresh_token": new_refresh_token
     }
-
