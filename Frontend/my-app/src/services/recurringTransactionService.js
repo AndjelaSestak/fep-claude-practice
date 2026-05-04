@@ -9,3 +9,13 @@ export const deactivateRecurringTransaction = async (recurringTransactionId) => 
         throw error;
     }
 };
+
+export const activateRecurringTransaction = async (recurringTransactionId) => {
+    try {
+        const response = await api.patch(`/recurring-transactions/${recurringTransactionId}/activate`);
+        return response.data;
+    } catch (error) {
+        console.error("Error activating recurring transaction:", error);
+        throw error;
+    }
+};
