@@ -112,7 +112,7 @@ async def run_due_recurring_transactions(db: Session):
         asyncio.create_task(process_transaction(transaction.id))
 
         
-def update_recurring_schedule(db: Session, recurring_transaction_id: int, request: RecurringTransactionUpdate, current_user: User):
+def update_recurring_transaction(db: Session, recurring_transaction_id: int, request: RecurringTransactionUpdate, current_user: User):
     recurring_transaction = db.query(RecurringTransaction).filter(
         RecurringTransaction.id == recurring_transaction_id,
         RecurringTransaction.is_active == True

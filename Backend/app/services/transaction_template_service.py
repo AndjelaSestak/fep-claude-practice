@@ -61,20 +61,16 @@ def get_template_by_id(db: Session, template_id: int, current_user: User) -> Tra
 def update_template(db: Session, template_id: int, request: TransactionTemplateUpdate, current_user: User) -> TransactionTemplate:
     template = get_template_by_id(db, template_id, current_user)
 
-    # Fields that are updated directly on the TransactionTemplate model
     TEMPLATE_FIELDS = {"name", "amount", "currency", "recipient", "recipient_account_number", "card_id", "reference"}
 
-    # Fields that belong to the recurring schedule (handled by colleague)
     RECURRING_FIELDS = {"frequency", "start_date", "end_date"}
 
     update_data = request.model_dump(exclude_unset=True)
 
-    # Update fields on the template itself
     for key, value in update_data.items():
         if key in TEMPLATE_FIELDS:
             setattr(template, key, value)
 
-    #Recurring schedule fields from the update request:
     recurring_update = {k: v for k, v in update_data.items() if k in RECURRING_FIELDS}
     
     if template.type == TransactionType.recurring and recurring_update:
@@ -84,14 +80,14 @@ def update_template(db: Session, template_id: int, request: TransactionTemplateU
         ).all()
 
         if not recurring_transactions:
-            raise TemplateNotFoundError("Recurring schedule not found")
+            raise TemplateNotFoundError("Recurring transaction not found")
 
         if len(recurring_transactions) > 1:
-            raise TemplateExecutionError("Multiple active recurring schedules found for this template")
+            raise TemplateExecutionError("Multiple active recurring transactions found for this template")
 
         recurring_transaction = recurring_transactions[0]
         
-        recurring_transaction_service.update_recurring_schedule(
+        recurring_transaction_service.update_recurring_transaction(
             db=db,
             recurring_transaction_id=recurring_transaction.id,
             request=RecurringTransactionUpdate(**recurring_update),
