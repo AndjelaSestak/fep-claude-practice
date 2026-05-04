@@ -212,14 +212,12 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
 
 
 def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None):
-    print(f"--- DEBUG: Početak filtriranja za korisnika {user_id} ---")
     try:
         query = db.query(Transaction).filter(Transaction.user_id == user_id)
 
         # 1. Filter za Period (Dashboard)
         if period == "current_month":
             from datetime import datetime, timezone
-            # Preporuka: Koristi timezone.utc ako ti je i model takav
             today = datetime.now(timezone.utc)
             start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             print(f"--- DEBUG: Filtriram od datuma: {start_of_month} ---")
@@ -236,8 +234,6 @@ def get_filtered_transactions(db: Session, user_id: int, search=None, type=None,
 
         # 3. Filter za Type (single / reccuring)
         if type and type != "all":
-            # SQLAlchemy dozvoljava poređenje sa stringom ako je Enum tipa (str, enum.Enum)
-            # ali je sigurnije ovako zbog tvoje specifične definicije:
             query = query.filter(Transaction.type == type)
 
         # 4. Filter za Direction (incoming / outgoing)
@@ -245,11 +241,9 @@ def get_filtered_transactions(db: Session, user_id: int, search=None, type=None,
             query = query.filter(Transaction.direction == direction)
 
         results = query.order_by(Transaction.created_at.desc()).all()
-        print(f"--- DEBUG: Pronađeno {len(results)} transakcija ---")
         return results
 
     except Exception as e:
-        print(f"--- DEBUG ERROR u get_filtered_transactions: {str(e)} ---")
         raise e
 
 def generate_csv_report(transactions):
