@@ -27,10 +27,9 @@ def _report_and_block_card(
         report_type=report_type,
     )
 
+    card.status = new_status
     try:
         db.add(card_report)
-        
-        card.status = new_status
         db.commit()
         db.refresh(card)
                          

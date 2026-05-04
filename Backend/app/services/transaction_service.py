@@ -14,7 +14,8 @@ from app.schemas.transaction import CreateTransactionRequest
 from app.services.exchange_rate_service import convert_amount
 from app.database import SessionLocal
 from app.utils.datetime import utc_now
-from app.utils.errors import InvalidTokenError
+from sqlalchemy.exc import SQLAlchemyError
+from app.utils.errors import DatabaseTransactionError, InvalidTokenError
 
 
 PENDING_DELAY_SECONDS = 180
@@ -72,10 +73,12 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
         status=TransactionStatus.pending,
         direction=TransactionDirection.outgoing
     )
-    db.add(transaction)
-    db.commit()
-    db.refresh(transaction)
-
+    try:
+        db.add(transaction)
+        db.commit()
+        db.refresh(transaction)
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while creating the transaction. Please try again.")
     return transaction
 
 
@@ -156,16 +159,11 @@ def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
 
 async def process_transaction(transaction_id: int) -> None:
     await asyncio.sleep(PENDING_DELAY_SECONDS)
-
     db: Session = SessionLocal()
     try:
-        transaction = db.query(Transaction).filter(
-            Transaction.id == transaction_id
-        ).first()
-
+        transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
         if not transaction:
             return
-
         complete_pending_transaction(db, transaction)
     except Exception:
         db.rollback()
@@ -205,62 +203,61 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
         raise ValueError("Only pending transactions can be cancelled")
 
     transaction.status = TransactionStatus.cancelled
-    db.commit()
-    db.refresh(transaction)
+    try:
+        db.commit()
+        db.refresh(transaction)
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while cancelling the transaction. Please try again.")
 
     return transaction
 
 
 def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None):
-    try:
-        query = db.query(Transaction).filter(Transaction.user_id == user_id)
+    
+    query = db.query(Transaction).filter(Transaction.user_id == user_id)
 
-        # 1. Filter za Period (Dashboard)
-        if period == "current_month":
-            from datetime import datetime, timezone
-            today = datetime.now(timezone.utc)
-            start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            print(f"--- DEBUG: Filtriram od datuma: {start_of_month} ---")
-            query = query.filter(Transaction.created_at >= start_of_month)
+    # 1. Filter za Period (Dashboard)
+    if period == "current_month":
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc)
+        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        query = query.filter(Transaction.created_at >= start_of_month)
 
-        # 2. Filter za Search (Pretraga po recipientu, senderu ili referenci)
-        if search:
-            search_pattern = f"%{search}%"
-            query = query.filter(
-                (Transaction.recipient.ilike(search_pattern)) |
-                (Transaction.sender.ilike(search_pattern)) |
-                (Transaction.reference.ilike(search_pattern))
-            )
+    # 2. Filter za Search (Pretraga po recipientu, senderu ili referenci)
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            (Transaction.recipient.ilike(search_pattern)) |
+            (Transaction.sender.ilike(search_pattern)) |
+            (Transaction.reference.ilike(search_pattern))
+        )
 
-        # 3. Filter za Type (single / reccuring)
-        if type and type != "all":
-            query = query.filter(Transaction.type == type)
+    # 3. Filter za Type (single / reccuring)
+    if type and type != "all":
+        query = query.filter(Transaction.type == type)
 
-        # 4. Filter za Direction (incoming / outgoing)
-        if direction and direction != "all":
-            query = query.filter(Transaction.direction == direction)
+    # 4. Filter za Direction (incoming / outgoing)
+    if direction and direction != "all":
+        query = query.filter(Transaction.direction == direction)
 
-        results = query.order_by(Transaction.created_at.desc()).all()
-        return results
+    results = query.order_by(Transaction.created_at.desc()).all()
+    return results
 
-    except Exception as e:
-        raise e
+    
 
 def generate_csv_report(transactions):
-    try:
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(["Datum", "Primalac", "Iznos", "Valuta", "Tip", "Smer"])
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Datum", "Primalac", "Iznos", "Valuta", "Tip", "Smer"])
+    
+    for t in transactions:
+        date_str = t.created_at.strftime("%d.%m.%Y") if t.created_at else "N/A"
         
-        for t in transactions:
-            date_str = t.created_at.strftime("%d.%m.%Y") if t.created_at else "N/A"
-            
-            writer.writerow([date_str, t.recipient, t.amount, t.currency, t.type.value, t.direction.value])
-        
-        return output.getvalue()
-    except Exception as e:
-        print(f"ERROR u CSV: {str(e)}")
-        raise e
+        writer.writerow([date_str, t.recipient, t.amount, t.currency, t.type.value, t.direction.value])
+    
+    return output.getvalue()
+    
     
 def generate_pdf_report(transactions, user_email):
     if not transactions:

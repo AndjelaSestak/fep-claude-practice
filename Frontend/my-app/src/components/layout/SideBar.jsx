@@ -5,7 +5,6 @@ const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Transactions', icon: ArrowLeftRight, path: '/transactions' },
   { label: 'Cards', icon: CreditCard, path: '/my-cards' },
-  { label: 'Payments', icon: Wallet, path: '/payments' },
   { label: 'Templates', icon: FileText, path: '/templates' },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ]
