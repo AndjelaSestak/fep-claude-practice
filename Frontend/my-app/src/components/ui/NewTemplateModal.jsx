@@ -45,6 +45,30 @@ const EMPTY_FORM = {
   end_date: '',
 }
 
+const padDatePart = (value) => String(value).padStart(2, '0')
+
+const toDatetimeLocalValue = (value) => {
+  if (!value) return ''
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return [
+    date.getFullYear(),
+    padDatePart(date.getMonth() + 1),
+    padDatePart(date.getDate()),
+  ].join('-') + `T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`
+}
+
+const toUTCISOString = (value) => {
+  if (!value) return null
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  return date.toISOString()
+}
+
 const templateToForm = (t) => ({
   name: t.name ?? '',
   type: t.type ?? 'single',
@@ -55,12 +79,13 @@ const templateToForm = (t) => ({
   card_id: t.card_id ? String(t.card_id) : '',
   reference: t.reference ?? '',
   frequency: t.recurring_transactions?.[0]?.frequency ?? 'monthly',
-  start_date: t.recurring_transactions?.[0]?.start_date?.split('T')[0] ?? '',
+  start_date: toDatetimeLocalValue(t.recurring_transactions?.[0]?.next_run_at),
   end_date: t.recurring_transactions?.[0]?.end_date ?? '',
 })
 
 const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
   const isEditMode = !!template
+  const recurringTransaction = template?.recurring_transactions?.[0]
 
   const [formData, setFormData] = useState(EMPTY_FORM)
   const [cards, setCards] = useState([])
@@ -102,6 +127,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
   }
 
   const isRecurring = formData.type === 'recurring'
+  const isStartDateLocked = isEditMode && isRecurring && recurringTransaction?.has_executed_transactions
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -109,7 +135,6 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
     try {
       const payload = {
         name: formData.name,
-        type: formData.type,
         recipient: formData.recipient,
         recipient_account_number: formData.recipient_account_number,
         amount: parseFloat(formData.amount),
@@ -117,8 +142,23 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
         card_id: parseInt(formData.card_id),
         reference: formData.reference || null,
         frequency: isRecurring ? formData.frequency : null,
-        start_date: isRecurring ? formData.start_date : null,
+        start_date: isRecurring ? toUTCISOString(formData.start_date) : null,
         end_date: isRecurring && formData.end_date ? formData.end_date : null,
+      }
+
+      if (!isEditMode) {
+        payload.type = formData.type
+      }
+
+      if (isStartDateLocked) {
+        delete payload.start_date
+      }
+
+      if (isEditMode && isRecurring) {
+        const originalStartDate = toDatetimeLocalValue(template.recurring_transactions?.[0]?.next_run_at)
+        if (formData.start_date === originalStartDate) {
+          delete payload.start_date
+        }
       }
 
       if (isEditMode) {
@@ -156,32 +196,34 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
               />
             </FormField>
 
-            <FormField label="Transaction Type" required>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="single"
-                    checked={formData.type === 'single'}
-                    onChange={handleChange}
-                    className="accent-green-600 w-4 h-4"
-                  />
-                  <span className="text-sm text-gray-700">Single</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="recurring"
-                    checked={formData.type === 'recurring'}
-                    onChange={handleChange}
-                    className="accent-green-600 w-4 h-4"
-                  />
-                  <span className="text-sm text-gray-700">Recurring</span>
-                </label>
-              </div>
-            </FormField>
+            {!isEditMode && (
+              <FormField label="Transaction Type" required>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="type"
+                      value="single"
+                      checked={formData.type === 'single'}
+                      onChange={handleChange}
+                      className="accent-green-600 w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-700">Single</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="type"
+                      value="recurring"
+                      checked={formData.type === 'recurring'}
+                      onChange={handleChange}
+                      className="accent-green-600 w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-700">Recurring</span>
+                  </label>
+                </div>
+              </FormField>
+            )}
 
             <FormField label="Recipient" required>
               <Input
@@ -267,9 +309,10 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                 <FormField label="Start Date" required>
                   <Input
                     name="start_date"
-                    type="date"
+                    type="datetime-local"
                     value={formData.start_date}
                     onChange={handleChange}
+                    disabled={isStartDateLocked}
                     required
                   />
                 </FormField>

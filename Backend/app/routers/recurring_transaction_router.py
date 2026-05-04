@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
+from app.utils.permissions import RequireRole
 from app.utils.errors import TransactionNotFoundError
-from app.services.auth_service import get_current_user
+from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.recurring_transaction import RecurringTransactionBase
 from app.dependencies import get_db
@@ -11,20 +12,17 @@ from app.models.transaction_template import TransactionTemplate
 
 router = APIRouter(prefix="/recurring-transactions", tags=["Recurring Transactions"])
 
+require_user = RequireRole(["user"])
 
 @router.patch("/{recurring_transaction_id}/cancel")
 def cancel_recurring_transaction_route(
     recurring_transaction_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_user)
 ):
     cancelled_transaction = cancel_recurring_transaction(
         db=db, 
         recurring_transaction_id=recurring_transaction_id, 
         user_id=current_user.id
     )
-    
-    if not cancelled_transaction:
-        raise TransactionNotFoundError("Recurring transaction not found or already cancelled.")
-    
     return {"detail": "Recurring transaction has been successfully cancelled."}

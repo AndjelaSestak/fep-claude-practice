@@ -32,7 +32,7 @@ export const getTemplateById = async (templateId) => {
 
 export const updateTemplate = async (templateId, data) => {
     try {
-        const response = await api.put(`/templates/UpdateTemplate/${templateId}`, data);
+        const response = await api.patch(`/templates/UpdateTemplate/${templateId}`, data);
         return response.data;
     } catch (error) {
         console.error("Error updating template:", error);
