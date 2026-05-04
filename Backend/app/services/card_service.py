@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.utils.datetime import ensure_utc
 from app.models.card import Card, CardStatus
 from app.models.card_type import CardType
 from app.models.email_verification import EmailVerification, VerificationPurpose
