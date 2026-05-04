@@ -80,18 +80,14 @@ async def create_card(db: Session, current_user: User, card_data: CardCreate, ba
         db.add(new_card)
         db.flush() 
 
-    except SQLAlchemyError:
-        raise DatabaseTransactionError("An error occurred while creating the card. Please try again.")
-    
-    new_verification = EmailVerification(
+        new_verification = EmailVerification(
             user_id=current_user.id,
             card_id=new_card.id,
             token=otp_code,
             purpose=VerificationPurpose.card_verification,
             expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
             is_used=False
-        )
-    try:    
+        )   
         db.add(new_verification)
         db.commit()
         db.refresh(new_card)
@@ -203,9 +199,10 @@ def soft_delete_card(db: Session, current_user: User, card_id: int):
     if not card:
         raise CardNotFoundError("Card not found")
     card.is_deleted = True
-    
+
     try:
         db.commit()
-        return {"message": "Card deleted successfully"}
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while deleting the card. Please try again.")
+    
+    return {"message": "Card deleted successfully"}

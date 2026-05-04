@@ -108,19 +108,21 @@ def verify_user_email(db: Session, data: VerifyOTP,background_tasks: BackgroundT
     if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("OTP code has expired")
 
-    
+    user.is_email_verified = True
+    verification.is_used = True
+
     try:
-        user.is_email_verified = True
-        verification.is_used = True
         db.commit()
 
-        background_tasks.add_task(
-            send_welcome_email,
-            recipient=data.email,
-            name=user.name
-        )
     except Exception:
         raise DatabaseTransactionError("An error occurred while creating the account. Please try again.")
+    
+
+    background_tasks.add_task(
+        send_welcome_email,
+        recipient=data.email,
+        name=user.name
+    )
 
     return {"message": "Email successfully verified!"}
 
