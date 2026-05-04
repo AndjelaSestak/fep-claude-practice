@@ -38,7 +38,6 @@ class TransactionTemplateUpdate(BaseModel):
     recipient_account_number: Optional[str] = None
     card_id: Optional[int] = None
     reference: Optional[str] = None
-    type: Optional[TransactionType] = None
     frequency: Optional[Frequency] = None
     start_date: Optional[datetime] = None
     end_date: Optional[date] = None
@@ -66,6 +65,7 @@ class RecurringTransactionSummary(BaseModel):
     next_run_at: Optional[datetime] = None
     end_date: Optional[date] = None
     is_active: bool
+    has_executed_transactions: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
