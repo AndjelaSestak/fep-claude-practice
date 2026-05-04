@@ -44,43 +44,34 @@ def create_recurring_transaction(
         raise DatabaseTransactionError("An error occurred while creating the recurring transaction. Please try again.")
     return recurring_transaction    
 
-def cancel_recurring_transaction(db: Session, recurring_transaction_id: int, user_id: int):
-    recurring_transaction = db.query(RecurringTransaction).filter(
+def set_recurring_transaction_status(
+    db: Session,
+    recurring_transaction_id: int,
+    user_id: int,
+    is_active: bool
+):
+    recurring_transaction = db.query(RecurringTransaction).join(TransactionTemplate).filter(
         RecurringTransaction.id == recurring_transaction_id,
-        RecurringTransaction.is_active == True
-    ).join(TransactionTemplate).filter(
         TransactionTemplate.user_id == user_id
     ).first()
 
     if not recurring_transaction:
-        raise TransactionNotFoundError("Recurring transaction not found or already cancelled.")
+        raise TransactionNotFoundError("Recurring transaction not found.")
 
-    recurring_transaction.is_active = False
-    try:
-        db.commit()
-        db.refresh(recurring_transaction)                    
-    except SQLAlchemyError:
-        raise DatabaseTransactionError("An error occurred while cancelling the recurring transaction. Please try again.")
+    if recurring_transaction.is_active == is_active:
+        status = "active" if is_active else "cancelled"
+        raise TransactionNotFoundError(f"Recurring transaction is already {status}.")
 
-    return recurring_transaction
-    
-def activate_recurring_transaction(db: Session, recurring_transaction_id: int, user_id: int):
-    recurring_transaction = db.query(RecurringTransaction).filter(
-        RecurringTransaction.id == recurring_transaction_id,
-        RecurringTransaction.is_active == False
-    ).join(TransactionTemplate).filter(
-        TransactionTemplate.user_id == user_id
-    ).first()
+    recurring_transaction.is_active = is_active
 
-    if not recurring_transaction:
-        raise TransactionNotFoundError("Recurring transaction not found or already active.")
-
-    recurring_transaction.is_active = True
     try:
         db.commit()
         db.refresh(recurring_transaction)
     except SQLAlchemyError:
-        raise DatabaseTransactionError("An error occurred while activating the recurring transaction. Please try again.")
+        db.rollback()
+        raise DatabaseTransactionError(
+            "An error occurred while updating the recurring transaction status. Please try again."
+        )
 
     return recurring_transaction
 

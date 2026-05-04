@@ -6,7 +6,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.recurring_transaction import RecurringTransactionBase
 from app.dependencies import get_db
-from app.services.recurring_transaction_service import cancel_recurring_transaction, activate_recurring_transaction
+from app.services.recurring_transaction_service import set_recurring_transaction_status
 from app.models.transaction_template import TransactionTemplate
 
 
@@ -20,10 +20,11 @@ def cancel_recurring_transaction_route(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user)
 ):
-    cancelled_transaction = cancel_recurring_transaction(
+    cancelled_transaction = set_recurring_transaction_status(
         db=db, 
         recurring_transaction_id=recurring_transaction_id, 
-        user_id=current_user.id
+        user_id=current_user.id,
+        is_active=False
     )
     return {"detail": "Recurring transaction has been successfully cancelled."}
 
@@ -33,9 +34,10 @@ def activate_recurring_transaction_route(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user)
 ):
-    activated_transaction = activate_recurring_transaction(
+    activated_transaction = set_recurring_transaction_status(
         db=db,
         recurring_transaction_id=recurring_transaction_id,
-        user_id=current_user.id
+        user_id=current_user.id,
+        is_active=True
     )
     return {"detail": "Recurring transaction has been successfully activated."}
