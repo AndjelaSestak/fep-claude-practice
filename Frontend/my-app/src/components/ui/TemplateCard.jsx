@@ -14,8 +14,16 @@ const TemplateCard = ({
   onExecute,
   onEdit,
   onDelete,
-  onDeactivate, 
+  onDeactivate,
+  onActivate,
 }) => {
+  const ToggleIcon = isActive ? XCircle : RefreshCw;
+  const toggleLabel = isActive ? "Deactivate" : "Activate";
+  const toggleAction = isActive ? onDeactivate : onActivate;
+  const toggleClassName = isActive
+    ? "w-full border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+    : "w-full border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700";
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4 relative overflow-hidden">
       
@@ -70,15 +78,14 @@ const TemplateCard = ({
           </Button>
         )}
 
-       
-        {isRecurring && isActive && (
+        {isRecurring && (
           <Button 
             variant="outline" 
-            onClick={onDeactivate} 
-            className="w-full border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+            onClick={toggleAction}
+            className={toggleClassName}
           >
-            <XCircle className="w-4 h-4 mr-2" />
-            Deactivate
+            <ToggleIcon className="w-4 h-4 mr-2" />
+            {toggleLabel}
           </Button>
         )}
 
