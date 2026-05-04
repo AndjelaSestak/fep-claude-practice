@@ -1,11 +1,13 @@
 from sqlalchemy.orm import Session
 from app.schemas.recurring_transaction import RecurringTransactionUpdate
 from app.models.transaction_template import TransactionTemplate
-from app.models.recurring_transaction import RecurringTransaction
+from app.models.card import Card
 from app.models.user import User
 from app.schemas.transaction_template import TransactionTemplateCreate, TransactionTemplateUpdate
 from app.models.transaction import TransactionType
-from app.utils.errors import DatabaseTransactionError, TemplateNotFoundError, TemplateExecutionError
+from app.utils.security import verify_password
+from app.models.recurring_transaction import RecurringTransaction
+from app.utils.errors import DatabaseTransactionError, TemplateNotFoundError, TemplateExecutionError,InvalidPinError
 from fastapi import BackgroundTasks
 from app.schemas.transaction import CreateTransactionRequest
 from app.services import recurring_transaction_service, transaction_service
@@ -113,11 +115,15 @@ def delete_template(db: Session, template_id: int, current_user: User):
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while deleting template. Please try again.")
 
-def execute_template(db: Session, template_id: int, current_user: User, background_tasks: BackgroundTasks):
+def execute_template(db: Session, template_id: int, current_user: User, background_tasks: BackgroundTasks, pin: str):
     template = get_template_by_id(db, template_id, current_user)
 
     if template.type == TransactionType.recurring:
         raise TemplateExecutionError("Recurring templates are executed automatically via scheduler.")
+
+    card = db.query(Card).filter(Card.id == template.card_id, Card.user_id == current_user.id).first()
+    if not card or not verify_password(pin, card.card_pin):
+        raise InvalidPinError("Incorrect PIN")
 
     transaction_request = CreateTransactionRequest(
         card_id=template.card_id,

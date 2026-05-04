@@ -82,28 +82,79 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
     return transaction
 
 
-def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
-    if transaction.status != TransactionStatus.pending:
-        return
-
-    wallet = db.query(Wallet).filter(
+def _process_sender(db: Session, transaction: Transaction) -> bool:
+    sender_wallet = db.query(Wallet).filter(
         Wallet.user_id == transaction.user_id,
         Wallet.is_active == True
     ).first()
 
-    if not wallet:
+    if not sender_wallet:
         transaction.status = TransactionStatus.failed
         db.commit()
-        return
+        return False
 
-    if float(wallet.balance) < float(transaction.amount):
+    if float(sender_wallet.balance) < float(transaction.amount):
         transaction.status = TransactionStatus.failed
         db.commit()
-        return
+        return False
 
-    wallet.balance = float(wallet.balance) - float(transaction.amount)
+    sender_wallet.balance = float(sender_wallet.balance) - float(transaction.amount)
     transaction.status = TransactionStatus.completed
-    db.commit()
+    return True
+
+
+def _process_recipient(db: Session, transaction: Transaction) -> None:
+    recipient_wallet = db.query(Wallet).filter(
+        Wallet.account_number == transaction.recipient_account_number,
+        Wallet.is_active == True
+    ).first()
+
+    if not recipient_wallet:
+        return
+
+    converted_amount = convert_amount(
+        float(transaction.amount),
+        transaction.currency,
+        recipient_wallet.currency
+    )
+    recipient_wallet.balance = float(recipient_wallet.balance) + converted_amount
+
+    recipient_card = db.query(Card).filter(
+        Card.wallet_id == recipient_wallet.id,
+        Card.status == CardStatus.active
+    ).first()
+
+    if not recipient_card:
+        return
+
+    incoming_txn = Transaction(
+        user_id=recipient_wallet.user_id,
+        card_id=recipient_card.id,
+        type=transaction.type,
+        amount=converted_amount,
+        currency=recipient_wallet.currency,
+        recipient=transaction.recipient,
+        recipient_account_number=transaction.recipient_account_number,
+        sender=transaction.sender,
+        sender_account_number=transaction.sender_account_number,
+        reference=transaction.reference,
+        status=TransactionStatus.completed,
+        direction=TransactionDirection.incoming
+    )
+    db.add(incoming_txn)
+
+
+def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
+    if transaction.status != TransactionStatus.pending:
+        return
+    try:
+        success = _process_sender(db, transaction)
+        if success:
+            _process_recipient(db, transaction)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
 
 async def process_transaction(transaction_id: int) -> None:

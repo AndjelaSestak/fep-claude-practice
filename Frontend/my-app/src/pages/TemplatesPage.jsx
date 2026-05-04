@@ -12,6 +12,7 @@ import AlertDialog, {
   AlertDialogCancel,
 } from "../components/ui/AlertDialog";
 import NewTemplateModal from "../components/ui/NewTemplateModal";
+import PinModal from "../components/ui/PinModal";
 import { getTemplates, deleteTemplate, executeTemplate } from "../services/templateService";
 import { deactivateRecurringTransaction } from "../services/recurringTransactionService";
 
@@ -23,7 +24,9 @@ const TemplatesPage = () => {
   const [editTarget, setEditTarget] = useState(null);
   const [executeSuccessOpen, setExecuteSuccessOpen] = useState(false);
   const [executeErrorOpen, setExecuteErrorOpen] = useState(false);
-  const [executeErrorMessage, setExecuteErrorMessage] = useState('');
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [pinTarget, setPinTarget] = useState(null);
+  const [executeLoading, setExecuteLoading] = useState(false);
 
   const fetchTemplates = async () => {
     try {
@@ -38,14 +41,19 @@ const TemplatesPage = () => {
     fetchTemplates();
   }, []);
 
-  const handleExecute = async (templateId) => {
+  const handleExecuteClick = (templateId) => {
+    setPinTarget(templateId);
+    setPinDialogOpen(true);
+  };
+
+  const handlePinConfirm = async (pin) => {
+    setExecuteLoading(true);
     try {
-      await executeTemplate(templateId);
+      await executeTemplate(pinTarget, pin);
+      setPinDialogOpen(false);
       setExecuteSuccessOpen(true);
-    } catch (err) {
-      const detail = err.response?.data?.detail;
-      setExecuteErrorMessage(typeof detail === 'string' ? detail : 'Failed to execute template.');
-      setExecuteErrorOpen(true);
+    } finally {
+      setExecuteLoading(false);
     }
   };
 
@@ -129,7 +137,7 @@ const TemplatesPage = () => {
                       cardType={t.card?.card_type?.name}
                       cardNumber={t.card?.card_number_masked}
                       isRecurring={false}
-                      onExecute={() => handleExecute(t.id)}
+                      onExecute={() => handleExecuteClick(t.id)}
                       onEdit={() => setEditTarget(t)}
                       onDelete={() => setDeleteTarget(t)}
                     />
@@ -197,10 +205,17 @@ const TemplatesPage = () => {
         </AlertDialogFooter>
       </AlertDialog>
 
+      <PinModal
+        open={pinDialogOpen}
+        onClose={() => setPinDialogOpen(false)}
+        onConfirm={handlePinConfirm}
+        loading={executeLoading}
+      />
+
       <AlertDialog open={executeErrorOpen} onClose={() => setExecuteErrorOpen(false)}>
         <AlertDialogHeader>
           <AlertDialogTitle>Execution failed</AlertDialogTitle>
-          <AlertDialogDescription>{executeErrorMessage}</AlertDialogDescription>
+          <AlertDialogDescription>Failed to execute template.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => setExecuteErrorOpen(false)}>Close</AlertDialogCancel>
