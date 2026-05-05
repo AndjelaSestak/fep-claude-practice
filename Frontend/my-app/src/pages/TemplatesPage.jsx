@@ -136,7 +136,10 @@ const TemplatesPage = () => {
 
             {/* Single Templates */}
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-700">Single</h2>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-2 w-10 bg-primary rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)]"></div>
+                <span className="text-[11px] font-black text-primary-dark uppercase tracking-[0.2em]">Single Templates</span>
+              </div>
               {singleTemplates.length > 0 ? (
                 <div className="grid grid-cols-3 gap-6">
                   {singleTemplates.map((t) => (
@@ -162,7 +165,10 @@ const TemplatesPage = () => {
 
             {/* Recurring Templates */}
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-700">Recurring</h2>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-2 w-10 bg-primary rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)]"></div>
+                <span className="text-[11px] font-black text-primary-dark uppercase tracking-[0.2em]">Recurring Templates</span>
+              </div>
               {recurringTemplates.length > 0 ? (
                 <div className="grid grid-cols-3 gap-6">
                   {recurringTemplates.map((t) => (

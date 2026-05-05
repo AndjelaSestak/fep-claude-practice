@@ -1,6 +1,6 @@
 from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
-from app.utils.errors import DatabaseTransactionError
+from app.utils.errors import DatabaseTransactionError, BadRequestError
 from app.models.user import User
 from app.services.email_types import send_card_block_notification
 from app.models.card import Card, CardStatus
@@ -17,9 +17,9 @@ def _report_and_block_card(
 ) -> Card:
     card = db.query(Card).filter(Card.id == card_id, Card.user_id == current_user.id).first()
     if not card:
-        raise ValueError("Card not found")
+        raise BadRequestError("Card not found")
     if card.status != CardStatus.active:
-        raise ValueError("Only active cards can be reported or blocked")
+        raise BadRequestError("Only active cards can be reported or blocked")
     
     card_report = CardReport(
         card_id=card.id,
@@ -83,9 +83,9 @@ def report_stolen_card(db: Session, card_id: int, background_tasks: BackgroundTa
 def manual_unblock_card(db: Session, card_id: int, current_user: User) -> Card:
     card = db.query(Card).filter(Card.id == card_id, Card.user_id == current_user.id).first()
     if not card:
-        raise ValueError("Card not found")
+        raise BadRequestError("Card not found")
     if card.status == CardStatus.active:
-        raise ValueError("Card is already active")
+        raise BadRequestError("Card is already active")
     
     card.status = CardStatus.active
     try:
@@ -99,7 +99,7 @@ def manual_unblock_card(db: Session, card_id: int, current_user: User) -> Card:
 def get_card_reports(db: Session, card_id: int, current_user: User) -> list[CardReport]:
     card = db.query(Card).filter(Card.id == card_id,Card.user_id == current_user.id, Card.is_email_verified == True, Card.is_deleted == False).first()
     if not card:
-        raise ValueError("Card not found")
+        raise BadRequestError("Card not found")
     
     reports = db.query(CardReport).filter(CardReport.card_id == card_id).all()
     return reports

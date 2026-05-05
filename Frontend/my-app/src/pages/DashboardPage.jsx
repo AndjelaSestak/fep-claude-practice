@@ -9,6 +9,8 @@ import { ItemList } from "../components/ui/ItemList";
 import { TransactionFilters } from "../components/ui/TransactionFilters";
 import { getCurrencies, getExchangeRate, getWalletBalance } from "../services/walletService";
 import { getTransactionById, getTransactionsForUser } from "../services/transactionService";
+import { exportTransactions } from "../services/generateReportService";
+import { triggerDownload } from "../utils/reportHelper";
 
 const DashboardPage = () => {
   const [walletBalance, setWalletBalance] = useState(null);
@@ -29,19 +31,35 @@ const DashboardPage = () => {
 
 
   // --- LOGIKA ZA EXPORT (Download) ---
-  const handleMonthlyExport = (format) => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const url = `${baseUrl}/transactions/export?format=${format}&period=current_month`;
-    
-    window.open(url, "_blank");
-  };
+  const handleMonthlyExport = async (format) => {
+    try {
+        // Za dashboard nam treba samo format i period
+        const blobData = await exportTransactions(
+            format, 
+            null,
+            null, 
+            null, 
+            'current_month'
+        );
+        
+        triggerDownload(blobData, `mesecni_izvestaj.${format}`);
+    } catch (error) {
+        console.error("Desila se greška pri preuzimanju mesečnog izveštaja:", error);
+    }
+};
 
   // --- LOGIKA ZA DOHVATANJE SVIH TRANSAKCIJA (API) ---
   const fetchTransactions = useCallback(async () => {
   setLoading(true);
   try {
    
-    const data = await getTransactionsForUser(filters.search, 10, 0); 
+    const data = await getTransactionsForUser(
+      filters.search,
+      10,
+      0,
+      filters.type,
+      filters.direction
+    ); 
     
     let result = data;
     
@@ -188,29 +206,34 @@ const DashboardPage = () => {
               <TransactionFilters onFilterChange={setFilters} />
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-2">
 
                 <div className="flex justify-end w-full">
-                
-              <div className="flex bg-primary/20 p-1 rounded-2xl backdrop-blur-sm border border-white/50">
-                                  <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      onClick={() => handleMonthlyExport('csv')}
-                                      className="hover:bg-white rounded-xl text-primary-dark font-bold transition-all px-4"
-                                  >
-                                      📊 CSV
-                                  </Button>
-                                  <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      onClick={() => handleMonthlyExport('pdf')}
-                                      className="hover:bg-white rounded-xl text-primary-dark font-bold transition-all px-4"
-                                  >
-                                      📄 PDF
-                                  </Button>
-                                  </div>
-                                  </div>
+                  <p className="text-sm font-semibold text-gray-700 uppercase tracking-[0.12em]">
+                    Download monthly export
+                  </p>
+                </div>
+
+                <div className="flex justify-end w-full">
+                  <div className="flex bg-primary/20 p-1 rounded-2xl backdrop-blur-sm border border-white/50">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleMonthlyExport('csv')}
+                        className="hover:bg-white rounded-xl text-primary-dark font-bold transition-all px-4"
+                    >
+                        📊 CSV
+                    </Button>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleMonthlyExport('pdf')}
+                        className="hover:bg-white rounded-xl text-primary-dark font-bold transition-all px-4"
+                    >
+                        📄 PDF
+                    </Button>
+                  </div>
+                </div>
               <ItemList 
                 title="Transactions" 
                 description={loading ? "Loading..." : `Showing ${transactions.length} results`}
