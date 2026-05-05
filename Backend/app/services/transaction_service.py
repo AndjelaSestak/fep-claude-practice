@@ -5,7 +5,7 @@ import csv
 from weasyprint import HTML
 from sqlalchemy.orm import Session
 from typing import Optional
-from sqlalchemy import String
+from sqlalchemy import String, or_
 from app.models.transaction import Transaction, TransactionStatus, TransactionDirection, TransactionType
 from app.models.card import Card, CardStatus
 from app.models.wallet import Wallet
@@ -21,7 +21,10 @@ from app.utils.errors import DatabaseTransactionError, InvalidTokenError
 PENDING_DELAY_SECONDS = 10
 
 def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None, limit: int = 10, offset: int = 0,):
-    query = db.query(Transaction).filter(Transaction.user_id == user_id)
+    query = db.query(Transaction).filter(
+        or_(Transaction.user_id == user_id,
+            Transaction.recipient_account_number == db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar_subquery())
+    )
 
     if search:
         search_pattern = f"%{search}%"
@@ -119,29 +122,29 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
     )
     recipient_wallet.balance = float(recipient_wallet.balance) + converted_amount
 
-    recipient_card = db.query(Card).filter(
-        Card.wallet_id == recipient_wallet.id,
-        Card.status == CardStatus.active
-    ).first()
+    # recipient_card = db.query(Card).filter(
+    #     Card.wallet_id == recipient_wallet.id,
+    #     Card.status == CardStatus.active
+    # ).first()
 
-    if not recipient_card:
-        return
+    # if not recipient_card:
+    #     return
 
-    incoming_txn = Transaction(
-        user_id=recipient_wallet.user_id,
-        card_id=recipient_card.id,
-        type=transaction.type,
-        amount=converted_amount,
-        currency=recipient_wallet.currency,
-        recipient=transaction.recipient,
-        recipient_account_number=transaction.recipient_account_number,
-        sender=transaction.sender,
-        sender_account_number=transaction.sender_account_number,
-        reference=transaction.reference,
-        status=TransactionStatus.completed,
-        direction=TransactionDirection.incoming
-    )
-    db.add(incoming_txn)
+    # incoming_txn = Transaction(
+    #     user_id=recipient_wallet.user_id,
+    #     card_id=recipient_card.id,
+    #     type=transaction.type,
+    #     amount=converted_amount,
+    #     currency=recipient_wallet.currency,
+    #     recipient=transaction.recipient,
+    #     recipient_account_number=transaction.recipient_account_number,
+    #     sender=transaction.sender,
+    #     sender_account_number=transaction.sender_account_number,
+    #     reference=transaction.reference,
+    #     status=TransactionStatus.completed,
+    #     direction=TransactionDirection.incoming
+    # )
+    # db.add(incoming_txn)
 
 
 def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
