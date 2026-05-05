@@ -5,6 +5,7 @@ import Input from '../components/ui/InputField'
 import { Link, useNavigate } from 'react-router-dom'
 import FormWrapper from '../components/ui/FormWrapper'
 import { authService } from '../services/authService'
+import Navbar from '../components/layout/NavBar'
 
 import AlertDialog, {
   AlertDialogHeader,
@@ -70,7 +71,8 @@ const RegistrationPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center px-4 pt-12">
+    <div className="min-h-screen bg-slate-100 flex flex-col">
+      <Navbar />
 
       {/* SUCCESS DIALOG */}
       <AlertDialog
@@ -118,21 +120,22 @@ const RegistrationPage = () => {
         </AlertDialogFooter>
       </AlertDialog>
 
-      {/* HEADER */}
-      <div className="mb-8 text-center">
-        <div className="flex items-center justify-center gap-2">
-          <div className="rounded-lg bg-primary p-2">
-            <span className="text-lg font-bold text-white">S</span>
+      <main className="flex flex-1 flex-col items-center px-4 py-12">
+        {/* HEADER */}
+        <div className="mb-8 text-center">
+          <div className="flex items-center justify-center gap-2">
+            <div className="rounded-lg bg-primary p-2">
+              <span className="text-lg font-bold text-white">S</span>
+            </div>
+            <h1 className="text-4xl font-bold text-slate-900">SecureBank</h1>
           </div>
-          <h1 className="text-4xl font-bold text-slate-900">SecureBank</h1>
+          <p className="mt-2 text-lg text-slate-600">
+            Secure, modern banking platform
+          </p>
         </div>
-        <p className="mt-2 text-lg text-slate-600">
-          Secure, modern banking platform
-        </p>
-      </div>
 
-      {/* FORM */}
-      <FormWrapper>
+        {/* FORM */}
+        <FormWrapper>
         <div className="w-full">
           <div className="mb-8 text-left">
             <h2 className="text-4xl font-bold text-slate-900">
@@ -197,7 +200,8 @@ const RegistrationPage = () => {
             </Link>
           </p>
         </div>
-      </FormWrapper>
+        </FormWrapper>
+      </main>
     </div>
   )
 }
