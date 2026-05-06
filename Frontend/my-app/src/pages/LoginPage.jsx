@@ -71,7 +71,7 @@ const LoginPage = () => {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-1">
               <label className="text-sm font-medium text-gray-700">Password</label>
-              <a href="/forgot-password" className="text-sm text-primary hover:underline">
+              <a href="/forgot_password" className="text-sm text-primary hover:underline">
                 Forgot password?
               </a>
             </div>

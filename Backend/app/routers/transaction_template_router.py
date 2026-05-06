@@ -18,7 +18,7 @@ router = APIRouter(prefix="/templates", tags=["Transaction Templates"])
 
 require_user = RequireRole(["user"])
 
-@router.post("/CreateTemplate", response_model=TransactionTemplateResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/create_template", response_model=TransactionTemplateResponse, status_code=status.HTTP_201_CREATED)
 def create_template(
     request: TransactionTemplateCreate,
     db: Annotated[Session, Depends(get_db)],
@@ -26,7 +26,7 @@ def create_template(
 ):
     return transaction_template_service.create_template(db, request, current_user)
 
-@router.get("/GetTemplateDetails/{template_id}", response_model=TransactionTemplateResponse)
+@router.get("/get_template_details/{template_id}", response_model=TransactionTemplateResponse)
 def get_template_details(
     template_id: int,
     db: Annotated[Session, Depends(get_db)],
@@ -34,14 +34,14 @@ def get_template_details(
 ):
     return transaction_template_service.get_template_by_id(db, template_id, current_user)
 
-@router.get("/GetAllTemplates", response_model=List[TransactionTemplateResponse])
+@router.get("/get_all_templates", response_model=List[TransactionTemplateResponse])
 def get_all_templates(
     db: Annotated[Session, Depends(get_db)],
     current_user: User = Depends(require_user)
 ):
     return transaction_template_service.get_templates(db, current_user)
 
-@router.patch("/UpdateTemplate/{template_id}", response_model=TransactionTemplateResponse)
+@router.patch("/update_template/{template_id}", response_model=TransactionTemplateResponse)
 def update_template(
     template_id: int,
     request: TransactionTemplateUpdate,
@@ -50,7 +50,7 @@ def update_template(
 ):
     return transaction_template_service.update_template(db, template_id, request, current_user)
 
-@router.delete("/DeleteTemplate/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/delete_template/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_template(
     template_id: int,
     db: Annotated[Session, Depends(get_db)],

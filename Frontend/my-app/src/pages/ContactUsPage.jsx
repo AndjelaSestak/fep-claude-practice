@@ -8,7 +8,7 @@ import TextArea from '../components/ui/TextArea';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import Navbar from '../components/layout/NavBar';
 import Footer from '../components/layout/Footer';
-import { sendMessageFromContactUsPage } from '../services/visitorService';
+import { sendContactMessage } from '../services/visitorService';
 import AlertDialog, {
   AlertDialogHeader,
   AlertDialogTitle,
@@ -78,7 +78,7 @@ const ContactUsPage = () => {
     setLoading(true);
 
     try {
-      await sendMessageFromContactUsPage(
+      await sendContactMessage(
         formData.sender,
         formData.subject,
         formData.sender_email,

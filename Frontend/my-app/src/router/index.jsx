@@ -27,7 +27,7 @@ const router = createBrowserRouter([
         element: <LoginPage />,
     },
     {
-        path: '/forgot-password',
+        path: '/forgot_password',
         element: <ForgotPasswordPage />,
     },
     {
@@ -59,11 +59,11 @@ const router = createBrowserRouter([
         element: <RegistrationPage />,
     },
     {
-        path: '/verify-email',
+        path: '/verify_email',
         element: <OTPVerificationPage />,
     },
     {
-        path: '/reset-password',
+        path: '/reset_password',
         element: <ResetPasswordPage />,
     },
     {
@@ -71,7 +71,7 @@ const router = createBrowserRouter([
         element: <SettingsPage />,
     },
     {
-        path: '/forgot-password',
+        path: '/forgot_password',
         element: <ForgotPasswordPage />,
     },
     {
@@ -79,11 +79,11 @@ const router = createBrowserRouter([
         element: <TransactionsPage />,
     },
     {
-        path: '/add-card',
+        path: '/add_card',
         element: <AddCardPage />,
     },
     {
-        path: '/my-cards',
+        path: '/my_cards',
         element: <MyCardsPage />,
     },
     {

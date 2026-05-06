@@ -4,7 +4,7 @@ import Button from '../components/ui/Button'
 import FormField from '../components/ui/FormField'
 import Input from '../components/ui/InputField'
 import FormWrapper from '../components/ui/FormWrapper'
-import { authService } from '../services/authService'
+import { resendVerificationEmail, verifyEmail } from '../services/authService'
 import cardService from '../services/cardService'
 import AlertDialog, {
   AlertDialogHeader,
@@ -64,7 +64,7 @@ const OTPVerificationPage = () => {
       })
       setSuccessDialogOpen(true)
     } else {
-      await authService.verifyEmail({
+      await verifyEmail({
         email,
         otp_code: otp
       })
@@ -83,7 +83,7 @@ const OTPVerificationPage = () => {
 
     try{
          setLoading(true)
-        await authService.resendVerificationEmail(email)
+        await resendVerificationEmail(email)
         setResendCooldown(60)
         setResendDialogOpen(true)
     }
@@ -113,7 +113,7 @@ const OTPVerificationPage = () => {
       <AlertDialogFooter>
         <AlertDialogAction onClick={() => {
           setSuccessDialogOpen(false)
-          navigate('/my-cards')
+          navigate('/my_cards')
         }}>
           Go to My Cards
         </AlertDialogAction>
