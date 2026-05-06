@@ -4,42 +4,52 @@ import { login as apiLogin, logout as apiLogout, getMe } from '../services/authS
 const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        let cancelled = false
+  useEffect(() => {
+    let cancelled = false
 
-        getMe()
-            .then((data) => { if (!cancelled) setUser(data) })
-            .catch(() => { if (!cancelled) setUser(null) })
-            .finally(() => { if (!cancelled) setLoading(false) })
+    getMe()
+      .then((data) => {
+        if (!cancelled) setUser(data)
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
 
-        return () => { cancelled = true }
-    }, [])
-
-    const login = async (email, password) => {
-        await apiLogin(email, password)
-        const me = await getMe()
-        setUser(me)
+    return () => {
+      cancelled = true
     }
+  }, [])
 
-    const logout = async () => {
-        await apiLogout()
-        setUser(null)
-    }
+  const login = async (email, password) => {
+    await apiLogin(email, password)
+    const me = await getMe()
+    setUser(me)
+  }
 
-    const refreshUser = async () => {
-        const me = await getMe()
-        setUser(me)
-        return me
-    }
+  const logout = async () => {
+    await apiLogout()
+    setUser(null)
+  }
 
-    return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, loading, refreshUser }}>
-            {children}
-        </AuthContext.Provider>
-    )
+  const refreshUser = async () => {
+    const me = await getMe()
+    setUser(me)
+    return me
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{ user, isAuthenticated: !!user, login, logout, loading, refreshUser }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export const useAuth = () => useContext(AuthContext)

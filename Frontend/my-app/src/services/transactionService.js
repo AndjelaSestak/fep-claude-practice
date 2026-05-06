@@ -1,59 +1,66 @@
-import api from "./api";
+import api from './api'
 
 export const getSupportedCurrencies = async () => {
-    try {
-        const response = await api.get('/currency/currencies');
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching currencies:", error);
-        throw error;
-    }
-};
+  try {
+    const response = await api.get('/currency/currencies')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching currencies:', error)
+    throw error
+  }
+}
 
 export const createTransaction = async (data) => {
-    try {
-        const response = await api.post('/transactions', data);
-        return response.data;
-    } catch (error) {
-        console.error("Error creating transaction:", error);
-        throw error;
-    }
-};
+  try {
+    const response = await api.post('/transactions', data)
+    return response.data
+  } catch (error) {
+    console.error('Error creating transaction:', error)
+    throw error
+  }
+}
 
 export const cancelTransaction = async (transactionId) => {
-    try {
-        const response = await api.delete(`/transactions/${transactionId}`);
-        return response.data;
-    } catch (error) {
-        console.error("Error cancelling transaction:", error);
-        throw error;
-    }
-};
+  try {
+    const response = await api.delete(`/transactions/${transactionId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error cancelling transaction:', error)
+    throw error
+  }
+}
 
-export const getTransactionsForUser = async (search, limit, offset, type = 'all', direction = 'all', period) => {
-    try {
-        const params = {};
-        if (search) params.search = search;
-        if (limit) params.limit = limit;
-        if (offset) params.offset = offset;
-        if (type) params.type = type;
-        if (direction) params.direction = direction;
-        if (period) params.period = period;
+export const getTransactionsForUser = async (
+  search,
+  limit,
+  offset,
+  type = 'all',
+  direction = 'all',
+  period
+) => {
+  try {
+    const params = {}
+    if (search) params.search = search
+    if (limit) params.limit = limit
+    if (offset) params.offset = offset
+    if (type) params.type = type
+    if (direction) params.direction = direction
+    if (period) params.period = period
 
-        const response = await api.get('/transactions/all', { params });
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching transactions:", error);
-        throw error;
-    }
-};
+    const response = await api.get('/transactions/all', { params })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching transactions:', error)
+    throw error
+  }
+}
 
 export const getTransactionById = async (transactionId) => {
-    try {
-        const response = await api.get(`/transactions/${transactionId}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Error fetching transaction with ID ${transactionId}:`, error);
-        throw error;
-    }
-};
+  try {
+    const response = await api.get(`/transactions/${transactionId}`)
+    return response.data
+  } catch (error) {
+    console.error(`Error fetching transaction with ID ${transactionId}:`, error)
+    throw error
+  }
+}

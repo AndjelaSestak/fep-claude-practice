@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, CreditCard, Wallet, FileText, Settings } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, CreditCard, FileText, Settings } from 'lucide-react'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Transactions', icon: ArrowLeftRight, path: '/transactions' },
   { label: 'Cards', icon: CreditCard, path: '/my_cards' },
   { label: 'Templates', icon: FileText, path: '/templates' },
-  { label: 'Settings', icon: Settings, path: '/settings' },
+  { label: 'Settings', icon: Settings, path: '/settings' }
 ]
 
 const Sidebar = () => {
@@ -22,22 +22,25 @@ const Sidebar = () => {
 
       {/* Nav Items */}
       <nav className="flex flex-col gap-1">
-        {navItems.map(({ label, icon: Icon, path }) => (
-          <NavLink
-            key={path}
-            to={path}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-green-50 text-green-600'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-              }`
-            }
-          >
-            <Icon size={18} />
-            {label}
-          </NavLink>
-        ))}
+        {navItems.map(({ label, icon, path }) => {
+          const Icon = icon
+          return (
+            <NavLink
+              key={path}
+              to={path}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-green-50 text-green-600'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                }`
+              }
+            >
+              <Icon size={18} />
+              {label}
+            </NavLink>
+          )
+        })}
       </nav>
     </aside>
   )
