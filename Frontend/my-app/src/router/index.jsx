@@ -18,78 +18,78 @@ import MyCardsPage from '../pages/MyCardsPage'
 import TemplatesPage from '../pages/TemplatesPage'
 
 const router = createBrowserRouter([
-    {
-        path: '/',
-        element: <HomePage />,
-    },
-    {
-        path: '/login',
-        element: <LoginPage />,
-    },
-    {
-        path: '/forgot-password',
-        element: <ForgotPasswordPage />,
-    },
-    {
-        path: '*',
-        element: <NotFoundPage />,
-    },
-    {
-        path: '/dashboard',
-        element: (
-            <ProtectedRoute>
-                <DashboardPage />
-            </ProtectedRoute>
-        ),
-    },
-    {
-        path: '/about',
-        element: <AboutPage />,
-    },
-    {
-        path: '/contactus',
-        element: <ContactUsPage />,
-    },
-    {
-        path: '/team',
-        element: <TeamPage />,
-    },
-    {
-        path: '/register',
-        element: <RegistrationPage />,
-    },
-    {
-        path: '/verify-email',
-        element: <OTPVerificationPage />,
-    },
-    {
-        path: '/reset-password',
-        element: <ResetPasswordPage />,
-    },
-    {
-        path: '/settings',
-        element: <SettingsPage />,
-    },
-    {
-        path: '/forgot-password',
-        element: <ForgotPasswordPage />,
-    },
-    {
-        path: '/transactions',
-        element: <TransactionsPage />,
-    },
-    {
-        path: '/add-card',
-        element: <AddCardPage />,
-    },
-    {
-        path: '/my-cards',
-        element: <MyCardsPage />,
-    },
-    {
-        path: '/templates',
-        element: <TemplatesPage />,
-    },
+  {
+    path: '/',
+    element: <HomePage />
+  },
+  {
+    path: '/login',
+    element: <LoginPage />
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />
+  },
+  {
+    path: '*',
+    element: <NotFoundPage />
+  },
+  {
+    path: '/dashboard',
+    element: (
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/about',
+    element: <AboutPage />
+  },
+  {
+    path: '/contactus',
+    element: <ContactUsPage />
+  },
+  {
+    path: '/team',
+    element: <TeamPage />
+  },
+  {
+    path: '/register',
+    element: <RegistrationPage />
+  },
+  {
+    path: '/verify-email',
+    element: <OTPVerificationPage />
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPasswordPage />
+  },
+  {
+    path: '/settings',
+    element: <SettingsPage />
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />
+  },
+  {
+    path: '/transactions',
+    element: <TransactionsPage />
+  },
+  {
+    path: '/add-card',
+    element: <AddCardPage />
+  },
+  {
+    path: '/my-cards',
+    element: <MyCardsPage />
+  },
+  {
+    path: '/templates',
+    element: <TemplatesPage />
+  }
 ])
 
 export default router

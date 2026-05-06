@@ -1,108 +1,109 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { CreditCard } from "lucide-react";
-import Button from "../components/ui/Button";
-import Input from "../components/ui/InputField";
-import FormField from "../components/ui/FormField";
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { CreditCard } from 'lucide-react'
+import Button from '../components/ui/Button'
+import Input from '../components/ui/InputField'
+import FormField from '../components/ui/FormField'
 import AlertDialog, {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogCancel,
-} from "../components/ui/AlertDialog";
-import { resetPassword } from "../services/authService";
+  AlertDialogCancel
+} from '../components/ui/AlertDialog'
+import { resetPassword } from '../services/authService'
 
 const ResetPasswordPage = () => {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") || "";
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token') || ''
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!token) {
-      setError("Reset token was not found. Open the link from your email to reset your password.");
+      setError('Reset token was not found. Open the link from your email to reset your password.')
     }
-  }, [token]);
+  }, [token])
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
-    }));
-  };
+      [name]: value
+    }))
+  }
 
   const validateForm = () => {
     if (!formData.newPassword) {
-      return "Please enter your new password.";
+      return 'Please enter your new password.'
     }
 
     if (formData.newPassword.length < 8) {
-      return "Password must be at least 8 characters.";
+      return 'Password must be at least 8 characters.'
     }
 
     if (!formData.confirmPassword) {
-      return "Please confirm your new password.";
+      return 'Please confirm your new password.'
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      return "Passwords do not match.";
+      return 'Passwords do not match.'
     }
 
-    return "";
-  };
+    return ''
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+    e.preventDefault()
+    setError('')
+    setSuccess('')
 
     if (!token) {
-      setError("Reset token is not available. Please use a valid link.");
-      showErrorDialog("Reset token is not available. Please use a valid link.");
-      return;
+      setError('Reset token is not available. Please use a valid link.')
+      showErrorDialog('Reset token is not available. Please use a valid link.')
+      return
     }
 
-    setError("");
-    const validationMessage = validateForm();
+    setError('')
+    const validationMessage = validateForm()
     if (validationMessage) {
-      showErrorDialog(validationMessage);
-      return;
+      showErrorDialog(validationMessage)
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
       await resetPassword({
         token,
         new_password: formData.newPassword,
-        confirm_new_password: formData.confirmPassword,
-      });
-      setSuccess("Password reset successfully. Redirecting to login...");
-      setFormData({ newPassword: "", confirmPassword: "" });
-      navigate("/login");
+        confirm_new_password: formData.confirmPassword
+      })
+      setSuccess('Password reset successfully. Redirecting to login...')
+      setFormData({ newPassword: '', confirmPassword: '' })
+      navigate('/login')
     } catch (err) {
-      const message = err?.response?.data?.detail || err?.message || "Something went wrong. Please try again.";
-      setError(message);
-      showErrorDialog(message);
+      const message =
+        err?.response?.data?.detail || err?.message || 'Something went wrong. Please try again.'
+      setError(message)
+      showErrorDialog(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const showErrorDialog = (message) => {
-    setErrorMessage(message);
-    setErrorDialogOpen(true);
-  };
+    setErrorMessage(message)
+    setErrorDialogOpen(true)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
@@ -120,9 +121,7 @@ const ResetPasswordPage = () => {
           <AlertDialogDescription>{errorMessage}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>
-            Close
-          </AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>Close</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
 
@@ -138,7 +137,7 @@ const ResetPasswordPage = () => {
         {success && <p className="text-green-600 text-sm mb-4">{success}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-            <FormField label="New password" required>
+          <FormField label="New password" required>
             <Input
               type="password"
               name="newPassword"
@@ -159,12 +158,12 @@ const ResetPasswordPage = () => {
           </FormField>
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? "Resetting password..." : "Reset password"}
+            {loading ? 'Resetting password...' : 'Reset password'}
           </Button>
         </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ResetPasswordPage;
+export default ResetPasswordPage

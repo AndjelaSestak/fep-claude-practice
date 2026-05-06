@@ -1,12 +1,19 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ArrowLeftRight, CreditCard, Wallet, FileText, Settings } from 'lucide-react'
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  CreditCard,
+  Wallet,
+  FileText,
+  Settings
+} from 'lucide-react'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Transactions', icon: ArrowLeftRight, path: '/transactions' },
   { label: 'Cards', icon: CreditCard, path: '/my-cards' },
   { label: 'Templates', icon: FileText, path: '/templates' },
-  { label: 'Settings', icon: Settings, path: '/settings' },
+  { label: 'Settings', icon: Settings, path: '/settings' }
 ]
 
 const Sidebar = () => {

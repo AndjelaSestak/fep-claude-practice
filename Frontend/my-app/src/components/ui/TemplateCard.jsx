@@ -1,11 +1,11 @@
-import { FileText, Play, Pencil, Trash2, RefreshCw, XCircle } from "lucide-react";
-import Button from "./Button";
+import { FileText, Play, Pencil, Trash2, RefreshCw, XCircle } from 'lucide-react'
+import Button from './Button'
 
 const TemplateCard = ({
   title,
   provider,
   amount,
-  currency = "RSD",
+  currency = 'RSD',
   cardType,
   cardNumber,
   isRecurring = false,
@@ -15,19 +15,17 @@ const TemplateCard = ({
   onEdit,
   onDelete,
   onDeactivate,
-  onActivate,
+  onActivate
 }) => {
-  const ToggleIcon = isActive ? XCircle : RefreshCw;
-  const toggleLabel = isActive ? "Deactivate" : "Activate";
-  const toggleAction = isActive ? onDeactivate : onActivate;
+  const ToggleIcon = isActive ? XCircle : RefreshCw
+  const toggleLabel = isActive ? 'Deactivate' : 'Activate'
+  const toggleAction = isActive ? onDeactivate : onActivate
   const toggleClassName = isActive
-    ? "w-full border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
-    : "w-full border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700";
+    ? 'w-full border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700'
+    : 'w-full border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700'
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4 relative overflow-hidden">
-      
-      
       {isRecurring && !isActive && (
         <div className="absolute inset-0 bg-gray-50/50 pointer-events-none"></div>
       )}
@@ -36,24 +34,22 @@ const TemplateCard = ({
         <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
           <FileText className="w-5 h-5 text-green-600" />
         </div>
-        
-       
+
         <div className="flex flex-col items-end gap-2">
           {isRecurring && (
             <div className="flex items-center gap-2">
               {/* STATUS BEDŽ */}
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
-                isActive 
-                  ? "bg-green-100 text-green-700" 
-                  : "bg-gray-200 text-gray-500"
-              }`}>
-                {isActive ? "Active" : "Inactive"}
+              <span
+                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
+                  isActive ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                }`}
+              >
+                {isActive ? 'Active' : 'Inactive'}
               </span>
 
-             
               <span className="flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
                 <RefreshCw className="w-3 h-3" />
-                {frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) : "Recurring"}
+                {frequency ? frequency.charAt(0).toUpperCase() + frequency.slice(1) : 'Recurring'}
               </span>
             </div>
           )}
@@ -66,8 +62,12 @@ const TemplateCard = ({
       </div>
 
       <div className="relative z-10">
-        <p className="text-3xl font-bold text-gray-900">{currency} {amount}</p>
-        <p className="text-gray-400 text-sm mt-1">{cardType} {cardNumber}</p>
+        <p className="text-3xl font-bold text-gray-900">
+          {currency} {amount}
+        </p>
+        <p className="text-gray-400 text-sm mt-1">
+          {cardType} {cardNumber}
+        </p>
       </div>
 
       <div className="mt-auto space-y-3 relative z-10">
@@ -79,11 +79,7 @@ const TemplateCard = ({
         )}
 
         {isRecurring && (
-          <Button 
-            variant="outline" 
-            onClick={toggleAction}
-            className={toggleClassName}
-          >
+          <Button variant="outline" onClick={toggleAction} className={toggleClassName}>
             <ToggleIcon className="w-4 h-4 mr-2" />
             {toggleLabel}
           </Button>
@@ -100,9 +96,8 @@ const TemplateCard = ({
           </Button>
         </div>
       </div>
-
     </div>
-  );
-};
+  )
+}
 
-export default TemplateCard;
+export default TemplateCard

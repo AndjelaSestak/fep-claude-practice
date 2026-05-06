@@ -1,32 +1,32 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { CreditCard } from "lucide-react";
-import Button from "../components/ui/Button";
-import Input from "../components/ui/InputField";
-import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/layout/NavBar";
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { CreditCard } from 'lucide-react'
+import Button from '../components/ui/Button'
+import Input from '../components/ui/InputField'
+import { useAuth } from '../context/AuthContext'
+import Navbar from '../components/layout/NavBar'
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate()
+  const { login } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleLogin = async () => {
-    setLoading(true);
-    setError("");
+    setLoading(true)
+    setError('')
 
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      await login(email, password)
+      navigate('/dashboard')
     } catch (err) {
-      setError("Invalid email or password");
+      setError(err.message || 'Invalid email or password')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -44,7 +44,6 @@ const LoginPage = () => {
 
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-md">
-
           <h2 className="text-2xl font-bold text-gray-900">Sign in</h2>
           <p className="text-gray-500 text-sm mt-1 mb-6">
             Enter your email and password to access your account
@@ -52,9 +51,7 @@ const LoginPage = () => {
           <label className="text-sm font-medium text-gray-700 mb-1 block">Email</label>
 
           {/* Error poruka */}
-          {error && (
-            <p className="text-red-500 text-sm mb-4">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
           {/* Email */}
           <div className="mb-4">
@@ -80,32 +77,26 @@ const LoginPage = () => {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             />
           </div>
 
           {/* Sign in dugme */}
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleLogin}
-            disabled={loading}
-          >
-            {loading ? "Signing in..." : "Sign in"}
+          <Button className="w-full" size="lg" onClick={handleLogin} disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign in'}
           </Button>
 
           {/* Register link */}
           <p className="text-center text-sm text-gray-500 mt-6">
-            Don't have an account?{" "}
+            Don't have an account?{' '}
             <a href="/register" className="text-primary font-medium hover:underline">
               Sign up
             </a>
           </p>
-
         </div>
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

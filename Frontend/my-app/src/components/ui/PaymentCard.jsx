@@ -1,31 +1,31 @@
-import { useState } from "react";
-import {
-  Lock,
-  Unlock,
-  AlertTriangle,
-  Trash2,
-  FileText,
-  Copy,
-  Check,
-} from "lucide-react";
-import Button from "./Button";
-import { Visa as VisaLogo, Mastercard as MastercardLogo } from "react-payment-logos/dist/flat";
+import { useState } from 'react'
+import { Lock, Unlock, AlertTriangle, Trash2, FileText, Copy, Check } from 'lucide-react'
+import Button from './Button'
+import { Visa as VisaLogo, Mastercard as MastercardLogo } from 'react-payment-logos/dist/flat'
 
 const maskAccountNumber = (accountNumber) => {
-  if (!accountNumber || accountNumber.length < 8) return accountNumber;
-  return `${accountNumber.slice(0, 4)} •••• •••• ${accountNumber.slice(-4)}`;
-};
+  if (!accountNumber || accountNumber.length < 8) return accountNumber
+  return `${accountNumber.slice(0, 4)} •••• •••• ${accountNumber.slice(-4)}`
+}
 
 // Logo rendered in original colours on a small white pill so it stays legible
 // on any card background without needing CSS filter hacks.
 const CardNetworkLogo = ({ cardType }) => {
-  const type = cardType?.toLowerCase();
-  const pill = "bg-white rounded-md px-2 py-1 flex items-center justify-center shadow-sm";
+  const type = cardType?.toLowerCase()
+  const pill = 'bg-white rounded-md px-2 py-1 flex items-center justify-center shadow-sm'
 
-  if (type === "visa")
-    return <div className={pill}><VisaLogo style={{ width: 38, height: "auto" }} /></div>;
-  if (type === "mastercard")
-    return <div className={pill}><MastercardLogo style={{ width: 34, height: "auto" }} /></div>;
+  if (type === 'visa')
+    return (
+      <div className={pill}>
+        <VisaLogo style={{ width: 38, height: 'auto' }} />
+      </div>
+    )
+  if (type === 'mastercard')
+    return (
+      <div className={pill}>
+        <MastercardLogo style={{ width: 34, height: 'auto' }} />
+      </div>
+    )
 
   return (
     <div className={pill}>
@@ -33,8 +33,8 @@ const CardNetworkLogo = ({ cardType }) => {
         {cardType}
       </span>
     </div>
-  );
-};
+  )
+}
 
 // Gold EMV chip with contact line etching
 const EmvChip = () => (
@@ -45,46 +45,43 @@ const EmvChip = () => (
     <div className="absolute left-[68%] inset-y-0 w-px bg-amber-700/30" />
     <div className="absolute inset-[18%] rounded-sm bg-amber-200/40" />
   </div>
-);
+)
 
 const PaymentCard = ({
   cardNumber,
   accountNumber,
   cardType,
-  status = "verified",
+  status = 'verified',
   onBlock,
   onUnblock,
   onReportStolen,
   onReportLost,
   onRemove,
-  onViewReports,
+  onViewReports
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false)
 
   const isBlocked =
-    status === "blocked" ||
-    status === "reported_lost" ||
-    status === "reported_stolen";
+    status === 'blocked' || status === 'reported_lost' || status === 'reported_stolen'
 
   const handleCopy = () => {
-    if (!accountNumber) return;
+    if (!accountNumber) return
     navigator.clipboard.writeText(accountNumber).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   return (
     // Outer white card — matches the app's existing card style (bg-white, rounded-2xl, shadow-sm)
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden w-80">
-
       {/* ── CARD VISUAL ─────────────────────────────────────────────────────── */}
       <div
         className={`
           relative aspect-[1.586/1] rounded-none overflow-hidden cursor-default select-none
           bg-gradient-to-br from-green-500 via-green-600 to-emerald-800
           transition-all duration-500
-          ${isBlocked ? "grayscale opacity-60" : ""}
+          ${isBlocked ? 'grayscale opacity-60' : ''}
         `}
       >
         {/* Soft light blob top-right for depth */}
@@ -97,9 +94,9 @@ const PaymentCard = ({
           className="absolute inset-0 opacity-[0.05] pointer-events-none"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px)," +
-              "linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
+              'linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),' +
+              'linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)',
+            backgroundSize: '20px 20px'
           }}
         />
 
@@ -107,7 +104,6 @@ const PaymentCard = ({
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
 
         <div className="relative h-full flex flex-col justify-between p-5">
-
           {/* TOP ROW: chip + logo */}
           <div className="flex items-center justify-between">
             <EmvChip />
@@ -124,7 +120,6 @@ const PaymentCard = ({
 
           {/* BOTTOM ROW: account number pill + status badge */}
           <div className="flex items-end justify-between gap-2">
-
             {accountNumber ? (
               <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5 min-w-0">
                 <span className="text-white/60 text-[9px] font-bold uppercase tracking-wider flex-shrink-0">
@@ -141,9 +136,7 @@ const PaymentCard = ({
                   aria-label="Copy account number"
                   className="text-white/50 hover:text-white flex-shrink-0 transition-colors ml-0.5"
                 >
-                  {copied
-                    ? <Check className="w-3 h-3 text-white" />
-                    : <Copy className="w-3 h-3" />}
+                  {copied ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
                 </button>
               </div>
             ) : (
@@ -155,13 +148,17 @@ const PaymentCard = ({
               className={`
                 flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full
                 text-[11px] font-semibold backdrop-blur-sm border
-                ${isBlocked
-                  ? "bg-red-500/25 border-red-300/30 text-red-100"
-                  : "bg-white/20 border-white/30 text-white"}
+                ${
+                  isBlocked
+                    ? 'bg-red-500/25 border-red-300/30 text-red-100'
+                    : 'bg-white/20 border-white/30 text-white'
+                }
               `}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${isBlocked ? "bg-red-300" : "bg-white animate-pulse"}`} />
-              {isBlocked ? "Blocked" : "Active"}
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${isBlocked ? 'bg-red-300' : 'bg-white animate-pulse'}`}
+              />
+              {isBlocked ? 'Blocked' : 'Active'}
             </div>
           </div>
         </div>
@@ -170,7 +167,6 @@ const PaymentCard = ({
       {/* ── ACTION BUTTONS ──────────────────────────────────────────────────── */}
       {/* Inside the same white card — separated by the card visual above */}
       <div className="p-4 flex flex-col gap-2">
-
         <Button
           variant="outline"
           size="sm"
@@ -178,7 +174,7 @@ const PaymentCard = ({
           className="w-full flex items-center justify-center gap-2"
         >
           {isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-          {isBlocked ? "Unblock Card" : "Block Card"}
+          {isBlocked ? 'Unblock Card' : 'Block Card'}
         </Button>
 
         {!isBlocked && (
@@ -226,7 +222,7 @@ const PaymentCard = ({
         </Button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PaymentCard;
+export default PaymentCard
