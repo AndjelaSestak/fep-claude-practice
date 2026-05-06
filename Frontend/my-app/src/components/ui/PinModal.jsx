@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import AlertDialog, {
   AlertDialogHeader,
   AlertDialogTitle,
@@ -13,12 +13,11 @@ const PinModal = ({ open, onClose, onConfirm, loading }) => {
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
 
-  useEffect(() => {
-    if (open) {
-      setPin('')
-      setPinError('')
-    }
-  }, [open])
+  const handleClose = () => {
+    setPin('')
+    setPinError('')
+    onClose()
+  }
 
   const handleConfirm = async () => {
     if (pin.length < 4) {
@@ -36,7 +35,7 @@ const PinModal = ({ open, onClose, onConfirm, loading }) => {
   }
 
   return (
-    <AlertDialog open={open} onClose={onClose}>
+    <AlertDialog open={open} onClose={handleClose}>
       <AlertDialogHeader>
         <AlertDialogTitle>Enter Card PIN</AlertDialogTitle>
         <AlertDialogDescription>
@@ -59,7 +58,7 @@ const PinModal = ({ open, onClose, onConfirm, loading }) => {
       </div>
 
       <AlertDialogFooter>
-        <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+        <AlertDialogCancel onClick={handleClose}>Cancel</AlertDialogCancel>
         <AlertDialogAction onClick={handleConfirm} disabled={loading || pin.length < 4}>
           {loading ? 'Verifying...' : 'Confirm'}
         </AlertDialogAction>

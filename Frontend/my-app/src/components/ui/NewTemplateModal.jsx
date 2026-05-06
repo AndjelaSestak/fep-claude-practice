@@ -109,6 +109,10 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
   useEffect(() => {
     if (!open) return
     setFormData(isEditMode ? templateToForm(template) : EMPTY_FORM)
+  }, [open, isEditMode, template])
+
+  useEffect(() => {
+    if (!open) return
 
     const loadData = async () => {
       try {
