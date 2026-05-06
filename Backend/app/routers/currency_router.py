@@ -13,7 +13,7 @@ def get_currencies(current_user: User = Depends(require_user)):
     return get_supported_currencies()
 
 
-@router.get("/exchange-rate")
+@router.get("/exchange_rate")
 def get_exchange_rate(from_currency: str, to_currency: str, current_user: User = Depends(require_user)):
     rate = fetch_exchange_rate(from_currency, to_currency)
     return {"exchange_rate": rate}

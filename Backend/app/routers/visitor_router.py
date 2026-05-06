@@ -6,7 +6,7 @@ from app.schemas.visitor import ContactMessageRequest
 router = APIRouter(prefix="/visitors", tags=["Visitors"])
 
 
-@router.post("/send-message")
+@router.post("/send_message")
 async def send_message_from_contact_us_page(
     message_data: ContactMessageRequest
 ):

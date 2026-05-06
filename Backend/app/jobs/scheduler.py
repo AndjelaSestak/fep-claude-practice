@@ -63,7 +63,7 @@ def start_scheduler() -> None:
         recurring_transactions_job,
         "interval",
         minutes=1,
-        id="recurring-transactions-job",
+        id="recurring_transactions_job",
         replace_existing=True,
     )
     scheduler.add_job(

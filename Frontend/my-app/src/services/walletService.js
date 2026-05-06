@@ -22,7 +22,7 @@ export const getCurrencies = async () => {
 
 export const getExchangeRate = async (fromCurrency, toCurrency) => {
     try {
-        const response = await api.get('/currency/exchange-rate', {
+        const response = await api.get('/currency/exchange_rate', {
             params: {
                 from_currency: fromCurrency,
                 to_currency: toCurrency,

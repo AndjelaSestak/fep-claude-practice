@@ -7,7 +7,7 @@ import PaymentCard from '../components/ui/PaymentCard'
 import { ItemList } from '../components/ui/ItemList'
 import Button from '../components/ui/Button'
 import { getMyCards, deleteCard } from '../services/cardService'
-import { blockCard, unblockCard, reportLostCard, reportStolenCard, getCardReports } from '../services/card_reportService'
+import { blockCard, unblockCard, reportLostCard, reportStolenCard, getCardReports } from '../services/cardReportService'
 import Dialog, {
   DialogContent,
   DialogHeader,
@@ -238,7 +238,7 @@ const MyCardsPage = () => {
 
             <div className="relative z-10">
               <Button
-                onClick={() => navigate('/add-card')}
+                onClick={() => navigate('/add_card')}
                 className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
               >
                 + New Card

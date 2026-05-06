@@ -20,18 +20,18 @@ require_user = RequireRole(["user"])
 def register_user(user: UserCreate, background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)]):
     return auth_service.register_user(db=db, user_data=user, background_tasks=background_tasks)
 
-@router.post("/verify-email", status_code=status.HTTP_200_OK)
+@router.post("/verify_email", status_code=status.HTTP_200_OK)
 def verify_email(data: VerifyOTP, background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)]):
     return auth_service.verify_user_email(db=db, data=data, background_tasks=background_tasks)
-@router.post("/forgot-password_email")
+@router.post("/forgot_password_email")
 def forgot_password_email(request: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     return auth_service.forgot_password(db=db, email=request.email, background_tasks=background_tasks)
 
-@router.post("/reset-password")
+@router.post("/reset_password")
 def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     return auth_service.reset_password(db=db, data=data)
 
-@router.post("/resend-verification-email", status_code=status.HTTP_200_OK)
+@router.post("/resend_verification_email", status_code=status.HTTP_200_OK)
 def resend_verification_email(data: ResendEmailRequest, background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)]):
     return auth_service.resend_verification_email(db=db, email=data.email, background_tasks=background_tasks)
 

@@ -102,7 +102,7 @@ const AddCardPage = () => {
           <AlertDialogAction
             onClick={() => {
               setSuccessDialogOpen(false)
-              navigate('/verify-email', {
+              navigate('/verify_email', {
                 state: { email: user?.email, type: 'card', cardId: createdCardId }
               })
             }}
@@ -207,7 +207,7 @@ const AddCardPage = () => {
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate('/my-cards')}
+                onClick={() => navigate('/my_cards')}
                 disabled={loading}
               >
                 Cancel
