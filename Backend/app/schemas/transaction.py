@@ -1,7 +1,6 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from app.models.transaction import TransactionStatus, TransactionDirection, TransactionType
-from app.services.exchange_rate_service import get_supported_currencies
 
 class CreateTransactionRequest(BaseModel):
     card_id: int
@@ -18,10 +17,9 @@ class CreateTransactionRequest(BaseModel):
         return v
 
     @field_validator("currency")
-    def currency_must_be_supported(cls, v):
-        supported = [c["value"] for c in get_supported_currencies()]
-        if v.upper() not in supported:
-            raise ValueError(f"Currency {v} is not supported")
+    def currency_format_must_be_valid(cls, v):
+        if not v or len(v) != 3:
+            raise ValueError("Currency must be a 3-letter code")
         return v.upper()
 
     @field_validator("recipient_account_number")

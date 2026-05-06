@@ -10,7 +10,7 @@ class TransactionTemplateBase(BaseModel):
     name: str
     amount: Decimal
     currency: str
-    recipient: str
+    recipient: Optional[str] = None
     recipient_account_number: str
     card_id: int
     reference: Optional[str] = None

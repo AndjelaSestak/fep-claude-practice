@@ -107,6 +107,9 @@ def update_template(db: Session, template_id: int, request: TransactionTemplateU
 
 def delete_template(db: Session, template_id: int, current_user: User):
     template = get_template_by_id(db, template_id, current_user)
+    for recurring in template.recurring_transactions:
+        if recurring.is_active: 
+            recurring.is_active = False
     template.is_deleted = True
 
     try:

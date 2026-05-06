@@ -7,6 +7,8 @@ import { TransactionFilters } from "../components/ui/TransactionFilters";
 import Button from "../components/ui/Button";
 import { getTransactionById, getTransactionsForUser } from "../services/transactionService";
 import NewTransactionModal from "../components/ui/NewTransactionModal";
+import { exportTransactions } from "../services/generateReportService";
+import { triggerDownload } from "../utils/reportHelper";
 
 
 const TransactionsPage = () => {
@@ -25,35 +27,43 @@ const TransactionsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  const handleExport = (format) => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    
-    // Pravimo query string na osnovu trenutnih filtera
-    const queryParams = new URLSearchParams({
-      format: format,
-      search: filters.search,
-      type: filters.type,
-      direction: filters.direction
-      // Ovde NE šaljemo limit i offset jer želimo SVE rezultate koji odgovaraju filteru
-    }).toString();
-
-    const url = `${baseUrl}/transactions/export?${queryParams}`;
-    window.open(url, "_blank");
-  };
+  const handleExport = async (format) => {
+    try {
+        
+        const blobData = await exportTransactions(
+            format, 
+            filters.search, 
+            filters.type, 
+            filters.direction
+        );
+        
+      
+        triggerDownload(blobData, `izvestaj.${format}`);
+    } catch (error) {
+        console.error("Desila se greška pri preuzimanju:", error);
+        // Ovde možeš staviti neki toast.error("Preuzimanje nije uspelo")
+    }
+};
 
   // 1. DOHVATANJE PODATAKA (Search ide na backend)
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const offset = (page - 1) * limit;
-      const data = await getTransactionsForUser(filters.search, limit, offset);
+      const data = await getTransactionsForUser(
+        filters.search,
+        limit,
+        offset,
+        filters.type,
+        filters.direction
+      );
       setTransactions(data);
     } catch (error) {
       console.error("Greška pri fetchu:", error);
     } finally {
       setLoading(false);
     }
-  }, [page, filters.search]);
+  }, [page, filters.search, filters.type, filters.direction]);
 
   useEffect(() => {
     fetchTransactions();
