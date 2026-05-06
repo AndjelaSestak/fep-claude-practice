@@ -13,8 +13,8 @@ from app.models.card import Card, CardStatus
 from app.models.transaction import Transaction, TransactionType, TransactionStatus, TransactionDirection
 from app.utils.security import get_password_hash
 
-IBAN_TEST = "RS359080000000000002"
-IBAN_JANE = "RS359080000000000003"
+ACCOUNT_NUMBER_TEST = "1000000000000002"
+ACCOUNT_NUMBER_JANE = "1000000000000003"
 
 def seed():
     db = SessionLocal()
@@ -83,18 +83,18 @@ def seed():
         test_user = db.query(User).filter(User.email == "user@example.com").first()
         jane_user = db.query(User).filter(User.email == "jane@example.com").first()
 
-        for user, iban, balance, currency in [
-            (test_user,  IBAN_TEST,  5000.00,  "RSD"),
-            (jane_user,  IBAN_JANE,  12000.00, "RSD"),
+        for user, account_number, balance, currency in [
+            (test_user,  ACCOUNT_NUMBER_TEST,  5000.00,  "RSD"),
+            (jane_user,  ACCOUNT_NUMBER_JANE,  12000.00, "RSD"),
         ]:
             if user and not db.query(Wallet).filter(Wallet.user_id == user.id).first():
                 db.add(Wallet(
                     user_id=user.id,
                     balance=balance,
-                    account_number=iban,
+                    account_number=account_number,
                     currency=currency,
                 ))
-                print(f"Wallet for '{user.email}' added ({iban}).")
+                print(f"Wallet for '{user.email}' added ({account_number}).")
         db.commit()
 
         # ── 5. Cards ──────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ def seed():
                         "user_id": test_user.id, "card_id": test_card.id,
                         "type": TransactionType.single, "amount": 250.0, "currency": "RSD",
                         "recipient": "Online Store",
-                        "recipient_account_number": "RS359080000000000099",
+                        "recipient_account_number": "1000000000000099",
                         "sender": "Test User",
                         "sender_account_number": test_wallet.account_number,
                         "reference": "Order #12345",
@@ -155,7 +155,7 @@ def seed():
                         "user_id": jane_user.id, "card_id": jane_card.id,
                         "type": TransactionType.single, "amount": 150.0, "currency": "RSD",
                         "recipient": "Restaurant",
-                        "recipient_account_number": "RS359080000000000098",
+                        "recipient_account_number": "1000000000000098",
                         "sender": "Jane Doe",
                         "sender_account_number": jane_wallet.account_number,
                         "reference": "Dinner with friends",

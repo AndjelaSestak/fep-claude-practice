@@ -76,9 +76,9 @@ The app uses JWT-based authentication. Tokens are stored in `localStorage` and a
 
 ## Routes
 
-| Path | Component | Access |
-|------|-----------|--------|
-| `/` | HomePage | Public |
-| `/login` | LoginPage | Public |
+| Path         | Component     | Access    |
+| ------------ | ------------- | --------- |
+| `/`          | HomePage      | Public    |
+| `/login`     | LoginPage     | Public    |
 | `/dashboard` | DashboardPage | Protected |
-| `*` | NotFoundPage | Public |
+| `*`          | NotFoundPage  | Public    |

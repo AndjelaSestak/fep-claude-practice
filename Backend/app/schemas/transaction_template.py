@@ -10,11 +10,20 @@ class TransactionTemplateBase(BaseModel):
     name: str
     amount: Decimal
     currency: str
-    recipient: str
+    recipient: Optional[str] = None
     recipient_account_number: str
     card_id: int
     reference: Optional[str] = None
     type: TransactionType = TransactionType.single
+
+    @field_validator("recipient_account_number")
+    @classmethod
+    def recipient_account_number_must_be_16_digits(cls, v):
+        if not v.isdigit():
+            raise ValueError("Recipient account number must contain only digits")
+        if len(v) != 16:
+            raise ValueError("Recipient account number must contain exactly 16 digits")
+        return v
 
 
 class TransactionTemplateCreate(TransactionTemplateBase):
@@ -52,6 +61,17 @@ class TransactionTemplateUpdate(BaseModel):
     frequency: Optional[Frequency] = None
     start_date: Optional[datetime] = None
     end_date: Optional[date] = None
+
+    @field_validator("recipient_account_number")
+    @classmethod
+    def recipient_account_number_must_be_16_digits(cls, v):
+        if v is None:
+            return v
+        if not v.isdigit():
+            raise ValueError("Recipient account number must contain only digits")
+        if len(v) != 16:
+            raise ValueError("Recipient account number must contain exactly 16 digits")
+        return v
 
 
 class CardTypeSummary(BaseModel):

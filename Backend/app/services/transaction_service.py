@@ -11,13 +11,14 @@ from app.models.card import Card, CardStatus
 from app.models.wallet import Wallet
 from app.models.user import User
 from app.schemas.transaction import CreateTransactionRequest
-from app.services.exchange_rate_service import convert_amount
+from app.services.exchange_rate_service import convert_amount, get_supported_currencies
 from app.database import SessionLocal
 from app.utils.datetime import utc_now
-from app.utils.errors import InvalidTokenError
+from sqlalchemy.exc import SQLAlchemyError
+from app.utils.errors import CardNotFoundError, DatabaseTransactionError, InvalidTokenError, TransactionNotFoundError, WalletNotFoundError, BadRequestError
 
 
-PENDING_DELAY_SECONDS = 180
+PENDING_DELAY_SECONDS = 10
 
 def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None, limit: int = 10, offset: int = 0,):
     query = db.query(Transaction).filter(Transaction.user_id == user_id)
@@ -34,19 +35,23 @@ def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None
     return query.order_by(Transaction.created_at.desc()).offset(offset).limit(limit).all()
 
 def create_transaction(db: Session, request: CreateTransactionRequest, current_user: User) -> Transaction:
+    supported_currencies = [c["value"] for c in get_supported_currencies()]
+    if request.currency.upper() not in supported_currencies:
+        raise BadRequestError(f"Currency {request.currency} is not supported")
+
     card = db.query(Card).filter(
         Card.id == request.card_id,
         Card.user_id == current_user.id
     ).first()
 
     if not card:
-        raise InvalidTokenError("Card not found or does not belong to you")
+        raise CardNotFoundError("Card not found or does not belong to you")
 
     if card.status != CardStatus.active:
-        raise ValueError("Card is not active")
+        raise BadRequestError("Card is not active")
 
     if not card.is_email_verified:
-        raise ValueError("Card is not verified")
+        raise BadRequestError("Card is not verified")
 
     wallet = db.query(Wallet).filter(
         Wallet.user_id == current_user.id,
@@ -54,7 +59,7 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
     ).first()
 
     if not wallet:
-        raise ValueError("Wallet not found")
+        raise WalletNotFoundError("Wallet not found")
 
     amount_converted = convert_amount(request.amount, request.currency, wallet.currency)
 
@@ -72,10 +77,12 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
         status=TransactionStatus.pending,
         direction=TransactionDirection.outgoing
     )
-    db.add(transaction)
-    db.commit()
-    db.refresh(transaction)
-
+    try:
+        db.add(transaction)
+        db.commit()
+        db.refresh(transaction)
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while creating the transaction. Please try again.")
     return transaction
 
 
@@ -107,7 +114,7 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
     ).first()
 
     if not recipient_wallet:
-        return
+        raise WalletNotFoundError('Recipient wallet not found')
 
     converted_amount = convert_amount(
         float(transaction.amount),
@@ -122,7 +129,7 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
     ).first()
 
     if not recipient_card:
-        return
+        raise CardNotFoundError('Recipient card not found')
 
     incoming_txn = Transaction(
         user_id=recipient_wallet.user_id,
@@ -156,16 +163,11 @@ def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
 
 async def process_transaction(transaction_id: int) -> None:
     await asyncio.sleep(PENDING_DELAY_SECONDS)
-
     db: Session = SessionLocal()
     try:
-        transaction = db.query(Transaction).filter(
-            Transaction.id == transaction_id
-        ).first()
-
+        transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
         if not transaction:
-            return
-
+            raise TransactionNotFoundError("Transaction not found")
         complete_pending_transaction(db, transaction)
     except Exception:
         db.rollback()
@@ -199,108 +201,53 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
     ).first()
 
     if not transaction:
-        raise ValueError("Transaction not found")
+        raise TransactionNotFoundError("Transaction not found")
 
     if transaction.status != TransactionStatus.pending:
-        raise ValueError("Only pending transactions can be cancelled")
+        raise BadRequestError("Only pending transactions can be cancelled")
 
     transaction.status = TransactionStatus.cancelled
-    db.commit()
-    db.refresh(transaction)
+    try:
+        db.commit()
+        db.refresh(transaction)
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while cancelling the transaction. Please try again.")
 
     return transaction
 
 
-def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None):
-    try:
-        query = db.query(Transaction).filter(Transaction.user_id == user_id)
-
-        # 1. Filter za Period (Dashboard)
-        if period == "current_month":
-            from datetime import datetime, timezone
-            today = datetime.now(timezone.utc)
-            start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            print(f"--- DEBUG: Filtriram od datuma: {start_of_month} ---")
-            query = query.filter(Transaction.created_at >= start_of_month)
-
-        # 2. Filter za Search (Pretraga po recipientu, senderu ili referenci)
-        if search:
-            search_pattern = f"%{search}%"
-            query = query.filter(
-                (Transaction.recipient.ilike(search_pattern)) |
-                (Transaction.sender.ilike(search_pattern)) |
-                (Transaction.reference.ilike(search_pattern))
-            )
-
-        # 3. Filter za Type (single / reccuring)
-        if type and type != "all":
-            query = query.filter(Transaction.type == type)
-
-        # 4. Filter za Direction (incoming / outgoing)
-        if direction and direction != "all":
-            query = query.filter(Transaction.direction == direction)
-
-        results = query.order_by(Transaction.created_at.desc()).all()
-        return results
-
-    except Exception as e:
-        raise e
-
-def generate_csv_report(transactions):
-    try:
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(["Datum", "Primalac", "Iznos", "Valuta", "Tip", "Smer"])
-        
-        for t in transactions:
-            date_str = t.created_at.strftime("%d.%m.%Y") if t.created_at else "N/A"
-            
-            writer.writerow([date_str, t.recipient, t.amount, t.currency, t.type.value, t.direction.value])
-        
-        return output.getvalue()
-    except Exception as e:
-        print(f"ERROR u CSV: {str(e)}")
-        raise e
+def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None, limit: int | None = None, offset: int = 0):
     
-def generate_pdf_report(transactions, user_email):
-    if not transactions:
-        # Vraćamo jednostavan PDF ili poruku ako nema podataka
-        html_content = f"<html><body><h1>Nema transakcija za izabrani period</h1></body></html>"
-        return HTML(string=html_content).write_pdf()
-    total_in = sum(float(t.amount) for t in transactions if t.direction.value == "incoming")
-    total_out = sum(float(t.amount) for t in transactions if t.direction.value == "outgoing")
+    query = db.query(Transaction).filter(Transaction.user_id == user_id)
 
+    # 1. Filter za Period (Dashboard)
+    if period == "current_month":
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc)
+        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        query = query.filter(Transaction.created_at >= start_of_month)
 
-    html_content = f"""
-    <html>
-    <head>
-        <style>
-            body {{ font-family: sans-serif; padding: 20px; color: #333; }}
-            .header {{ border-bottom: 2px solid #4f46e5; margin-bottom: 20px; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-            th {{ background: #f3f4f6; text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }}
-            td {{ padding: 10px; border-bottom: 1px solid #eee; }}
-            .summary {{ margin-top: 30px; border-top: 2px solid #eee; padding-top: 10px; text-align: right; }}
-            .income {{ color: green; }} .expense {{ color: red; }}
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>Izveštaj transakcija</h1>
-            <p>Korisnik: {user_email} | Datum: {date.today().strftime("%d.%m.%Y")}</p>
-        </div>
-        <table>
-            <thead><tr><th>Datum</th><th>Primalac</th><th>Tip</th><th>Iznos</th></tr></thead>
-            <tbody>
-                {"".join([f'<tr><td>{t.created_at.strftime("%d.%m.%Y")}</td><td>{t.recipient if t.recipient else (t.sender if t.sender else "N/A")}</td><td>{t.type.value}</td><td class="{"income" if t.direction.value == "incoming" else "expense"}">{"+" if t.direction.value == "incoming" else "-"}{t.amount} {t.currency}</td></tr>' for t in transactions])}
-            </tbody>
-        </table>
-        <div class="summary">
-            <p>Ukupno uplate: <span class="income">+{total_in:.2f}</span></p>
-            <p>Ukupno isplate: <span class="expense">-{total_out:.2f}</span></p>
-            <p><strong>Neto razlika: {total_in - total_out:.2f}</strong></p>
-        </div>
-    </body>
-    </html>
-    """
-    return HTML(string=html_content).write_pdf()
+    # 2. Filter za Search (Pretraga po recipientu, senderu ili referenci)
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            (Transaction.recipient.ilike(search_pattern)) |
+            (Transaction.sender.ilike(search_pattern)) |
+            (Transaction.reference.ilike(search_pattern))
+        )
+
+    # 3. Filter za Type (single / recurring)
+    if type and type != "all":
+        query = query.filter(Transaction.type == type)
+
+    # 4. Filter za Direction (incoming / outgoing)
+    if direction and direction != "all":
+        query = query.filter(Transaction.direction == direction)
+
+    query = query.order_by(Transaction.created_at.desc())
+
+    if limit is not None:
+        query = query.offset(offset).limit(limit)
+
+    results = query.all()
+    return results

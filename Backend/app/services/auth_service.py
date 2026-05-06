@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 
-from app.services.card_service import generate_iban
+from app.services.card_service import generate_account_number
 from app.schemas.auth import TokenResponse, VerifyOTP, ResetPasswordRequest
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
@@ -65,7 +65,7 @@ def register_user(db: Session, user_data: UserCreate,background_tasks: Backgroun
         new_wallet = Wallet(
             user_id=new_user.id,
             balance=0,
-            account_number=generate_iban(db),
+            account_number=generate_account_number(db),
             currency="RSD"
         )
         db.add(new_wallet)
@@ -108,19 +108,21 @@ def verify_user_email(db: Session, data: VerifyOTP,background_tasks: BackgroundT
     if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("OTP code has expired")
 
-    
+    user.is_email_verified = True
+    verification.is_used = True
+
     try:
-        user.is_email_verified = True
-        verification.is_used = True
         db.commit()
 
-        background_tasks.add_task(
-            send_welcome_email,
-            recipient=data.email,
-            name=user.name
-        )
     except Exception:
         raise DatabaseTransactionError("An error occurred while creating the account. Please try again.")
+    
+
+    background_tasks.add_task(
+        send_welcome_email,
+        recipient=data.email,
+        name=user.name
+    )
 
     return {"message": "Email successfully verified!"}
 
@@ -211,7 +213,7 @@ def forgot_password(db: Session, email: str, background_tasks: BackgroundTasks):
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while sending the password reset email. Please try again.")
 
-    reset_link = f"http://localhost:5173/reset-password?token={reset_token}"
+    reset_link = f"http://localhost:5173/reset_password?token={reset_token}"
 
     background_tasks.add_task(
         send_reset_password_email,
@@ -327,4 +329,3 @@ def refresh_access_token(db: Session, refresh_token: str) -> str:
         "access_token": new_access_token, 
         "refresh_token": new_refresh_token
     }
-

@@ -2,7 +2,7 @@ from datetime import date, timedelta, datetime
 import asyncio
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from app.utils.errors import DatabaseTransactionError, TransactionNotFoundError
+from app.utils.errors import DatabaseTransactionError, TransactionNotFoundError, BadRequestError
 from app.models.user import User
 from app.schemas.recurring_transaction import RecurringTransactionUpdate
 from app.services.transaction_service import create_transaction, process_transaction
@@ -44,25 +44,37 @@ def create_recurring_transaction(
         raise DatabaseTransactionError("An error occurred while creating the recurring transaction. Please try again.")
     return recurring_transaction    
 
-def cancel_recurring_transaction(db: Session, recurring_transaction_id: int, user_id: int):
-    recurring_transaction = db.query(RecurringTransaction).filter(
+def set_recurring_transaction_status(
+    db: Session,
+    recurring_transaction_id: int,
+    user_id: int,
+    is_active: bool
+):
+    recurring_transaction = db.query(RecurringTransaction).join(TransactionTemplate).filter(
         RecurringTransaction.id == recurring_transaction_id,
-        RecurringTransaction.user_id == user_id,
-        RecurringTransaction.is_active == True
+        TransactionTemplate.user_id == user_id
     ).first()
 
     if not recurring_transaction:
-        raise TransactionNotFoundError("Recurring transaction not found or already cancelled.")
+        raise TransactionNotFoundError("Recurring transaction not found.")
 
-    recurring_transaction.is_active = False
+    if recurring_transaction.is_active == is_active:
+        status = "active" if is_active else "cancelled"
+        raise TransactionNotFoundError(f"Recurring transaction is already {status}.")
+
+    recurring_transaction.is_active = is_active
+
     try:
         db.commit()
-        db.refresh(recurring_transaction)                    
+        db.refresh(recurring_transaction)
     except SQLAlchemyError:
-        raise DatabaseTransactionError("An error occurred while cancelling the recurring transaction. Please try again.")
+        db.rollback()
+        raise DatabaseTransactionError(
+            "An error occurred while updating the recurring transaction status. Please try again."
+        )
 
     return recurring_transaction
-    
+
 async def run_due_recurring_transactions(db: Session):
     now = utc_now()
 
@@ -74,15 +86,7 @@ async def run_due_recurring_transactions(db: Session):
     for recurring_transaction in due_transactions:
         template = recurring_transaction.transaction_template
 
-        if template.is_deleted:
-            recurring_transaction.is_active = False
-            try:
-                db.commit()
-            except SQLAlchemyError:
-                db.rollback()
-            continue
-
-        if recurring_transaction.end_date and recurring_transaction.next_run_at.date() > recurring_transaction.end_date:
+        if template.is_deleted or (recurring_transaction.end_date and recurring_transaction.next_run_at.date() > recurring_transaction.end_date):
             recurring_transaction.is_active = False
             try:
                 db.commit()
@@ -121,7 +125,7 @@ def update_recurring_transaction(db: Session, recurring_transaction_id: int, req
     ).first()
 
     if not recurring_transaction:
-        return None
+        raise TransactionNotFoundError("Recurring transaction not found or is not active.")
 
     update_data = request.model_dump(exclude_unset=True)
 
@@ -137,7 +141,7 @@ def update_recurring_transaction(db: Session, recurring_transaction_id: int, req
         ).first() is not None
 
         if has_executed_transactions:
-            raise ValueError("Start date cannot be changed after the recurring transaction has been executed.")
+            raise BadRequestError("Start date cannot be changed after the recurring transaction has been executed.")
 
         start_date_utc = ensure_utc(update_data["start_date"])
         recurring_transaction.next_run_at = start_date_utc
