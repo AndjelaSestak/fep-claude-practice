@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useState, useEffect } from 'react'
 import { login as apiLogin, logout as apiLogout, getMe } from '../services/authService'
 
-const AuthContext = createContext(null)
+// eslint-disable-next-line react-refresh/only-export-components
+export const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
@@ -52,4 +53,3 @@ export const AuthProvider = ({ children }) => {
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
