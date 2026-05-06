@@ -11,7 +11,7 @@ import {
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Transactions', icon: ArrowLeftRight, path: '/transactions' },
-  { label: 'Cards', icon: CreditCard, path: '/my-cards' },
+  { label: 'Cards', icon: CreditCard, path: '/my_cards' },
   { label: 'Templates', icon: FileText, path: '/templates' },
   { label: 'Settings', icon: Settings, path: '/settings' }
 ]

@@ -4,7 +4,7 @@ import FormField from '../components/ui/FormField'
 import Input from '../components/ui/InputField'
 import { Link, useNavigate } from 'react-router-dom'
 import FormWrapper from '../components/ui/FormWrapper'
-import { authService } from '../services/authService'
+import { register } from '../services/authService'
 import Navbar from '../components/layout/NavBar'
 
 import AlertDialog, {
@@ -52,7 +52,7 @@ const RegistrationPage = () => {
     setLoading(true)
 
     try {
-      await authService.register({
+      await register({
         ...formData,
         date_of_birth: formData.date_of_birth || null
       })
@@ -84,7 +84,7 @@ const RegistrationPage = () => {
           <AlertDialogAction
             onClick={() => {
               setSuccessDialogOpen(false)
-              navigate('/verify-email', {
+              navigate('/verify_email', {
                 state: { email: formData.email }
               })
             }}

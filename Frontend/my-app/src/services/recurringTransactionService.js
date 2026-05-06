@@ -2,7 +2,7 @@ import api from './api'
 
 export const deactivateRecurringTransaction = async (recurringTransactionId) => {
   try {
-    const response = await api.patch(`/recurring-transactions/${recurringTransactionId}/cancel`)
+    const response = await api.patch(`/recurring_transactions/${recurringTransactionId}/cancel`)
     return response.data
   } catch (error) {
     console.error('Error cancelling recurring transaction:', error)
@@ -12,7 +12,7 @@ export const deactivateRecurringTransaction = async (recurringTransactionId) => 
 
 export const activateRecurringTransaction = async (recurringTransactionId) => {
   try {
-    const response = await api.patch(`/recurring-transactions/${recurringTransactionId}/activate`)
+    const response = await api.patch(`/recurring_transactions/${recurringTransactionId}/activate`)
     return response.data
   } catch (error) {
     console.error('Error activating recurring transaction:', error)

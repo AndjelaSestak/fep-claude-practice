@@ -10,7 +10,7 @@ from app.services.recurring_transaction_service import set_recurring_transaction
 from app.models.transaction_template import TransactionTemplate
 
 
-router = APIRouter(prefix="/recurring-transactions", tags=["Recurring Transactions"])
+router = APIRouter(prefix="/recurring_transactions", tags=["Recurring Transactions"])
 
 require_user = RequireRole(["user"])
 

@@ -11,11 +11,11 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 require_user = RequireRole(["user"])
 
-@router.get("/getAllUsers", response_model=list[UserResponse])
+@router.get("/get_all_users", response_model=list[UserResponse])
 def get_users(db: Session = Depends(get_db), current_user: User = Depends(require_user)):
     return get_all_users(db)
     
-@router.get("/getUserById/{user_id}", response_model=UserResponse)
+@router.get("/get_user_by_id/{user_id}", response_model=UserResponse)
 def get_user_by_id_route(db: Session = Depends(get_db), current_user: User = Depends(require_user)):
     return get_user_by_id(db, current_user.id)
 

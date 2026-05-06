@@ -3,7 +3,7 @@ import api from './api'
 // CREATE CARD
 export const createCard = async (cardData) => {
   try {
-    const response = await api.post('/cards/CreateCard', cardData)
+    const response = await api.post('/cards/create_card', cardData)
     return response.data
   } catch (error) {
     console.error('Error creating card:', error)
@@ -14,7 +14,7 @@ export const createCard = async (cardData) => {
 // VERIFY CARD (OTP)
 export const verifyCard = async (verifyData) => {
   try {
-    const response = await api.post('/cards/VerifyCard', verifyData)
+    const response = await api.post('/cards/verify_card', verifyData)
     return response.data
   } catch (error) {
     console.error('Error verifying card:', error)
@@ -25,7 +25,7 @@ export const verifyCard = async (verifyData) => {
 // GET ALL USER CARDS
 export const getMyCards = async () => {
   try {
-    const response = await api.get('/cards/GetMyCards')
+    const response = await api.get('/cards/get_my_cards')
     return response.data
   } catch (error) {
     console.error('Error fetching cards:', error)
@@ -36,7 +36,7 @@ export const getMyCards = async () => {
 // GET CARD BY ID
 export const getCardById = async (cardId) => {
   try {
-    const response = await api.get(`/cards/GetCardDetails/${cardId}`)
+    const response = await api.get(`/cards/get_card_details/${cardId}`)
     return response.data
   } catch (error) {
     console.error('Error fetching card details:', error)
@@ -47,7 +47,7 @@ export const getCardById = async (cardId) => {
 // DELETE CARD
 export const deleteCard = async (cardId) => {
   try {
-    const response = await api.delete(`/cards/DeleteCard/${cardId}`)
+    const response = await api.delete(`/cards/delete_card/${cardId}`)
     return response.data
   } catch (error) {
     console.error('Error deleting card:', error)
@@ -58,7 +58,7 @@ export const deleteCard = async (cardId) => {
 // VERIFY CARD PIN
 export const verifyCardPin = async (cardId, pin) => {
   try {
-    const response = await api.post('/cards/VerifyPin', { card_id: cardId, pin })
+    const response = await api.post('/cards/verify_pin', { card_id: cardId, pin })
     return response.data
   } catch (error) {
     console.error('Error verifying card PIN:', error)
@@ -76,3 +76,5 @@ const cardService = {
 }
 
 export default cardService
+
+export default cardService;

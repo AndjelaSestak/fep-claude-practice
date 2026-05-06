@@ -13,7 +13,7 @@ import {
   reportLostCard,
   reportStolenCard,
   getCardReports
-} from '../services/card_reportService'
+} from '../services/cardReportService'
 import Dialog, {
   DialogContent,
   DialogHeader,
@@ -222,7 +222,7 @@ const MyCardsPage = () => {
 
             <div className="relative z-10">
               <Button
-                onClick={() => navigate('/add-card')}
+                onClick={() => navigate('/add_card')}
                 className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
               >
                 + New Card

@@ -213,7 +213,7 @@ def forgot_password(db: Session, email: str, background_tasks: BackgroundTasks):
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while sending the password reset email. Please try again.")
 
-    reset_link = f"http://localhost:5173/reset-password?token={reset_token}"
+    reset_link = f"http://localhost:5173/reset_password?token={reset_token}"
 
     background_tasks.add_task(
         send_reset_password_email,

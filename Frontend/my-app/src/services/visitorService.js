@@ -1,8 +1,8 @@
 import api from './api'
 
-export const sendMessageFromContactUsPage = async (sender, subject, sender_email, message) => {
+export const sendContactMessage = async (sender, subject, sender_email, message) => {
   try {
-    const response = await api.post('/visitors/send-message', {
+    const response = await api.post('/visitors/send_message', {
       sender,
       subject,
       sender_email,
@@ -10,7 +10,7 @@ export const sendMessageFromContactUsPage = async (sender, subject, sender_email
     })
     return response.data
   } catch (error) {
-    console.error('Error sending message from contact us page:', error)
+    console.error('Error sending contact message:', error)
     throw error
   }
 }
