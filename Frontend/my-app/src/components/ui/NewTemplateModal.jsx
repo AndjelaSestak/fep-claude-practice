@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  DialogClose
 } from './Dialog'
 import FormField from './FormField'
 import Input from './InputField'
@@ -18,7 +18,7 @@ import AlertDialog, {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialogCancel
 } from './AlertDialog'
 import { getMyCards } from '../../services/cardService'
 import { getSupportedCurrencies } from '../../services/transactionService'
@@ -28,7 +28,7 @@ const FREQUENCIES = [
   { value: 'daily', label: 'Daily' },
   { value: 'weekly', label: 'Weekly' },
   { value: 'monthly', label: 'Monthly' },
-  { value: 'yearly', label: 'Yearly' },
+  { value: 'yearly', label: 'Yearly' }
 ]
 
 const EMPTY_FORM = {
@@ -42,16 +42,20 @@ const EMPTY_FORM = {
   reference: '',
   frequency: 'monthly',
   start_date: '',
-  end_date: '',
+  end_date: ''
 }
 
 const ACCOUNT_NUMBER_LENGTH = 16
 
 const getAccountNumberDigits = (value) =>
-  String(value ?? '').replace(/\D/g, '').slice(0, ACCOUNT_NUMBER_LENGTH)
+  String(value ?? '')
+    .replace(/\D/g, '')
+    .slice(0, ACCOUNT_NUMBER_LENGTH)
 
 const formatAccountNumber = (value) =>
-  getAccountNumberDigits(value).replace(/(.{4})/g, '$1 ').trim()
+  getAccountNumberDigits(value)
+    .replace(/(.{4})/g, '$1 ')
+    .trim()
 
 const padDatePart = (value) => String(value).padStart(2, '0')
 
@@ -61,11 +65,10 @@ const toDatetimeLocalValue = (value) => {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
 
-  return [
-    date.getFullYear(),
-    padDatePart(date.getMonth() + 1),
-    padDatePart(date.getDate()),
-  ].join('-') + `T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`
+  return (
+    [date.getFullYear(), padDatePart(date.getMonth() + 1), padDatePart(date.getDate())].join('-') +
+    `T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`
+  )
 }
 
 const toUTCISOString = (value) => {
@@ -88,7 +91,7 @@ const templateToForm = (t) => ({
   reference: t.reference ?? '',
   frequency: t.recurring_transactions?.[0]?.frequency ?? 'monthly',
   start_date: toDatetimeLocalValue(t.recurring_transactions?.[0]?.next_run_at),
-  end_date: t.recurring_transactions?.[0]?.end_date ?? '',
+  end_date: t.recurring_transactions?.[0]?.end_date ?? ''
 })
 
 const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
@@ -106,17 +109,21 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
   useEffect(() => {
     if (!open) return
     setFormData(isEditMode ? templateToForm(template) : EMPTY_FORM)
+  }, [open, isEditMode, template])
+
+  useEffect(() => {
+    if (!open) return
 
     const loadData = async () => {
       try {
         const [cardsData, currenciesData] = await Promise.all([
           getMyCards(),
-          getSupportedCurrencies(),
+          getSupportedCurrencies()
         ])
         setCards(
           cardsData.map((c) => ({
             value: String(c.id),
-            label: c.card_number_masked,
+            label: c.card_number_masked
           }))
         )
         setCurrencies(currenciesData)
@@ -133,12 +140,13 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'recipient_account_number' ? formatAccountNumber(value) : value,
+      [name]: name === 'recipient_account_number' ? formatAccountNumber(value) : value
     }))
   }
 
   const isRecurring = formData.type === 'recurring'
-  const isStartDateLocked = isEditMode && isRecurring && recurringTransaction?.has_executed_transactions
+  const isStartDateLocked =
+    isEditMode && isRecurring && recurringTransaction?.has_executed_transactions
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -161,7 +169,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
         reference: formData.reference || null,
         frequency: isRecurring ? formData.frequency : null,
         start_date: isRecurring ? toUTCISOString(formData.start_date) : null,
-        end_date: isRecurring && formData.end_date ? formData.end_date : null,
+        end_date: isRecurring && formData.end_date ? formData.end_date : null
       }
 
       if (!isEditMode) {
@@ -173,7 +181,9 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
       }
 
       if (isEditMode && isRecurring) {
-        const originalStartDate = toDatetimeLocalValue(template.recurring_transactions?.[0]?.next_run_at)
+        const originalStartDate = toDatetimeLocalValue(
+          template.recurring_transactions?.[0]?.next_run_at
+        )
         if (formData.start_date === originalStartDate) {
           delete payload.start_date
         }
@@ -360,7 +370,9 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
 
       <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
         <AlertDialogHeader>
-          <AlertDialogTitle>{isEditMode ? 'Template updated' : 'Template created'}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {isEditMode ? 'Template updated' : 'Template created'}
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Your template has been {isEditMode ? 'updated' : 'saved'} and is ready to use.
           </AlertDialogDescription>

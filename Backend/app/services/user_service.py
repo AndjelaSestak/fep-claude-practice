@@ -1,6 +1,6 @@
 from app.utils.security import verify_password, get_password_hash
 from app.schemas.user import UserPasswordUpdate, UserUpdate
-from app.utils.errors import DatabaseTransactionError, UserNotFoundError
+from app.utils.errors import DatabaseTransactionError, UserNotFoundError, BadRequestError
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -50,7 +50,7 @@ def update_current_user(db: Session, current_user: User, user_data: UserUpdate) 
 def change_password(db: Session, current_user: User, user_password_update: UserPasswordUpdate) -> User:
    
     if not verify_password(user_password_update.current_password, current_user.password_hash):
-        raise ValueError("Current password is incorrect")
+        raise BadRequestError("Current password is incorrect")
 
     hashed_new_password = get_password_hash(user_password_update.new_password)
     current_user.password_hash = hashed_new_password

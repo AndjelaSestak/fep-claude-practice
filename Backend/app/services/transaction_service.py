@@ -11,20 +11,17 @@ from app.models.card import Card, CardStatus
 from app.models.wallet import Wallet
 from app.models.user import User
 from app.schemas.transaction import CreateTransactionRequest
-from app.services.exchange_rate_service import convert_amount
+from app.services.exchange_rate_service import convert_amount, get_supported_currencies
 from app.database import SessionLocal
 from app.utils.datetime import utc_now
 from sqlalchemy.exc import SQLAlchemyError
-from app.utils.errors import DatabaseTransactionError, InvalidTokenError
+from app.utils.errors import CardNotFoundError, DatabaseTransactionError, InvalidTokenError, TransactionNotFoundError, WalletNotFoundError, BadRequestError
 
 
 PENDING_DELAY_SECONDS = 10
 
 def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None, limit: int = 10, offset: int = 0,):
-    query = db.query(Transaction).filter(
-        or_(Transaction.user_id == user_id,
-            Transaction.recipient_account_number == db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar_subquery())
-    )
+    query = db.query(Transaction).filter(Transaction.user_id == user_id)
 
     if search:
         search_pattern = f"%{search}%"
@@ -38,19 +35,23 @@ def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None
     return query.order_by(Transaction.created_at.desc()).offset(offset).limit(limit).all()
 
 def create_transaction(db: Session, request: CreateTransactionRequest, current_user: User) -> Transaction:
+    supported_currencies = [c["value"] for c in get_supported_currencies()]
+    if request.currency.upper() not in supported_currencies:
+        raise BadRequestError(f"Currency {request.currency} is not supported")
+
     card = db.query(Card).filter(
         Card.id == request.card_id,
         Card.user_id == current_user.id
     ).first()
 
     if not card:
-        raise InvalidTokenError("Card not found or does not belong to you")
+        raise CardNotFoundError("Card not found or does not belong to you")
 
     if card.status != CardStatus.active:
-        raise ValueError("Card is not active")
+        raise BadRequestError("Card is not active")
 
     if not card.is_email_verified:
-        raise ValueError("Card is not verified")
+        raise BadRequestError("Card is not verified")
 
     wallet = db.query(Wallet).filter(
         Wallet.user_id == current_user.id,
@@ -58,7 +59,7 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
     ).first()
 
     if not wallet:
-        raise ValueError("Wallet not found")
+        raise WalletNotFoundError("Wallet not found")
 
     amount_converted = convert_amount(request.amount, request.currency, wallet.currency)
 
@@ -113,7 +114,7 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
     ).first()
 
     if not recipient_wallet:
-        return
+        raise WalletNotFoundError('Recipient wallet not found')
 
     converted_amount = convert_amount(
         float(transaction.amount),
@@ -122,29 +123,29 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
     )
     recipient_wallet.balance = float(recipient_wallet.balance) + converted_amount
 
-    # recipient_card = db.query(Card).filter(
-    #     Card.wallet_id == recipient_wallet.id,
-    #     Card.status == CardStatus.active
-    # ).first()
+    recipient_card = db.query(Card).filter(
+        Card.wallet_id == recipient_wallet.id,
+        Card.status == CardStatus.active
+    ).first()
 
-    # if not recipient_card:
-    #     return
+    if not recipient_card:
+        raise CardNotFoundError('Recipient card not found')
 
-    # incoming_txn = Transaction(
-    #     user_id=recipient_wallet.user_id,
-    #     card_id=recipient_card.id,
-    #     type=transaction.type,
-    #     amount=converted_amount,
-    #     currency=recipient_wallet.currency,
-    #     recipient=transaction.recipient,
-    #     recipient_account_number=transaction.recipient_account_number,
-    #     sender=transaction.sender,
-    #     sender_account_number=transaction.sender_account_number,
-    #     reference=transaction.reference,
-    #     status=TransactionStatus.completed,
-    #     direction=TransactionDirection.incoming
-    # )
-    # db.add(incoming_txn)
+    incoming_txn = Transaction(
+        user_id=recipient_wallet.user_id,
+        card_id=recipient_card.id,
+        type=transaction.type,
+        amount=converted_amount,
+        currency=recipient_wallet.currency,
+        recipient=transaction.recipient,
+        recipient_account_number=transaction.recipient_account_number,
+        sender=transaction.sender,
+        sender_account_number=transaction.sender_account_number,
+        reference=transaction.reference,
+        status=TransactionStatus.completed,
+        direction=TransactionDirection.incoming
+    )
+    db.add(incoming_txn)
 
 
 def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
@@ -166,7 +167,7 @@ async def process_transaction(transaction_id: int) -> None:
     try:
         transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
         if not transaction:
-            return
+            raise TransactionNotFoundError("Transaction not found")
         complete_pending_transaction(db, transaction)
     except Exception:
         db.rollback()
@@ -200,10 +201,10 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
     ).first()
 
     if not transaction:
-        raise ValueError("Transaction not found")
+        raise TransactionNotFoundError("Transaction not found")
 
     if transaction.status != TransactionStatus.pending:
-        raise ValueError("Only pending transactions can be cancelled")
+        raise BadRequestError("Only pending transactions can be cancelled")
 
     transaction.status = TransactionStatus.cancelled
     try:
@@ -215,7 +216,7 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
     return transaction
 
 
-def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None):
+def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None, limit: int | None = None, offset: int = 0):
     
     query = db.query(Transaction).filter(Transaction.user_id == user_id)
 
@@ -235,7 +236,7 @@ def get_filtered_transactions(db: Session, user_id: int, search=None, type=None,
             (Transaction.reference.ilike(search_pattern))
         )
 
-    # 3. Filter za Type (single / reccuring)
+    # 3. Filter za Type (single / recurring)
     if type and type != "all":
         query = query.filter(Transaction.type == type)
 
@@ -243,64 +244,10 @@ def get_filtered_transactions(db: Session, user_id: int, search=None, type=None,
     if direction and direction != "all":
         query = query.filter(Transaction.direction == direction)
 
-    results = query.order_by(Transaction.created_at.desc()).all()
+    query = query.order_by(Transaction.created_at.desc())
+
+    if limit is not None:
+        query = query.offset(offset).limit(limit)
+
+    results = query.all()
     return results
-
-    
-
-def generate_csv_report(transactions):
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Datum", "Primalac", "Iznos", "Valuta", "Tip", "Smer"])
-    
-    for t in transactions:
-        date_str = t.created_at.strftime("%d.%m.%Y") if t.created_at else "N/A"
-        
-        writer.writerow([date_str, t.recipient, t.amount, t.currency, t.type.value, t.direction.value])
-    
-    return output.getvalue()
-    
-    
-def generate_pdf_report(transactions, user_email):
-    if not transactions:
-        # Vraćamo jednostavan PDF ili poruku ako nema podataka
-        html_content = f"<html><body><h1>Nema transakcija za izabrani period</h1></body></html>"
-        return HTML(string=html_content).write_pdf()
-    total_in = sum(float(t.amount) for t in transactions if t.direction.value == "incoming")
-    total_out = sum(float(t.amount) for t in transactions if t.direction.value == "outgoing")
-
-
-    html_content = f"""
-    <html>
-    <head>
-        <style>
-            body {{ font-family: sans-serif; padding: 20px; color: #333; }}
-            .header {{ border-bottom: 2px solid #4f46e5; margin-bottom: 20px; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-            th {{ background: #f3f4f6; text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }}
-            td {{ padding: 10px; border-bottom: 1px solid #eee; }}
-            .summary {{ margin-top: 30px; border-top: 2px solid #eee; padding-top: 10px; text-align: right; }}
-            .income {{ color: green; }} .expense {{ color: red; }}
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>Izveštaj transakcija</h1>
-            <p>Korisnik: {user_email} | Datum: {date.today().strftime("%d.%m.%Y")}</p>
-        </div>
-        <table>
-            <thead><tr><th>Datum</th><th>Primalac</th><th>Tip</th><th>Iznos</th></tr></thead>
-            <tbody>
-                {"".join([f'<tr><td>{t.created_at.strftime("%d.%m.%Y")}</td><td>{t.recipient if t.recipient else (t.sender if t.sender else "N/A")}</td><td>{t.type.value}</td><td class="{"income" if t.direction.value == "incoming" else "expense"}">{"+" if t.direction.value == "incoming" else "-"}{t.amount} {t.currency}</td></tr>' for t in transactions])}
-            </tbody>
-        </table>
-        <div class="summary">
-            <p>Ukupno uplate: <span class="income">+{total_in:.2f}</span></p>
-            <p>Ukupno isplate: <span class="expense">-{total_out:.2f}</span></p>
-            <p><strong>Neto razlika: {total_in - total_out:.2f}</strong></p>
-        </div>
-    </body>
-    </html>
-    """
-    return HTML(string=html_content).write_pdf()
