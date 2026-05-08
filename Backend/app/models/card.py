@@ -1,8 +1,9 @@
-from sqlalchemy import Integer, Numeric, Boolean, String, Text, ForeignKey, Enum
+from sqlalchemy import Integer, Numeric, Boolean, String, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
 import enum
 from app.database import Base
+
 
 class CardStatus(str, enum.Enum):
     active = "active"
@@ -27,7 +28,7 @@ class Card(Base):
     status: Mapped[CardStatus] = mapped_column(Enum(CardStatus), default=CardStatus.blocked)
     is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     user: Mapped["User"] = relationship("User", back_populates="cards")
     card_type: Mapped["CardType"] = relationship("CardType", back_populates="cards")

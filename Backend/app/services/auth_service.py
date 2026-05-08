@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 
-import random
+from app.services.card_service import generate_account_number
 from app.schemas.auth import TokenResponse, VerifyOTP, ResetPasswordRequest
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
@@ -21,6 +21,7 @@ from app.config import settings
 from app.dependencies import get_db
 
 from app.utils.errors import EmailAlreadyRegisteredError, InvalidOTPError, InvalidTokenError, NotAuthenticatedError, OTPExpiredError, RoleNotFoundError, DatabaseTransactionError, UserNotFoundError
+from app.utils.datetime import ensure_utc
 
 def register_user(db: Session, user_data: UserCreate,background_tasks: BackgroundTasks) -> User:
     existing_user = db.query(User).filter(
@@ -61,21 +62,17 @@ def register_user(db: Session, user_data: UserCreate,background_tasks: Backgroun
         )
         db.add(new_verification)
 
-        # Create a wallet for the new user automatically
-        while True:
-            account_number = "".join([str(random.randint(0, 9)) for _ in range(16)])
-            existing = db.query(Wallet).filter(Wallet.account_number == account_number).first()
-            if not existing:
-                break
         new_wallet = Wallet(
             user_id=new_user.id,
             balance=0,
-            account_number=account_number,
+            account_number=generate_account_number(db),
             currency="RSD"
         )
         db.add(new_wallet)
 
-        db.commit()
+        
+        db.commit()                   
+        
         db.refresh(new_user)
 
         background_tasks.add_task(
@@ -88,7 +85,6 @@ def register_user(db: Session, user_data: UserCreate,background_tasks: Backgroun
         return new_user
     
     except SQLAlchemyError:
-        db.rollback()
         raise DatabaseTransactionError("An error occurred while creating the account. Please try again.")
     
 def verify_user_email(db: Session, data: VerifyOTP,background_tasks: BackgroundTasks):
@@ -109,23 +105,24 @@ def verify_user_email(db: Session, data: VerifyOTP,background_tasks: BackgroundT
     if not verification:
         raise InvalidOTPError("Invalid OTP code provided")
 
-    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("OTP code has expired")
 
-    
+    user.is_email_verified = True
+    verification.is_used = True
+
     try:
-        user.is_email_verified = True
-        verification.is_used = True
         db.commit()
 
-        background_tasks.add_task(
-            send_welcome_email,
-            recipient=data.email,
-            name=user.name
-        )
     except Exception:
-        db.rollback()
         raise DatabaseTransactionError("An error occurred while creating the account. Please try again.")
+    
+
+    background_tasks.add_task(
+        send_welcome_email,
+        recipient=data.email,
+        name=user.name
+    )
 
     return {"message": "Email successfully verified!"}
 
@@ -153,8 +150,11 @@ def resend_verification_email(db: Session, email: str,background_tasks: Backgrou
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=10), #Istice za 10 min
         is_used=False
     )
-    db.add(new_verification)
-    db.commit()
+    try:
+        db.add(new_verification)
+        db.commit()                    
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while resending the verification email. Please try again.")
 
     background_tasks.add_task(
         send_verification_email,
@@ -162,7 +162,7 @@ def resend_verification_email(db: Session, email: str,background_tasks: Backgrou
         name=user.name,
         otp=otp_code
     )
-
+    
     return {"message": "A new verification email has been sent."}
 
 def login_user(db: Session, email: str, password: str) -> dict:
@@ -174,7 +174,7 @@ def login_user(db: Session, email: str, password: str) -> dict:
         raise UserNotFoundError("Email address has not been verified")
 
     jti = secrets.token_hex(32)
-    access_token = create_access_token({"sub": str(user.id)})
+    access_token = create_access_token({"sub": str(user.id), "role": user.role.name})
     refresh_token = create_refresh_token({"sub": str(user.id), "jti": jti})
     
     db_token = RefreshToken(
@@ -183,8 +183,11 @@ def login_user(db: Session, email: str, password: str) -> dict:
         jti=jti,
         expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     )
-    db.add(db_token)
-    db.commit()
+    try:
+        db.add(db_token)
+        db.commit()                  
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while logging in. Please try again.")
 
     return {"access_token": access_token, "refresh_token": refresh_token}
 
@@ -204,10 +207,13 @@ def forgot_password(db: Session, email: str, background_tasks: BackgroundTasks):
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
         is_used=False
     )
-    db.add(new_verification)
-    db.commit()
+    try:
+        db.add(new_verification)
+        db.commit()                  
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while sending the password reset email. Please try again.")
 
-    reset_link = f"http://localhost:5173/reset-password?token={reset_token}"
+    reset_link = f"http://localhost:5173/reset_password?token={reset_token}"
 
     background_tasks.add_task(
         send_reset_password_email,
@@ -228,7 +234,7 @@ def reset_password(db: Session, data: ResetPasswordRequest):
     if not verification:
         raise InvalidOTPError("Invalid or expired reset link")
 
-    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
         raise OTPExpiredError("Reset link has expired")
 
     user = db.query(User).filter(
@@ -242,7 +248,10 @@ def reset_password(db: Session, data: ResetPasswordRequest):
     user.password_hash = get_password_hash(data.new_password)
     verification.is_used = True
 
-    db.commit()
+    try:
+        db.commit()                    
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while resetting the password. Please try again.")
 
     return {"message": "Password reset successfully."}
     
@@ -258,7 +267,11 @@ def logout_user(db: Session, refresh_token: str | None):
     db_token = db.query(RefreshToken).filter(RefreshToken.jti == jti).first()
     if db_token:
         db_token.revoked = True
-        db.commit()
+
+    try:
+        db.commit()                   
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while logging out. Please try again.")
 
 def refresh_access_token(db: Session, refresh_token: str) -> str:
     from jose import JWTError
@@ -279,8 +292,16 @@ def refresh_access_token(db: Session, refresh_token: str) -> str:
 
     # 2. Generisanje novih identiteta
     user_id = payload["sub"]
+
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user:
+        raise InvalidTokenError("User not found or deleted")
+    
     new_jti = secrets.token_hex(32)
-    new_access_token = create_access_token({"sub": user_id})
+    new_access_token = create_access_token({
+        "sub": str(user_id), 
+        "role": user.role.name
+    })
     new_refresh_token = create_refresh_token({"sub": user_id, "jti": new_jti})
 
     # 3. Upisivanje novog tokena koji će zameniti stari
@@ -298,25 +319,13 @@ def refresh_access_token(db: Session, refresh_token: str) -> str:
     old_db_token.revoked = True
     old_db_token.replaced_by = new_db_token.id 
     
-    db.commit()
+    try:
+        db.commit()                    
+    except SQLAlchemyError:
+        raise DatabaseTransactionError("An error occurred while refreshing the access token. Please try again.")
 
     # Vraćamo oba, ruter će ih staviti u cookies
     return {
         "access_token": new_access_token, 
         "refresh_token": new_refresh_token
     }
-
-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
-    from jose import JWTError
-    token = request.cookies.get("access_token")
-    if not token:
-        raise NotAuthenticatedError("Not authenticated")
-    try:
-        payload = decode_token(token)
-        user_id = int(payload["sub"])
-    except (JWTError, KeyError, ValueError):
-        raise InvalidTokenError("Invalid or expired token")
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise InvalidTokenError("User not found")
-    return user

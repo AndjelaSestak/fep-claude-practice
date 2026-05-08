@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from decimal import Decimal
 from typing import Optional, List
 from datetime import datetime, date
@@ -10,11 +10,20 @@ class TransactionTemplateBase(BaseModel):
     name: str
     amount: Decimal
     currency: str
-    recipient: str
+    recipient: Optional[str] = None
     recipient_account_number: str
     card_id: int
     reference: Optional[str] = None
     type: TransactionType = TransactionType.single
+
+    @field_validator("recipient_account_number")
+    @classmethod
+    def recipient_account_number_must_be_16_digits(cls, v):
+        if not v.isdigit():
+            raise ValueError("Recipient account number must contain only digits")
+        if len(v) != 16:
+            raise ValueError("Recipient account number must contain exactly 16 digits")
+        return v
 
 
 class TransactionTemplateCreate(TransactionTemplateBase):
@@ -30,6 +39,17 @@ class TransactionTemplateCreate(TransactionTemplateBase):
         return self
 
 
+class ExecuteTemplateRequest(BaseModel):
+    pin: str = Field(..., min_length=4, max_length=4)
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, v):
+        if not v.isdigit():
+            raise ValueError("PIN must contain only digits")
+        return v
+
+
 class TransactionTemplateUpdate(BaseModel):
     name: Optional[str] = None
     amount: Optional[Decimal] = None
@@ -38,10 +58,20 @@ class TransactionTemplateUpdate(BaseModel):
     recipient_account_number: Optional[str] = None
     card_id: Optional[int] = None
     reference: Optional[str] = None
-    type: Optional[TransactionType] = None
     frequency: Optional[Frequency] = None
     start_date: Optional[datetime] = None
     end_date: Optional[date] = None
+
+    @field_validator("recipient_account_number")
+    @classmethod
+    def recipient_account_number_must_be_16_digits(cls, v):
+        if v is None:
+            return v
+        if not v.isdigit():
+            raise ValueError("Recipient account number must contain only digits")
+        if len(v) != 16:
+            raise ValueError("Recipient account number must contain exactly 16 digits")
+        return v
 
 
 class CardTypeSummary(BaseModel):
@@ -62,10 +92,11 @@ class CardSummary(BaseModel):
 class RecurringTransactionSummary(BaseModel):
     id: int
     frequency: Frequency
-    start_date: Optional[datetime] = None
+    start_date: Optional[date] = None
     next_run_at: Optional[datetime] = None
     end_date: Optional[date] = None
     is_active: bool
+    has_executed_transactions: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

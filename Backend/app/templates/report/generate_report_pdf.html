@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: sans-serif; padding: 20px; color: #333; }
+        .header { border-bottom: 2px solid #4f46e5; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #f3f4f6; text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .summary { margin-top: 30px; border-top: 2px solid #eee; padding-top: 10px; text-align: right; }
+        .income { color: green; } 
+        .expense { color: red; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Transaction Report</h1>
+        <p>User: {{ user_email }} | Date: {{ date_today }}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr><th>Date</th><th>Recipient</th><th>Type</th><th>Amount</th></tr>
+        </thead>
+        <tbody>
+            {% for t in transactions %}
+            <tr>
+                <td>{{ t.created_at.strftime("%d.%m.%Y") if t.created_at else "N/A" }}</td>
+                <td>{{ t.recipient if t.recipient else (t.sender if t.sender else "N/A") }}</td>
+                <td>{{ t.type.value }}</td>
+                <td class="{{ 'income' if t.direction.value == 'incoming' else 'expense' }}">
+                    {{ '+' if t.direction.value == 'incoming' else '-' }}{{ t.amount }} {{ t.currency }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="summary">
+        <p>Total deposits: <span class="income">+{{ total_in }}</span></p>
+        <p>Total withdrawals: <span class="expense">-{{ total_out }}</span></p>
+        <p><strong>Net difference: {{ neto }}</strong></p>
+    </div>
+</body>
+</html>

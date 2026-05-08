@@ -4,7 +4,8 @@ import Button from '../components/ui/Button'
 import FormField from '../components/ui/FormField'
 import Input from '../components/ui/InputField'
 import FormWrapper from '../components/ui/FormWrapper'
-import { authService } from '../services/authService'
+import { toast } from 'react-toastify'
+import { resendVerificationEmail, verifyEmail } from '../services/authService'
 import cardService from '../services/cardService'
 import AlertDialog, {
   AlertDialogHeader,
@@ -18,16 +19,16 @@ import AlertDialog, {
 const OTPVerificationPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  
-  const [otp, setOtp] = useState("")
-  const [error, setError] = useState("")
+
+  const [otp, setOtp] = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const email = location.state?.email || ""
-  const type = location.state?.type || ""
-  const cardId = location.state?.cardId || ""
+  const email = location.state?.email || ''
+  const type = location.state?.type || ''
+  const cardId = location.state?.cardId || ''
 
-    // ERROR DIALOG
+  // ERROR DIALOG
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -35,6 +36,7 @@ const OTPVerificationPage = () => {
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
 
   const [resendDialogOpen, setResendDialogOpen] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   // Zaštita: Ako nema email-a (npr. refresh stranice), vrati korisnika na registraciju
   useEffect(() => {
@@ -43,100 +45,105 @@ const OTPVerificationPage = () => {
     }
   }, [email, navigate])
 
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [resendCooldown])
+
   const handleVerify = async (e) => {
-  e.preventDefault()
+    e.preventDefault()
 
-  try {
-    setLoading(true)
-    setError("")
+    try {
+      setLoading(true)
+      setError('')
 
-    if (type === 'card') {
-      await cardService.verifyCard({
-        card_id: cardId,
-        otp_code: otp
-      })
-      navigate('/my-cards')
-    } else {
-      await authService.verifyEmail({
-        email,
-        otp_code: otp
-      })
-      navigate('/login')
+      if (type === 'card') {
+        await cardService.verifyCard({
+          card_id: cardId,
+          otp_code: otp
+        })
+        setSuccessDialogOpen(true)
+      } else {
+        await verifyEmail({
+          email,
+          otp_code: otp
+        })
+        toast.success('Email verified successfully! You are being redirected to the login page.')
+        navigate('/login')
+      }
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Invalid code')
+    } finally {
+      setLoading(false)
     }
-    
-  } catch (err) {
-    setError(err.response?.data?.detail || "Invalid code")
-  } finally {
-    setLoading(false)
   }
-}
 
   const handleResend = async (e) => {
     e.preventDefault()
 
-    try{
-         setLoading(true)
-        await authService.resendVerificationEmail(email)
-        setResendDialogOpen(true)
-    }
-    catch(err){
-        const errorMessage = err.response?.data?.detail || "Failed to resend verification email. Please try again."
+    try {
+      setLoading(true)
+      await resendVerificationEmail(email)
+      setResendCooldown(60)
+      setResendDialogOpen(true)
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.detail || 'Failed to resend verification email. Please try again.'
       setErrorMessage(errorMessage)
       setErrorDialogOpen(true)
-    }finally {
+    } finally {
       setLoading(false)
     }
-
   }
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center px-4 pt-12">
-
-        {/* SUCCESS DIALOG - Nakon uspešne verifikacije */}
-    <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Email Verified!</AlertDialogTitle>
-        <AlertDialogDescription>
-          Your email has been successfully verified. You can now access your dashboard.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogAction onClick={() => navigate('/dashboard')}>
-          Go to Dashboard
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialog>
-
-    {/* RESEND DIALOG - Nakon ponovnog slanja koda */}
-    <AlertDialog open={resendDialogOpen} onClose={() => setResendDialogOpen(false)}>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Code Sent</AlertDialogTitle>
-        <AlertDialogDescription>
-          A new 6-digit verification code has been sent to <b>{email}</b>.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogAction onClick={() => setResendDialogOpen(false)}>
-          Got it
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialog>
-
-    {/* ERROR DIALOG */}
-      <AlertDialog open={errorDialogOpen} onClose={() => setErrorDialogOpen(false)}>
+      {/* SUCCESS DIALOG - shown after successful card OTP verification */}
+      <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Error</AlertDialogTitle>
+          <AlertDialogTitle>Card Verified!</AlertDialogTitle>
           <AlertDialogDescription>
-            {errorMessage}
+            Your card has been successfully verified. Your card details have been sent to your
+            registered email address. Please delete the email once you have noted your details.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>
-            Close
-          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              setSuccessDialogOpen(false)
+              navigate('/my_cards')
+            }}
+          >
+            Go to My Cards
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialog>
-      
+
+      {/* RESEND DIALOG - Nakon ponovnog slanja koda */}
+      <AlertDialog open={resendDialogOpen} onClose={() => setResendDialogOpen(false)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Code Sent</AlertDialogTitle>
+          <AlertDialogDescription>
+            A new 6-digit verification code has been sent to <b>{email}</b>.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={() => setResendDialogOpen(false)}>Got it</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialog>
+
+      {/* ERROR DIALOG */}
+      <AlertDialog open={errorDialogOpen} onClose={() => setErrorDialogOpen(false)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Error</AlertDialogTitle>
+          <AlertDialogDescription>{errorMessage}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>Close</AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialog>
+
       {/* HEADER / LOGO */}
       <div className="mb-8 text-center">
         <div className="flex items-center justify-center gap-2">
@@ -145,20 +152,15 @@ const OTPVerificationPage = () => {
           </div>
           <h1 className="text-4xl font-bold text-slate-900">SecureBank</h1>
         </div>
-        <p className="mt-2 text-lg text-slate-600">
-          Secure, modern banking platform
-        </p>
+        <p className="mt-2 text-lg text-slate-600">Secure, modern banking platform</p>
       </div>
 
       <FormWrapper>
         <div className="w-full">
           <div className="mb-8 text-left">
-            <h2 className="text-4xl font-bold text-slate-900">
-              Verify your email
-            </h2>
+            <h2 className="text-4xl font-bold text-slate-900">Verify your email</h2>
             <p className="mt-2 text-lg text-slate-600">
-              We sent a 6-digit code to{' '}
-              <span className="font-medium text-slate-900">{email}</span>
+              We sent a 6-digit code to <span className="font-medium text-slate-900">{email}</span>
             </p>
           </div>
 
@@ -190,17 +192,28 @@ const OTPVerificationPage = () => {
             >
               {loading ? 'Verifying...' : 'Verify Email'}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full"
+              onClick={() => navigate(-1)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
           </form>
 
           <div className="mt-8 space-y-4">
             <p className="text-center text-sm text-slate-600">
               Didn't receive the code?{' '}
-              <button 
+              <button
                 type="button"
-                className="font-medium text-primary hover:underline transition-all"
+                className="font-medium text-primary hover:underline transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
                 onClick={handleResend}
+                disabled={resendCooldown > 0 || loading}
               >
-                Resend code
+                {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : 'Resend code'}
               </button>
             </p>
 

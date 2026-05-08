@@ -1,23 +1,19 @@
-from pydantic import BaseModel, Field, field_validator, ConfigDict, model_validator
-from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, Field, field_validator, ConfigDict, model_validator, computed_field
+from datetime import datetime, timezone
 from app.models.card import CardStatus
 
 
-class CardCreate(BaseModel):
-    card_number: str = Field(..., min_length=13, max_length=19)
-    cardholder_name: str = Field(..., min_length=1, max_length=100)
-    expiry_month: int = Field(...)
-    expiry_year: int = Field(...)
-    card_type_id: int = Field(...)
-    cvv: str = Field(..., min_length=3, max_length=4)
-    card_pin: str = Field(..., min_length=4, max_length=4)
+# Minimal wallet projection used only inside CardResponse to expose account_number
+# without touching the Card model or making an extra service call.
+class _WalletBrief(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    account_number: str
 
-    @field_validator("card_number")
-    @classmethod
-    def validate_card_number(cls, v):
-        if not v.isdigit():
-            raise ValueError("Card number must contain only digits")
-        return v
+
+class CardCreate(BaseModel):
+    cardholder_name: str = Field(..., min_length=1, max_length=100)
+    card_type_id: int = Field(...)
 
     @field_validator("cardholder_name")
     @classmethod
@@ -26,54 +22,12 @@ class CardCreate(BaseModel):
             raise ValueError("Cardholder name is required")
         return v.strip().upper()
 
-    @field_validator("cvv")
-    @classmethod
-    def validate_cvv(cls, v):
-        if not v.isdigit():
-            raise ValueError("CVV must contain only digits")
-        return v
-    
-    @field_validator("card_pin")
-    @classmethod
-    def validate_pin(cls, v):
-        if not v.isdigit():
-            raise ValueError("PIN must contain only digits")
-        return v
-    
-    @field_validator("expiry_year")
-    @classmethod
-    def validate_expiry_year(cls, v):
-        current_year = datetime.now().year
-
-        if v < current_year:
-            raise ValueError("Expiry year cannot be in the past")
-
-        if v > current_year + 20:
-            raise ValueError("Expiry year is too far in the future")
-        return v
-    
-    @field_validator("expiry_month")
-    @classmethod
-    def validate_expiry_month(cls, v):
-        if v < 1 or v > 12:
-            raise ValueError("Expiry month must be between 1 and 12")
-        return v
-    
     @field_validator("card_type_id")
     @classmethod
     def validate_card_type_id(cls, v):
         if v <= 0:
             raise ValueError("Please select a card type")
         return v
-
-    @model_validator(mode="after")
-    def validate_expiry_date(self):
-        if self.expiry_year is None or self.expiry_month is None:
-            return self
-        now = datetime.now()
-        if self.expiry_year < now.year or (self.expiry_year == now.year and self.expiry_month < now.month):
-            raise ValueError("Card has expired")
-        return self
 
 
 class CardVerify(BaseModel):
@@ -85,6 +39,18 @@ class CardVerify(BaseModel):
     def validate_otp(cls, v):
         if not v.isdigit():
             raise ValueError("OTP must contain only digits")
+        return v
+
+
+class CardPinVerify(BaseModel):
+    card_id: int = Field(..., gt=0)
+    pin: str = Field(..., min_length=4, max_length=4)
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, v):
+        if not v.isdigit():
+            raise ValueError("PIN must contain only digits")
         return v
 
 
@@ -103,3 +69,12 @@ class CardResponse(BaseModel):
     is_email_verified: bool
     is_deleted: bool
     created_at: datetime
+
+    # Pydantic reads `wallet` from the ORM relationship (from_attributes=True),
+    # but exclude=True keeps it out of the JSON response.
+    wallet: Optional[_WalletBrief] = Field(default=None, exclude=True)
+
+    @computed_field
+    @property
+    def account_number(self) -> str | None:
+        return self.wallet.account_number if self.wallet else None

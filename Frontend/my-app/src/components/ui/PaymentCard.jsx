@@ -1,99 +1,228 @@
-import { CreditCard, Lock, AlertTriangle, Trash2, FileText } from "lucide-react";
-import Button from "./Button";
+import { useState } from 'react'
+import { Lock, Unlock, AlertTriangle, Trash2, FileText, Copy, Check } from 'lucide-react'
+import Button from './Button'
+import { Visa as VisaLogo, Mastercard as MastercardLogo } from 'react-payment-logos/dist/flat'
+
+const maskAccountNumber = (accountNumber) => {
+  if (!accountNumber || accountNumber.length < 8) return accountNumber
+  return `${accountNumber.slice(0, 4)} •••• •••• ${accountNumber.slice(-4)}`
+}
+
+// Logo rendered in original colours on a small white pill so it stays legible
+// on any card background without needing CSS filter hacks.
+const CardNetworkLogo = ({ cardType }) => {
+  const type = cardType?.toLowerCase()
+  const pill = 'bg-white rounded-md px-2 py-1 flex items-center justify-center shadow-sm'
+
+  if (type === 'visa')
+    return (
+      <div className={pill}>
+        <VisaLogo style={{ width: 38, height: 'auto' }} />
+      </div>
+    )
+  if (type === 'mastercard')
+    return (
+      <div className={pill}>
+        <MastercardLogo style={{ width: 34, height: 'auto' }} />
+      </div>
+    )
+
+  return (
+    <div className={pill}>
+      <span className="text-slate-700 text-[10px] font-bold tracking-widest uppercase px-1">
+        {cardType}
+      </span>
+    </div>
+  )
+}
+
+// Gold EMV chip with contact line etching
+const EmvChip = () => (
+  <div className="w-10 h-7 rounded-md bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 shadow-md relative overflow-hidden flex-shrink-0">
+    <div className="absolute top-[28%] inset-x-0 h-px bg-amber-700/30" />
+    <div className="absolute top-[60%] inset-x-0 h-px bg-amber-700/30" />
+    <div className="absolute left-[28%] inset-y-0 w-px bg-amber-700/30" />
+    <div className="absolute left-[68%] inset-y-0 w-px bg-amber-700/30" />
+    <div className="absolute inset-[18%] rounded-sm bg-amber-200/40" />
+  </div>
+)
 
 const PaymentCard = ({
   cardNumber,
+  accountNumber,
   cardType,
-  status = "verified",
+  status = 'verified',
   onBlock,
   onUnblock,
   onReportStolen,
   onReportLost,
   onRemove,
-  onViewReports,
+  onViewReports
 }) => {
-  const isBlocked =
-    status === "blocked" ||
-    status === "reported_lost" ||
-    status === "reported_stolen";
+  const [copied, setCopied] = useState(false)
 
+  const isBlocked =
+    status === 'blocked' || status === 'reported_lost' || status === 'reported_stolen'
+
+  const handleCopy = () => {
+    if (!accountNumber) return
+    navigator.clipboard.writeText(accountNumber).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   return (
+    // Outer white card — matches the app's existing card style (bg-white, rounded-2xl, shadow-sm)
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden w-80">
+      {/* ── CARD VISUAL ─────────────────────────────────────────────────────── */}
+      <div
+        className={`
+          relative aspect-[1.586/1] rounded-none overflow-hidden cursor-default select-none
+          bg-gradient-to-br from-green-500 via-green-600 to-emerald-800
+          transition-all duration-500
+          ${isBlocked ? 'grayscale opacity-60' : ''}
+        `}
+      >
+        {/* Soft light blob top-right for depth */}
+        <div className="absolute -top-8 -right-8 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        {/* Darker blob bottom-left for contrast */}
+        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-emerald-900/30 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Colored top border - zelena verified, zuta blocked */}
-      <div className={`h-1.5 w-full ${isBlocked ? "bg-yellow-400" : "bg-primary"}`} />
+        {/* Subtle grid texture */}
+        <div
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),' +
+              'linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)',
+            backgroundSize: '20px 20px'
+          }}
+        />
 
-      <div className="p-6 flex flex-col gap-6">
+        {/* Top shimmer line */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
 
-        {/* Ikonica i status badge */}
-        <div className="flex items-start justify-between">
-          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-            <CreditCard className="w-6 h-6 text-blue-500" />
+        <div className="relative h-full flex flex-col justify-between p-5">
+          {/* TOP ROW: chip + logo */}
+          <div className="flex items-center justify-between">
+            <EmvChip />
+            <CardNetworkLogo cardType={cardType} />
           </div>
-          <span className={`text-sm font-medium px-3 py-1 rounded-full border ${
-            isBlocked
-              ? "text-yellow-600 border-yellow-300 bg-yellow-50"
-              : "text-primary border-primary bg-primary-light"
-          }`}>
-            {isBlocked ? "Blocked" : "Verified"}
-          </span>
-        </div>
 
-        {/* Broj kartice i tip */}
-        <div>
-          <p className="text-2xl font-bold text-gray-900 tracking-widest">
-            •••• •••• •••• {cardNumber}
+          {/* CARD NUMBER */}
+          <p
+            className="text-white/90 text-sm tracking-[0.15em] drop-shadow-sm whitespace-nowrap"
+            style={{ fontFamily: "'Courier New', Courier, monospace" }}
+          >
+            •••• &nbsp;•••• &nbsp;•••• &nbsp;{cardNumber}
           </p>
-          <p className="text-gray-400 text-sm mt-1">{cardType}</p>
-        </div>
 
-        {/* Dugmad */}
-        <div className="flex flex-col gap-3">
+          {/* BOTTOM ROW: account number pill + status badge */}
+          <div className="flex items-end justify-between gap-2">
+            {accountNumber ? (
+              <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5 min-w-0">
+                <span className="text-white/60 text-[9px] font-bold uppercase tracking-wider flex-shrink-0">
+                  ACC
+                </span>
+                <span
+                  className="text-white/85 text-[11px] truncate"
+                  style={{ fontFamily: "'Courier New', Courier, monospace" }}
+                >
+                  {maskAccountNumber(accountNumber)}
+                </span>
+                <button
+                  onClick={handleCopy}
+                  aria-label="Copy account number"
+                  className="text-white/50 hover:text-white flex-shrink-0 transition-colors ml-0.5"
+                >
+                  {copied ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
+                </button>
+              </div>
+            ) : (
+              <span />
+            )}
 
-          {/* Block/Unblock dugme */}
-          <Button variant="outline" onClick={isBlocked ? onUnblock : onBlock} className="w-full">
-            <Lock className="w-4 h-4 mr-2" />
-            {isBlocked ? "Unblock Card" : "Block Card"}
-          </Button>
-
-          {/* Report dugmad - samo ako nije blokirana */}
-          {!isBlocked && (
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={onReportStolen} className="flex items-center justify-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors">
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                Report Stolen
-              </Button>
-              <Button variant="outline" onClick={onReportLost} className="flex items-center justify-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors">
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                Report Lost
-              </Button>
+            {/* Status badge */}
+            <div
+              className={`
+                flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                text-[11px] font-semibold backdrop-blur-sm border
+                ${
+                  isBlocked
+                    ? 'bg-red-500/25 border-red-300/30 text-red-100'
+                    : 'bg-white/20 border-white/30 text-white'
+                }
+              `}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${isBlocked ? 'bg-red-300' : 'bg-white animate-pulse'}`}
+              />
+              {isBlocked ? 'Blocked' : 'Active'}
             </div>
-          )}
-
-          {/* Remove Card */}
-          <Button
-            variant="destructive"
-            onClick={onRemove}
-            className="w-full gap-2 text-slate-600 hover:text-primary"
-          >
-            <Trash2 className="w-4 h-4" />
-            Remove Card
-          </Button>
-
-          <Button
-            variant="default"
-            onClick={onViewReports}
-            className="w-full gap-2 text-slate-600 hover:text-primary"
-          >
-            <FileText className="w-4 h-4" />
-            View Card reports
-          </Button>
-
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
 
-export default PaymentCard;
+      {/* ── ACTION BUTTONS ──────────────────────────────────────────────────── */}
+      {/* Inside the same white card — separated by the card visual above */}
+      <div className="p-4 flex flex-col gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={isBlocked ? onUnblock : onBlock}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          {isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+          {isBlocked ? 'Unblock Card' : 'Block Card'}
+        </Button>
+
+        {!isBlocked && (
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReportLost}
+              className="flex items-center justify-center gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Report Lost
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReportStolen}
+              className="flex items-center justify-center gap-1.5 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Report Stolen
+            </Button>
+          </div>
+        )}
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onViewReports}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          <FileText className="w-3.5 h-3.5" />
+          View History
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRemove}
+          className="w-full flex items-center justify-center gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          Remove Card
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export default PaymentCard

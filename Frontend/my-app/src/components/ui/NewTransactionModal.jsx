@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  DialogClose
 } from './Dialog'
 import FormField from './FormField'
 import Input from './InputField'
@@ -18,9 +18,10 @@ import AlertDialog, {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialogCancel
 } from './AlertDialog'
-import { getMyCards } from '../../services/cardService'
+import PinModal from './PinModal'
+import { getMyCards, verifyCardPin } from '../../services/cardService'
 import { getSupportedCurrencies, createTransaction } from '../../services/transactionService'
 
 const EMPTY_FORM = {
@@ -29,8 +30,17 @@ const EMPTY_FORM = {
   currency: '',
   recipient: '',
   recipient_account_number: '',
-  reference: '',
+  reference: ''
 }
+
+const ACCOUNT_NUMBER_LENGTH = 16
+
+const getAccountNumberDigits = (value) => value.replace(/\D/g, '').slice(0, ACCOUNT_NUMBER_LENGTH)
+
+const formatAccountNumber = (value) =>
+  getAccountNumberDigits(value)
+    .replace(/(.{4})/g, '$1 ')
+    .trim()
 
 const NewTransactionModal = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState(EMPTY_FORM)
@@ -41,6 +51,9 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
   const [errorMessage, setErrorMessage] = useState('')
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
 
+  const [pinDialogOpen, setPinDialogOpen] = useState(false)
+  const [pendingFormData, setPendingFormData] = useState(null)
+
   useEffect(() => {
     if (!open) return
     setFormData(EMPTY_FORM)
@@ -49,12 +62,12 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
       try {
         const [cardsData, currenciesData] = await Promise.all([
           getMyCards(),
-          getSupportedCurrencies(),
+          getSupportedCurrencies()
         ])
         setCards(
           cardsData.map((c) => ({
             value: String(c.id),
-            label: c.card_number_masked,
+            label: c.card_number_masked
           }))
         )
         setCurrencies(currenciesData)
@@ -69,26 +82,43 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'recipient_account_number' ? formatAccountNumber(value) : value
+    }))
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
+    const recipientAccountNumber = getAccountNumberDigits(formData.recipient_account_number)
+    if (recipientAccountNumber.length !== ACCOUNT_NUMBER_LENGTH) {
+      setErrorMessage('Recipient account number must contain exactly 16 digits.')
+      setErrorDialogOpen(true)
+      return
+    }
+
+    setPendingFormData(formData)
+    setPinDialogOpen(true)
+  }
+
+  const handlePinConfirm = async (pin) => {
     setLoading(true)
     try {
+      await verifyCardPin(parseInt(pendingFormData.card_id), pin)
+      setPinDialogOpen(false)
       await createTransaction({
-        card_id: parseInt(formData.card_id),
-        amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        recipient: formData.recipient,
-        recipient_account_number: formData.recipient_account_number,
-        reference: formData.reference || null,
+        card_id: parseInt(pendingFormData.card_id),
+        amount: parseFloat(pendingFormData.amount),
+        currency: pendingFormData.currency,
+        recipient: pendingFormData.recipient,
+        recipient_account_number: getAccountNumberDigits(pendingFormData.recipient_account_number),
+        reference: pendingFormData.reference || null
       })
       setSuccessDialogOpen(true)
     } catch (err) {
+      if (pinDialogOpen) throw err
       const data = err.response?.data
       let message = 'Something went wrong. Please try again.'
-
       if (Array.isArray(data?.detail)) {
         const seen = new Set()
         message = data.detail
@@ -98,7 +128,6 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
       } else if (typeof data?.detail === 'string') {
         message = data.detail
       }
-
       setErrorMessage(message)
       setErrorDialogOpen(true)
     } finally {
@@ -171,7 +200,9 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
                 name="recipient_account_number"
                 value={formData.recipient_account_number}
                 onChange={handleChange}
-                placeholder="e.g. RS35105008123456789"
+                placeholder="1234 5678 9012 3456"
+                inputMode="numeric"
+                maxLength={19}
                 required
               />
             </FormField>
@@ -194,6 +225,14 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* PIN VERIFICATION */}
+      <PinModal
+        open={pinDialogOpen}
+        onClose={() => setPinDialogOpen(false)}
+        onConfirm={handlePinConfirm}
+        loading={loading}
+      />
 
       {/* SUCCESS */}
       <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
