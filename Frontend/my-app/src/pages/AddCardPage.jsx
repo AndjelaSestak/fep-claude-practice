@@ -5,7 +5,7 @@ import Input from '../components/ui/InputField'
 import { useNavigate } from 'react-router-dom'
 import FormWrapper from '../components/ui/FormWrapper'
 import { createCard } from '../services/cardService'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
 import AlertDialog, {
   AlertDialogHeader,
