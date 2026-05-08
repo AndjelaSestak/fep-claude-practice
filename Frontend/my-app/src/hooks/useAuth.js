@@ -18,7 +18,10 @@ export const useAuth = () => {
 
   const loginMutation = useMutation({
     mutationFn: ({ email, password }) => contextLogin(email, password),
-    onSuccess: () => navigate('/dashboard'),
+    onSuccess: () => {
+      toast.success('Welcome back!')
+      navigate('/dashboard')
+    },
     onError: (err) => {
       const message = err?.response?.data?.detail || err?.message || 'Invalid email or password'
       toast.error(message)

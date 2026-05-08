@@ -6,6 +6,7 @@ import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/InputField'
 import FormWrapper from '../../../components/ui/FormWrapper'
 import { useAuth } from '../../../hooks/useAuth'
+import { registerSchema } from '../../../schemas/auth'
 
 const RegistrationForm = () => {
   const [formData, setFormData] = useState({
@@ -17,28 +18,32 @@ const RegistrationForm = () => {
     password: '',
     confirm_password: ''
   })
+  const [errors, setErrors] = useState({})
 
   const { register, isRegisterPending } = useAuth()
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.password || !formData.confirm_password) {
-      toast.error('Please fill in all required fields.')
+    const result = registerSchema.safeParse(formData)
+    if (!result.success) {
+      const fieldErrors = {}
+      result.error.issues.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message
+      })
+      setErrors(fieldErrors)
+      toast.error('Please fix the errors before continuing.')
       return
     }
 
-    if (formData.password !== formData.confirm_password) {
-      toast.error('Passwords do not match.')
-      return
-    }
-
-    register({ ...formData, date_of_birth: formData.date_of_birth || null })
+    setErrors({})
+    register({ ...result.data, date_of_birth: result.data.date_of_birth || null })
   }
 
   return (
@@ -51,19 +56,19 @@ const RegistrationForm = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <FormField label="Full Name" required>
-            <Input name="name" value={formData.name} onChange={handleChange} />
+            <Input name="name" value={formData.name} onChange={handleChange} error={errors.name} />
           </FormField>
 
           <FormField label="Email" required>
-            <Input name="email" value={formData.email} onChange={handleChange} />
+            <Input name="email" value={formData.email} onChange={handleChange} error={errors.email} />
           </FormField>
 
           <FormField label="City">
-            <Input name="city" value={formData.city} onChange={handleChange} />
+            <Input name="city" value={formData.city} onChange={handleChange} error={errors.city} />
           </FormField>
 
           <FormField label="Address">
-            <Input name="address" value={formData.address} onChange={handleChange} />
+            <Input name="address" value={formData.address} onChange={handleChange} error={errors.address} />
           </FormField>
 
           <FormField label="Date of Birth">
@@ -72,6 +77,7 @@ const RegistrationForm = () => {
               name="date_of_birth"
               value={formData.date_of_birth}
               onChange={handleChange}
+              error={errors.date_of_birth}
             />
           </FormField>
 
@@ -81,6 +87,7 @@ const RegistrationForm = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
+              error={errors.password}
             />
           </FormField>
 
@@ -90,6 +97,7 @@ const RegistrationForm = () => {
               name="confirm_password"
               value={formData.confirm_password}
               onChange={handleChange}
+              error={errors.confirm_password}
             />
           </FormField>
 

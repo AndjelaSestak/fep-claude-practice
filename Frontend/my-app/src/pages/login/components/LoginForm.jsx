@@ -1,20 +1,29 @@
 import { useState } from 'react'
+import { toast } from 'react-toastify'
 import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/InputField'
 import { useAuth } from '../../../hooks/useAuth'
-import { toast } from 'react-toastify'
+import { loginSchema } from '../../../schemas/auth'
 
 const LoginForm = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [errors, setErrors] = useState({})
   const { login, isLoginPending } = useAuth()
 
   const handleLogin = () => {
-    if (!email || !password) {
-      toast.error('Please enter your email and password.')
+    const result = loginSchema.safeParse({ email, password })
+    if (!result.success) {
+      const fieldErrors = {}
+      result.error.issues.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message
+      })
+      setErrors(fieldErrors)
+      toast.error('Please fix the errors before continuing.')
       return
     }
-    login({ email, password })
+    setErrors({})
+    login(result.data)
   }
 
   return (
@@ -30,7 +39,8 @@ const LoginForm = () => {
           type="email"
           placeholder="admin@gmail.com"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => { setEmail(e.target.value); setErrors((prev) => ({ ...prev, email: undefined })) }}
+          error={errors.email}
         />
       </div>
 
@@ -45,8 +55,9 @@ const LoginForm = () => {
           type="password"
           placeholder="••••••••"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => { setPassword(e.target.value); setErrors((prev) => ({ ...prev, password: undefined })) }}
           onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+          error={errors.password}
         />
       </div>
 
