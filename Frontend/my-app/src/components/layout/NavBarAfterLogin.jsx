@@ -1,16 +1,9 @@
 import { LogOut } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../hooks/useAuth'
 
 const NavBarAfterLogin = () => {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
   const username = user?.name || 'User'
-
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login')
-  }
 
   return (
     <div className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-100">
@@ -18,7 +11,7 @@ const NavBarAfterLogin = () => {
 
       <div className="flex items-center gap-4">
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm"
         >
           <LogOut size={16} />

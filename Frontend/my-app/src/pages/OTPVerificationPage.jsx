@@ -4,6 +4,7 @@ import Button from '../components/ui/Button'
 import FormField from '../components/ui/FormField'
 import Input from '../components/ui/InputField'
 import FormWrapper from '../components/ui/FormWrapper'
+import { toast } from 'react-toastify'
 import { resendVerificationEmail, verifyEmail } from '../services/authService'
 import cardService from '../services/cardService'
 import AlertDialog, {
@@ -68,6 +69,7 @@ const OTPVerificationPage = () => {
           email,
           otp_code: otp
         })
+        toast.success('Email verified successfully! You are being redirected to the login page.')
         navigate('/login')
       }
     } catch (err) {
