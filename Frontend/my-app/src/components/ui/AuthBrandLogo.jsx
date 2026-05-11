@@ -1,6 +1,6 @@
 import { CreditCard } from 'lucide-react'
 
-const LoginLogo = () => (
+const AuthBrandLogo = () => (
   <div className="flex flex-col items-center mb-8">
     <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
       <CreditCard className="w-8 h-8 text-white" />
@@ -10,4 +10,4 @@ const LoginLogo = () => (
   </div>
 )
 
-export default LoginLogo
+export default AuthBrandLogo
