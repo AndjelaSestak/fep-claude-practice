@@ -1,8 +1,8 @@
-import { useSettings } from '../../hooks/useSettings'
-import FormWrapper from '../../components/ui/FormWrapper'
-import FormField from '../../components/ui/FormField'
-import Input from '../../components/ui/InputField'
-import Button from '../../components/ui/Button'
+import { useSettings } from '../../../hooks/useSettings'
+import FormWrapper from '../../../components/ui/FormWrapper'
+import FormField from '../../../components/ui/FormField'
+import Input from '../../../components/ui/InputField'
+import Button from '../../../components/ui/Button'
 
 const ProfileInformationForm = () => {
   const { user, updateProfile, isUpdateProfilePending } = useSettings()
