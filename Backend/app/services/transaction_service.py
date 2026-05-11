@@ -5,7 +5,7 @@ import csv
 from weasyprint import HTML
 from sqlalchemy.orm import Session
 from typing import Optional
-from sqlalchemy import String
+from sqlalchemy import String, or_
 from app.models.transaction import Transaction, TransactionStatus, TransactionDirection, TransactionType
 from app.models.card import Card, CardStatus
 from app.models.wallet import Wallet
