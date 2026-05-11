@@ -4,14 +4,28 @@ import Button from '../../../components/ui/Button'
 import FormField from '../../../components/ui/FormField'
 import FormWrapper from '../../../components/ui/FormWrapper'
 import Input from '../../../components/ui/InputField'
+import { forgotPasswordSchema } from '../../../schemas/mail'
 
 const ForgotPasswordForm = () => {
   const { forgotPassword, isForgotPasswordPending } = useMail()
   const [email, setEmail] = useState('')
-    
+  const [errors, setErrors] = useState({})
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    forgotPassword(email)
+
+    const result = forgotPasswordSchema.safeParse({ email })
+    if (!result.success) {
+      const fieldErrors = {}
+      result.error.issues.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message
+      })
+      setErrors(fieldErrors)
+      return
+    }
+
+    setErrors({})
+    forgotPassword(result.data.email)
   }
 
   return (
@@ -21,13 +35,17 @@ const ForgotPasswordForm = () => {
         Enter your email address and we will send you a reset link
       </p>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <FormField label="Email" required>
           <Input
             type="email"
             placeholder="name@example.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setErrors((prev) => ({ ...prev, email: undefined }))
+            }}
+            error={errors.email}
           />
         </FormField>
 
