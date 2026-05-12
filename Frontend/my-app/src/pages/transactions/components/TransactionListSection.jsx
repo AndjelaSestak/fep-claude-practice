@@ -1,6 +1,6 @@
-import { TransactionFilters } from '../ui/TransactionFilters'
-import { ItemList } from '../ui/ItemList'
-import { TransactionItem } from '../ui/TransactionItem'
+import { TransactionFilters } from '../../../components/ui/TransactionFilters'
+import { ItemList } from '../../../components/ui/ItemList'
+import { TransactionItem } from '../../../components/ui/TransactionItem'
 
 export const TransactionListSection = ({
   loading,

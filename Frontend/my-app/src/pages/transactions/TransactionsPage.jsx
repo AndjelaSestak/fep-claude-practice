@@ -1,10 +1,11 @@
 import Sidebar from '../../components/layout/SideBar'
 import NavBarAfterLogin from '../../components/layout/NavBarAfterLogin'
 import NewTransactionModal from '../../components/ui/NewTransactionModal'
-import { TransactionDetailsModal } from '../../components/ui/TransactionDetailsModal'
+import { TransactionDetailsModal } from '../transactions/components/TransactionDetailsModal'
 import { Pagination } from '../../components/ui/Pagination'
-import { TransactionListSection } from '../../components/transactions/TransactionListSection'
+import { TransactionListSection } from '../transactions/components/TransactionListSection'
 import { useTransactions } from '../../hooks/useTransactions'
+import TransactionHeader from '../transactions/components/TransactionHeader'
 
 const TransactionsPage = () => {
   const {
@@ -36,9 +37,9 @@ const TransactionsPage = () => {
 
         <main className="p-8 overflow-y-auto">
           <div className="max-w-5xl mx-auto space-y-6">
-            <TransactionsHeader
-              onExport={handleExport}
-              onNewTransaction={() => setNewTransactionOpen(true)}
+            <TransactionHeader
+              handleExport={handleExport}
+              setNewTransactionOpen={setNewTransactionOpen}
             />
             <TransactionListSection
               loading={loading}

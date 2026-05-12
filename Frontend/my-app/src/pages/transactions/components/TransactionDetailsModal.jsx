@@ -1,5 +1,4 @@
-import React from 'react'
-import Button from './Button'
+import Button from '../../../components/ui/Button'
 
 export const TransactionDetailsModal = ({ isOpen, onClose, loading, transaction }) => {
   if (!isOpen) return null

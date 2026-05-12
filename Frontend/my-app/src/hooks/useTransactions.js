@@ -76,7 +76,7 @@ export const useTransactions = () => {
     }
   }
 
-  // 4. Otvaranje detalja transakcije
+  // 4. Opening transaction details modal
   const handleTransactionClick = async (id) => {
     setDetailsLoading(true)
     setIsModalOpen(true)
@@ -84,7 +84,7 @@ export const useTransactions = () => {
       const data = await getTransactionById(id)
       setSelectedTransaction(data)
     } catch (error) {
-      console.error('Greška kod detalja:', error)
+      console.error('Mistake happened while loading transaction details:', error)
       toast.error('Unable to load transaction details. Please try again.')
       setIsModalOpen(false)
     } finally {
