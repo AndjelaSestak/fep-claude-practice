@@ -1,4 +1,5 @@
 import PaymentCard from './card/PaymentCard'
+import { getLastFourDigits } from '../../../utils/formatters'
 
 const CARD_TYPE_MAP = {
   1: 'Visa',
@@ -17,14 +18,14 @@ const CardsList = ({
 }) => {
   if (loading) return <p className="text-slate-500">Loading cards...</p>
 
-  if ((cards?.length ?? 0) === 0) return <p className="text-slate-500">You have no cards yet.</p>
+  if (cards.length === 0) return <p className="text-slate-500">You have no cards yet.</p>
 
   return (
     <div className="flex flex-wrap justify-center gap-6">
       {cards.map((card) => (
         <PaymentCard
           key={card.id}
-          cardNumber={card.card_number_masked?.slice(-4)}
+          cardNumber={getLastFourDigits(card.card_number_masked)}
           accountNumber={card.account_number}
           cardType={CARD_TYPE_MAP[card.card_type_id] || 'Unknown'}
           status={card.status}

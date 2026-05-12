@@ -90,7 +90,7 @@ const CardFace = ({ cardNumber, accountNumber, cardType, isBlocked }) => {
         </p>
 
         <div className="flex items-end justify-between gap-2">
-          {accountNumber ? (
+          {accountNumber && (
             <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5 min-w-0">
               <span className="text-white/60 text-[9px] font-bold uppercase tracking-wider flex-shrink-0">
                 ACC
@@ -109,8 +109,6 @@ const CardFace = ({ cardNumber, accountNumber, cardType, isBlocked }) => {
                 {copied ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
               </button>
             </div>
-          ) : (
-            <span />
           )}
 
           <div
