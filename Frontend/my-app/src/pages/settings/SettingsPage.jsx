@@ -11,10 +11,9 @@ const SettingsPage = () => {
       <Sidebar />
 
       <div className="flex flex-col flex-1 overflow-auto">
-        <NavBarAfterLogin username="" />
+        <NavBarAfterLogin />
 
         <div className="flex-1 bg-slate-50 flex flex-col px-8 pt-12 gap-8">
-
           <SettingsHeader />
 
           <ProfileInformationForm />

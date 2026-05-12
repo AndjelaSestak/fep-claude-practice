@@ -1,14 +1,13 @@
+import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { useSettings } from '../../../hooks/useSettings'
 import FormWrapper from '../../../components/ui/FormWrapper'
 import Button from '../../../components/ui/Button'
+import AlertDialog from '../../../components/ui/AlertDialog'
 
 const AccountManagementSection = () => {
   const { deleteAccount, isDeleteAccountPending } = useSettings()
-
-  const handleDeleteAccount = () => {
-    deleteAccount()
-  }
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false)
 
   return (
     <FormWrapper className="border-red-200  max-w-none">
@@ -28,10 +27,20 @@ const AccountManagementSection = () => {
         size="sm"
         variant="destructive"
         disabled={isDeleteAccountPending}
-        onClick={handleDeleteAccount}
+        onClick={() => setIsAlertDialogOpen(true)}
       >
         {isDeleteAccountPending ? 'Deleting...' : 'Delete account'}
       </Button>
+
+      <AlertDialog
+        open={isAlertDialogOpen}
+        onClose={() => setIsAlertDialogOpen(false)}
+        onConfirm={deleteAccount}
+        title="Delete Account"
+        description="Are you sure you want to delete your account? This action cannot be undone."
+        confirmLabel={isDeleteAccountPending ? 'Deleting...' : 'Delete account'}
+        confirmDisabled={isDeleteAccountPending}
+      />
     </FormWrapper>
   )
 }

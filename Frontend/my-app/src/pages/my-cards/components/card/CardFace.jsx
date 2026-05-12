@@ -95,10 +95,7 @@ const CardFace = ({ cardNumber, accountNumber, cardType, isBlocked }) => {
               <span className="text-white/60 text-[9px] font-bold uppercase tracking-wider flex-shrink-0">
                 ACC
               </span>
-              <span
-                className="text-white/85 text-[11px] truncate"
-                style={monoStyle}
-              >
+              <span className="text-white/85 text-[11px] truncate" style={monoStyle}>
                 {maskAccountNumber(accountNumber)}
               </span>
               <button

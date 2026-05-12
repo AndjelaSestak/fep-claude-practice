@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { toast } from 'react-toastify';
-import { sendContactMessage } from '../services/visitorService';
+import { useState } from 'react'
+import { toast } from 'react-toastify'
+import { sendContactMessage } from '../services/visitorService'
 
 export const useContactForm = () => {
   const [formData, setFormData] = useState({
@@ -8,20 +8,20 @@ export const useContactForm = () => {
     sender_email: '',
     subject: '',
     message: ''
-  });
-  const [loading, setLoading] = useState(false);
+  })
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault()
+    setLoading(true)
 
     try {
       await sendContactMessage(
@@ -29,39 +29,36 @@ export const useContactForm = () => {
         formData.subject,
         formData.sender_email,
         formData.message
-      );
+      )
 
-     
-      toast.success('Your message has been sent successfully!');
+      toast.success('Your message has been sent successfully!')
 
-     
       setFormData({
         sender: '',
         subject: '',
         sender_email: '',
         message: ''
-      });
+      })
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      let textToShow = 'Slanje poruke nije uspelo. Pokušajte ponovo.';
+      const detail = err.response?.data?.detail
+      let textToShow = 'Slanje poruke nije uspelo. Pokušajte ponovo.'
 
       if (Array.isArray(detail)) {
-        textToShow = detail.map((e) => `Polje ${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', ');
+        textToShow = detail.map((e) => `Polje ${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', ')
       } else if (typeof detail === 'string') {
-        textToShow = detail;
+        textToShow = detail
       }
 
-     
-      toast.error(textToShow);
+      toast.error(textToShow)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return {
     formData,
     loading,
     handleChange,
     handleSubmit
-  };
-};
+  }
+}

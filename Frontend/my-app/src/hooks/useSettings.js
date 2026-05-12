@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import { changePassword, updateCurrentUser, deleteUser } from '../services/userService'
 import { getApiErrorMessage } from '../utils/getApiErrorMessage'
 
-
 export const useSettings = () => {
   const { user, refreshUser } = useAuth()
   const navigate = useNavigate()
@@ -50,6 +49,5 @@ export const useSettings = () => {
     isChangePasswordPending: changePasswordMutation.isPending,
     deleteAccount: deleteAccountMutation.mutate,
     isDeleteAccountPending: deleteAccountMutation.isPending
-
   }
 }

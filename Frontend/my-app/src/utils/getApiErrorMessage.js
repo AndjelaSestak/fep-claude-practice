@@ -11,9 +11,7 @@ export const getApiErrorMessage = (error, fallback = 'Something went wrong.') =>
   }
 
   if (Array.isArray(detail)) {
-    const detailMessages = detail
-      .map((item) => item?.msg)
-      .filter(Boolean)
+    const detailMessages = detail.map((item) => item?.msg).filter(Boolean)
 
     if (detailMessages.length > 0) {
       return detailMessages.join(', ')
