@@ -1,11 +1,15 @@
+import { useState } from 'react'
+import { toast } from 'react-toastify'
 import { useSettings } from '../../../hooks/useSettings'
 import FormWrapper from '../../../components/ui/FormWrapper'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/InputField'
 import Button from '../../../components/ui/Button'
+import { updateProfileSchema } from '../../../schemas/settings'
 
 const ProfileInformationForm = () => {
   const { user, updateProfile, isUpdateProfilePending } = useSettings()
+  const [errors, setErrors] = useState({})
 
   const handleUpdateSubmit = (event) => {
     event.preventDefault()
@@ -18,7 +22,24 @@ const ProfileInformationForm = () => {
       date_of_birth: formData.get('date_of_birth') || null
     }
 
-    updateProfile(profileData)
+    const result = updateProfileSchema.safeParse(profileData)
+    if (!result.success) {
+      const fieldErrors = {}
+      result.error.issues.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message
+      })
+      setErrors(fieldErrors)
+      toast.error('Please fix the errors before continuing.')
+      return
+    }
+
+    setErrors({})
+    updateProfile(result.data)
+  }
+
+  const clearError = (event) => {
+    const { name } = event.target
+    setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
   if (!user) {
@@ -41,6 +62,8 @@ const ProfileInformationForm = () => {
             defaultValue={user.name || ''}
             placeholder="John Doe"
             className="w-full"
+            onChange={clearError}
+            error={errors.name}
           />
         </FormField>
 
@@ -61,6 +84,8 @@ const ProfileInformationForm = () => {
             defaultValue={user.city || ''}
             placeholder="Beograd"
             className="w-full"
+            onChange={clearError}
+            error={errors.city}
           />
         </FormField>
 
@@ -71,6 +96,8 @@ const ProfileInformationForm = () => {
             defaultValue={user.address || ''}
             placeholder="Knez Mihaila 123"
             className="w-full"
+            onChange={clearError}
+            error={errors.address}
           />
         </FormField>
 
@@ -80,6 +107,8 @@ const ProfileInformationForm = () => {
             type="date"
             defaultValue={user.date_of_birth || ''}
             className="w-full"
+            onChange={clearError}
+            error={errors.date_of_birth}
           />
         </FormField>
 
