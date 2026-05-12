@@ -14,7 +14,7 @@ import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import ResetPasswordPage from '../pages/ResetPasswordPage'
 import TransactionsPage from '../pages/TransactionsPage'
 import AddCardPage from '../pages/AddCardPage'
-import MyCardsPage from '../pages/MyCardsPage'
+import MyCardsPage from '../pages/my-cards/MyCardsPage'
 import TemplatesPage from '../pages/TemplatesPage'
 
 const router = createBrowserRouter([
