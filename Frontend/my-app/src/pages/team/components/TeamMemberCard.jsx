@@ -1,4 +1,4 @@
-import TeamCard from '../../../components/ui/TeamCardWrapper'
+import TeamCard from './TeamCardWrapper'
 
 const TeamMemberCard = ({ member }) => {
   return (
