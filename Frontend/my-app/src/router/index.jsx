@@ -13,7 +13,7 @@ import SettingsPage from '../pages/settings/SettingsPage'
 import ForgotPasswordPage from '../pages/forgot-password/ForgotPasswordPage'
 import ResetPasswordPage from '../pages/ResetPasswordPage'
 import TransactionsPage from '../pages/TransactionsPage'
-import AddCardPage from '../pages/AddCardPage'
+import AddCardPage from '../pages/add-card/AddCardPage'
 import MyCardsPage from '../pages/my-cards/MyCardsPage'
 import TemplatesPage from '../pages/TemplatesPage'
 
