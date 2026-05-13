@@ -41,7 +41,8 @@ export const useAuth = () => {
       navigate('/verify_email', { state: { email: variables.email } })
     },
     onError: (err) => {
-      const message = err?.response?.data?.detail || err?.message || 'Registration failed. Please try again.'
+      const message =
+        err?.response?.data?.detail || err?.message || 'Registration failed. Please try again.'
       toast.error(message)
     }
   })

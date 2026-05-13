@@ -1,5 +1,5 @@
-import React from 'react';
-import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import React from 'react'
+import { Mail, Phone, MapPin, Clock } from 'lucide-react'
 
 const contactInfo = [
   {
@@ -30,7 +30,7 @@ const contactInfo = [
     description: 'Weekend: Closed',
     isLink: false
   }
-];
+]
 
 const ContactInfoCards = () => {
   return (
@@ -44,14 +44,16 @@ const ContactInfoCards = () => {
             {info.icon}
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">{info.title}</h3>
-          <p className={`text-sm mb-1 ${info.isLink ? 'text-primary font-medium' : 'text-gray-900 font-medium'}`}>
+          <p
+            className={`text-sm mb-1 ${info.isLink ? 'text-primary font-medium' : 'text-gray-900 font-medium'}`}
+          >
             {info.value}
           </p>
           <p className="text-sm text-gray-500">{info.description}</p>
         </div>
       ))}
     </div>
-  );
-};
+  )
+}
 
-export default ContactInfoCards;
+export default ContactInfoCards

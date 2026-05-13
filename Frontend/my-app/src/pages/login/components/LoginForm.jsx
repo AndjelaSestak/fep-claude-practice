@@ -39,7 +39,10 @@ const LoginForm = () => {
           type="email"
           placeholder="admin@gmail.com"
           value={email}
-          onChange={(e) => { setEmail(e.target.value); setErrors((prev) => ({ ...prev, email: undefined })) }}
+          onChange={(e) => {
+            setEmail(e.target.value)
+            setErrors((prev) => ({ ...prev, email: undefined }))
+          }}
           error={errors.email}
         />
       </div>
@@ -55,7 +58,10 @@ const LoginForm = () => {
           type="password"
           placeholder="••••••••"
           value={password}
-          onChange={(e) => { setPassword(e.target.value); setErrors((prev) => ({ ...prev, password: undefined })) }}
+          onChange={(e) => {
+            setPassword(e.target.value)
+            setErrors((prev) => ({ ...prev, password: undefined }))
+          }}
           onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
           error={errors.password}
         />
