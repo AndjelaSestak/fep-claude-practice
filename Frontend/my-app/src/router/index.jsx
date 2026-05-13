@@ -5,12 +5,12 @@ import NotFoundPage from '../pages/NotFoundPage'
 import DashboardPage from '../pages/DashboardPage'
 import ContactUsPage from '../pages/contactUs/ContactUsPage'
 import AboutPage from '../pages/about/AboutPage'
-import TeamPage from '../pages/TeamPage'
+import TeamPage from '../pages/team/TeamPage'
 import RegistrationPage from '../pages/register/RegistrationPage'
 import OTPVerificationPage from '../pages/OTPVerificationPage'
 import ProtectedRoute from './ProtectedRoute'
 import SettingsPage from '../pages/settings/SettingsPage'
-import ForgotPasswordPage from '../pages/ForgotPasswordPage'
+import ForgotPasswordPage from '../pages/forgot-password/ForgotPasswordPage'
 import ResetPasswordPage from '../pages/ResetPasswordPage'
 import TransactionsPage from '../pages/TransactionsPage'
 import AddCardPage from '../pages/AddCardPage'
@@ -69,10 +69,6 @@ const router = createBrowserRouter([
   {
     path: '/settings',
     element: <SettingsPage />
-  },
-  {
-    path: '/forgot_password',
-    element: <ForgotPasswordPage />
   },
   {
     path: '/transactions',
