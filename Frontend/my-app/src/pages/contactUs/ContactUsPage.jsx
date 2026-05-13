@@ -18,7 +18,7 @@ const ContactUsPage = () => {
       </div>
       <Footer />
     </div>
-  );
-};
+  )
+}
 
-export default ContactUsPage;
+export default ContactUsPage

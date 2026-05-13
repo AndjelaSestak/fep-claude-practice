@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import FormField from '../../../components/ui/FormField'
 import InputField from '../../../components/ui/InputField'
 import TextArea from '../../../components/ui/TextArea'
@@ -7,7 +7,7 @@ import { useContactForm } from '../../../hooks/useContactForm'
 
 const ContactUsForm = () => {
 
-  const { formData, loading, handleChange, handleSubmit } = useContactForm();
+  const { formData, loading, handleChange, handleSubmit } = useContactForm()
 
   return (
     <div className="max-w-4xl mx-auto bg-white border border-gray-100 rounded-2xl shadow-sm p-8 md:p-12">
@@ -44,7 +44,7 @@ const ContactUsForm = () => {
         </Button>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default ContactUsForm;
+export default ContactUsForm
