@@ -13,7 +13,7 @@ import SettingsPage from '../pages/SettingsPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import ResetPasswordPage from '../pages/ResetPasswordPage'
 import TransactionsPage from '../pages/TransactionsPage'
-import AddCardPage from '../pages/AddCardPage'
+import AddCardPage from '../pages/add-card/AddCardPage'
 import MyCardsPage from '../pages/my-cards/MyCardsPage'
 import TemplatesPage from '../pages/TemplatesPage'
 
@@ -69,10 +69,6 @@ const router = createBrowserRouter([
   {
     path: '/settings',
     element: <SettingsPage />
-  },
-  {
-    path: '/forgot_password',
-    element: <ForgotPasswordPage />
   },
   {
     path: '/transactions',

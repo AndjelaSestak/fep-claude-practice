@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { queryKeys } from '../lib/queryKeys'
@@ -11,6 +11,9 @@ import {
   getCardReports
 } from '../services/cardReportService'
 
+// TODO: move getApiError to a shared utility and replace local invalidateQueries calls with a shared helper per hook
+const getApiError = (err, fallback) => err?.response?.data?.detail || fallback
+
 export const useCards = () => {
   const queryClient = useQueryClient()
 
@@ -18,58 +21,99 @@ export const useCards = () => {
   const [cardToDelete, setCardToDelete] = useState(null)
 
   const [reportsDialogOpen, setReportsDialogOpen] = useState(false)
-  const [reportsLoading, setReportsLoading] = useState(false)
-  const [selectedCardReports, setSelectedCardReports] = useState([])
+  const [activeReportCardId, setActiveReportCardId] = useState(null)
 
-  const { data: cards = [], isLoading: loading } = useQuery({
+  const invalidateCards = () => queryClient.invalidateQueries({ queryKey: queryKeys.cards.all, exact: true })
+
+  const optimisticUpdate = (status) => async (cardId) => {
+    await queryClient.cancelQueries({ queryKey: queryKeys.cards.all, exact: true })
+    const previousCards = queryClient.getQueryData(queryKeys.cards.all)
+    queryClient.setQueryData(queryKeys.cards.all, (old) =>
+      old?.map((card) => (card.id === cardId ? { ...card, status } : card))
+    )
+    return { previousCards }
+  }
+
+  const rollback = (_err, _vars, context) => {
+    queryClient.setQueryData(queryKeys.cards.all, context?.previousCards)
+  }
+
+  const {
+    data: cards = [],
+    isLoading: loading,
+    isError: isCardsError,
+    error: cardsError
+  } = useQuery({
     queryKey: queryKeys.cards.all,
-    queryFn: getMyCards,
-    onError: (err) => toast.error(err.response?.data?.detail || 'Failed to load cards.')
+    queryFn: getMyCards
   })
+
+  useEffect(() => {
+    if (isCardsError) toast.error(getApiError(cardsError, 'Failed to load cards.'))
+  }, [isCardsError, cardsError])
+
+  const {
+    data: selectedCardReports = [],
+    isLoading: reportsLoading,
+    isError: isReportsError,
+    error: reportsError
+  } = useQuery({
+    queryKey: queryKeys.cards.reports(activeReportCardId),
+    queryFn: () => getCardReports(activeReportCardId),
+    enabled: activeReportCardId !== null
+  })
+
+  useEffect(() => {
+    if (isReportsError) toast.error(getApiError(reportsError, 'Failed to load card reports.'))
+  }, [isReportsError, reportsError])
 
   const deleteMutation = useMutation({
     mutationFn: deleteCard,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cards.all })
+      invalidateCards()
       toast.success('Card removed successfully.')
     },
-    onError: (err) => toast.error(err.response?.data?.detail || 'Failed to remove card.')
+    onError: (err) => toast.error(getApiError(err, 'Failed to remove card.'))
   })
 
   const blockMutation = useMutation({
     mutationFn: blockCard,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cards.all })
-      toast.success('Card blocked.')
-    },
-    onError: (err) => toast.error(err.response?.data?.detail || 'Failed to block card.')
+    onMutate: optimisticUpdate('blocked'),
+    onSuccess: () => toast.success('Card blocked.'),
+    onError: (err, vars, context) => {
+      rollback(err, vars, context)
+      toast.error(getApiError(err, 'Failed to block card.'))
+    }
   })
 
   const unblockMutation = useMutation({
     mutationFn: unblockCard,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cards.all })
-      toast.success('Card unblocked.')
-    },
-    onError: (err) => toast.error(err.response?.data?.detail || 'Failed to unblock card.')
+    onMutate: optimisticUpdate('active'),
+    onSuccess: () => toast.success('Card unblocked.'),
+    onError: (err, vars, context) => {
+      rollback(err, vars, context)
+      toast.error(getApiError(err, 'Failed to unblock card.'))
+    }
   })
 
   const reportLostMutation = useMutation({
     mutationFn: reportLostCard,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cards.all })
-      toast.success('Card reported as lost.')
-    },
-    onError: (err) => toast.error(err.response?.data?.detail || 'Failed to report lost card.')
+    onMutate: optimisticUpdate('reported_lost'),
+    onSuccess: () => toast.success('Card reported as lost.'),
+    onError: (err, vars, context) => {
+      rollback(err, vars, context)
+      toast.error(getApiError(err, 'Failed to report lost card.'))
+    }
   })
 
   const reportStolenMutation = useMutation({
     mutationFn: reportStolenCard,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cards.all })
-      toast.success('Card reported as stolen.')
-    },
-    onError: (err) => toast.error(err.response?.data?.detail || 'Failed to report stolen card.')
+    onMutate: optimisticUpdate('reported_stolen'),
+    onSuccess: () => toast.success('Card reported as stolen.'),
+    onError: (err, vars, context) => {
+      rollback(err, vars, context)
+      toast.error(getApiError(err, 'Failed to report stolen card.'))
+    }
   })
 
   const handleRemove = (card) => {
@@ -86,38 +130,39 @@ export const useCards = () => {
     })
   }
 
-  const handleViewReports = async (cardId) => {
-    setReportsDialogOpen(true)
-    setReportsLoading(true)
-    setSelectedCardReports([])
+  const handleBlock = (cardId) => blockMutation.mutate(cardId)
+  const handleUnblock = (cardId) => unblockMutation.mutate(cardId)
+  const handleReportLost = (cardId) => reportLostMutation.mutate(cardId)
+  const handleReportStolen = (cardId) => reportStolenMutation.mutate(cardId)
 
-    try {
-      const reports = await getCardReports(cardId)
-      setSelectedCardReports(reports ?? [])
-    } catch (err) {
-      setReportsDialogOpen(false)
-      toast.error(err.response?.data?.detail || 'Failed to load card reports.')
-    } finally {
-      setReportsLoading(false)
-    }
+  const handleViewReports = (cardId) => {
+    setActiveReportCardId(cardId)
+    setReportsDialogOpen(true)
   }
 
   return {
+    // MyCards — list
     cards,
     loading,
+
+    // MyCards — delete
     deleteDialogOpen,
     cardToDelete,
-    confirmDelete,
     handleRemove,
-    handleBlock: (cardId) => blockMutation.mutate(cardId),
-    handleUnblock: (cardId) => unblockMutation.mutate(cardId),
-    handleReportLost: (cardId) => reportLostMutation.mutate(cardId),
-    handleReportStolen: (cardId) => reportStolenMutation.mutate(cardId),
+    confirmDelete,
+    setDeleteDialogOpen,
+
+    // MyCards — actions
+    handleBlock,
+    handleUnblock,
+    handleReportLost,
+    handleReportStolen,
+
+    // MyCards — reports
     reportsDialogOpen,
     reportsLoading,
     selectedCardReports,
     handleViewReports,
-    setDeleteDialogOpen,
     setReportsDialogOpen
   }
 }

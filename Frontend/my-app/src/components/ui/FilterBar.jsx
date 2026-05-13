@@ -39,7 +39,7 @@ export default function FilterBar({ label, options, value, onChange, className }
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex justify-between items-center w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium hover:bg-slate-50"
+        className="flex justify-between items-center w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-base font-medium hover:bg-slate-50"
       >
         {selectedOption ? selectedOption.label : label}
         <span className={cn('ml-2 transition-transform', isOpen && 'rotate-180')}>▼</span>
@@ -47,7 +47,7 @@ export default function FilterBar({ label, options, value, onChange, className }
 
       {/* Dropdown options */}
       {isOpen && (
-        <div className="absolute mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-sm">
+        <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-sm">
           {/* Default option */}
           <div
             onClick={() => {
@@ -55,7 +55,7 @@ export default function FilterBar({ label, options, value, onChange, className }
               setIsOpen(false)
             }}
             className={cn(
-              'px-4 py-2 cursor-pointer hover:bg-slate-100',
+              'px-4 py-2 text-base cursor-pointer hover:bg-slate-100',
               value === '' && 'font-semibold bg-slate-100'
             )}
           >
@@ -71,7 +71,7 @@ export default function FilterBar({ label, options, value, onChange, className }
                 setIsOpen(false)
               }}
               className={cn(
-                'px-4 py-2 cursor-pointer hover:bg-slate-100',
+                'px-4 py-2 text-base cursor-pointer hover:bg-slate-100',
                 value === opt.value && 'font-semibold bg-slate-100'
               )}
             >
