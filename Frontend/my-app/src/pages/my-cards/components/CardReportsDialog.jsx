@@ -29,24 +29,23 @@ const CardReportsDialog = ({ open, onClose, reportsLoading, selectedCardReports 
             selectedCardReports.map((report, index) => {
               const { card: cardStyle, text: textStyle } = getReportTypeStyle(report.report_type)
               return (
-              <div
-                key={`${report.report_type}-${report.created_at}-${index}`}
-                className={`rounded-lg border p-4 ${cardStyle}`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span
-                    className={`text-sm font-semibold ${textStyle}`}
-                  >
-                    {formatReportType(report.report_type)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {report.created_at
-                      ? new Date(report.created_at).toLocaleString()
-                      : 'Unknown date'}
-                  </span>
+                <div
+                  key={`${report.report_type}-${report.created_at}-${index}`}
+                  className={`rounded-lg border p-4 ${cardStyle}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`text-sm font-semibold ${textStyle}`}>
+                      {formatReportType(report.report_type)}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {report.created_at
+                        ? new Date(report.created_at).toLocaleString()
+                        : 'Unknown date'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )})}
+              )
+            })}
         </div>
       )}
     </DialogContent>
