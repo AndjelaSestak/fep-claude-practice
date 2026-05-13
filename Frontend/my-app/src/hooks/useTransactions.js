@@ -19,7 +19,6 @@ export const useTransactions = () => {
 
   const [newTransactionOpen, setNewTransactionOpen] = useState(false)
 
-  // 1. Fetching transactions from backend
   const fetchTransactions = useCallback(async () => {
     setLoading(true)
     try {
@@ -33,7 +32,7 @@ export const useTransactions = () => {
       )
       setTransactions(data)
     } catch (error) {
-      console.error('Greška pri fetchu:', error)
+      console.error('Mistake happened while fetching transactions:', error)
       toast.error('Unable to fetch transactions. Please try again.')
     } finally {
       setLoading(false)
@@ -44,7 +43,6 @@ export const useTransactions = () => {
     fetchTransactions()
   }, [fetchTransactions])
 
-  // 2. Local filtering of transactions based on type and direction
   useEffect(() => {
     let result = [...transactions]
 
@@ -59,7 +57,6 @@ export const useTransactions = () => {
     setFilteredTransactions(result)
   }, [transactions, filters])
 
-  // 3. Export
   const handleExport = async (format) => {
     try {
       const blobData = await exportTransactions(
@@ -76,7 +73,6 @@ export const useTransactions = () => {
     }
   }
 
-  // 4. Opening transaction details modal
   const handleTransactionClick = async (id) => {
     setDetailsLoading(true)
     setIsModalOpen(true)

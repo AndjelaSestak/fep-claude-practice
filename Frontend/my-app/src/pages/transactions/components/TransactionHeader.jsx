@@ -1,5 +1,6 @@
 import PageHeader from '../../../components/ui/PageHeader'
 import Button from '../../../components/ui/Button'
+import { FileSpreadsheet, FileText, Plus } from 'lucide-react'
 
 const TransactionHeader = ({ handleExport, setNewTransactionOpen }) => {
   return (
@@ -16,7 +17,7 @@ const TransactionHeader = ({ handleExport, setNewTransactionOpen }) => {
             onClick={() => handleExport('csv')}
             className="hover:bg-white rounded-xl text-primary-dark font-bold transition-all px-4"
           >
-            📊 CSV
+            <FileSpreadsheet size={16} /> CSV
           </Button>
           <Button
             variant="ghost"
@@ -24,7 +25,7 @@ const TransactionHeader = ({ handleExport, setNewTransactionOpen }) => {
             onClick={() => handleExport('pdf')}
             className="hover:bg-white rounded-xl text-primary-dark font-bold transition-all px-4"
           >
-            📄 PDF
+            <FileText size={16} /> PDF
           </Button>
         </div>
 
@@ -32,7 +33,7 @@ const TransactionHeader = ({ handleExport, setNewTransactionOpen }) => {
           onClick={() => setNewTransactionOpen(true)}
           className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
         >
-          + New Transaction
+          <Plus size={16} /> New Transaction
         </Button>
       </div>
     </PageHeader>
