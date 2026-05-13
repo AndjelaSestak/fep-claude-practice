@@ -56,8 +56,4 @@ const ContactInfoCards = () => {
   )
 }
 
-<<<<<<< HEAD
 export default ContactInfoCards
-=======
-export default ContactInfoCards
->>>>>>> dev

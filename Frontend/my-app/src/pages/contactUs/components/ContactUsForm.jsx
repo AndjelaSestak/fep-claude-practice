@@ -6,10 +6,6 @@ import Button from '../../../components/ui/Button'
 import { useContactForm } from '../../../hooks/useContactForm'
 
 const ContactUsForm = () => {
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
   const { formData, loading, handleChange, handleSubmit } = useContactForm()
 
   return (
@@ -76,8 +72,4 @@ const ContactUsForm = () => {
   )
 }
 
-<<<<<<< HEAD
 export default ContactUsForm
-=======
-export default ContactUsForm
->>>>>>> dev

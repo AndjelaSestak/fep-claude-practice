@@ -2,6 +2,7 @@ import { toast } from 'react-toastify'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { forgotPassword, resetPassword } from '../services/authService'
+import { getApiErrorMessage } from '../utils/getApiErrorMessage'
 
 export const useMail = () => {
   const navigate = useNavigate()
@@ -23,9 +24,7 @@ export const useMail = () => {
       navigate('/login')
     },
     onError: (err) => {
-      const message =
-        err?.response?.data?.detail || err?.message || 'Something went wrong. Please try again.'
-      toast.error(message)
+      toast.error(getApiErrorMessage(err, 'Failed to reset password. Please try again.'))
     }
   })
 

@@ -31,7 +31,6 @@ export const useContactForm = () => {
         formData.message
       )
 
-     
       toast.success('Your message has been sent successfully!')
 
       setFormData({
@@ -50,7 +49,6 @@ export const useContactForm = () => {
         textToShow = detail
       }
 
-     
       toast.error(textToShow)
     } finally {
       setLoading(false)
