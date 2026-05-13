@@ -141,24 +141,17 @@ export const useCards = () => {
   }
 
   return {
-    // MyCards — list
     cards,
     loading,
-
-    // MyCards — delete
     deleteDialogOpen,
     cardToDelete,
     handleRemove,
     confirmDelete,
     setDeleteDialogOpen,
-
-    // MyCards — actions
     handleBlock,
     handleUnblock,
     handleReportLost,
     handleReportStolen,
-
-    // MyCards — reports
     reportsDialogOpen,
     reportsLoading,
     selectedCardReports,

@@ -1,30 +1,3 @@
-/**
- * USAGE EXAMPLE:
- *
- * import FilterBar from "../components/ui/FilterBar";
- * import { useState } from "react";
- *
- * const Example = () => {
- *   const [selectedStatus, setSelectedStatus] = useState("");
- *   const statusOptions = [
- *     { label: "Active", value: "active" },
- *     { label: "Inactive", value: "inactive" },
- *     { label: "Pending", value: "pending" },
- *   ];
- *
- *   return (
- *     <div className="w-64">
- *       <FilterBar
- *         label="All Statuses"
- *         options={statusOptions}
- *         value={selectedStatus}
- *         onChange={setSelectedStatus}
- *       />
- *     </div>
- *   );
- * };
- */
-
 import React, { useState } from 'react'
 import { cn } from '../../utils/cn'
 
@@ -35,7 +8,6 @@ export default function FilterBar({ label, options, value, onChange, className }
 
   return (
     <div className={cn('relative w-full', className)}>
-      {/* Trigger button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -45,10 +17,8 @@ export default function FilterBar({ label, options, value, onChange, className }
         <span className={cn('ml-2 transition-transform', isOpen && 'rotate-180')}>▼</span>
       </button>
 
-      {/* Dropdown options */}
       {isOpen && (
         <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-sm">
-          {/* Default option */}
           <div
             onClick={() => {
               onChange('')
@@ -62,7 +32,6 @@ export default function FilterBar({ label, options, value, onChange, className }
             {label}
           </div>
 
-          {/* Dynamic options */}
           {options.map((opt) => (
             <div
               key={opt.value}
