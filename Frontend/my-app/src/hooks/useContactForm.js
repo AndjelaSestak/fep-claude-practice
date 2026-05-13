@@ -34,7 +34,6 @@ export const useContactForm = () => {
      
       toast.success('Your message has been sent successfully!')
 
-     
       setFormData({
         sender: '',
         subject: '',
