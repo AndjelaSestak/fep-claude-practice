@@ -4,6 +4,7 @@ import FormWrapper from '../../../components/ui/FormWrapper'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/InputField'
 import Button from '../../../components/ui/Button'
+import Checkbox from '../../../components/ui/Checkbox'
 
 const PasswordManagementForm = () => {
   const [passwordData, setPasswordData] = useState({
@@ -48,15 +49,12 @@ const PasswordManagementForm = () => {
             placeholder="Current Password"
             className="w-full"
           />
-          <label className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={showCurrentPassword}
-              onChange={(event) => setShowCurrentPassword(event.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            Show current password
-          </label>
+          <Checkbox
+            label="Show current password"
+            checked={showCurrentPassword}
+            onChange={(event) => setShowCurrentPassword(event.target.checked)}
+            className="mt-2"
+          />
         </FormField>
 
         <FormField label="New Password" required>
@@ -79,15 +77,12 @@ const PasswordManagementForm = () => {
             placeholder="Confirm New Password"
             className="w-full"
           />
-          <label className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={showNewPassword}
-              onChange={(event) => setShowNewPassword(event.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            Show new password
-          </label>
+          <Checkbox
+            label="Show new password"
+            checked={showNewPassword}
+            onChange={(event) => setShowNewPassword(event.target.checked)}
+            className="mt-2"
+          />
         </FormField>
 
         <div className="flex justify-end">
