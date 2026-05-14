@@ -1,24 +1,16 @@
 import { useEffect, useState, useCallback } from 'react'
-import Sidebar from '../components/layout/SideBar'
-import NavBarAfterLogin from '../components/layout/NavBarAfterLogin'
-import InfoCard from '../components/ui/InfoCard'
-import Select from '../components/ui/Select'
-import Button from '../components/ui/Button'
-import { TransactionItem } from '../components/ui/TransactionItem'
-import { ItemList } from '../components/ui/ItemList'
-import { TransactionFilters } from '../components/ui/TransactionFilters'
-import { getCurrencies, getExchangeRate, getWalletBalance } from '../services/walletService'
-import { getTransactionById, getTransactionsForUser } from '../services/transactionService'
-import { exportTransactions } from '../services/generateReportService'
-import { triggerDownload } from '../utils/reportHelper'
+import Sidebar from '../../components/layout/SideBar'
+import NavBarAfterLogin from '../../components/layout/NavBarAfterLogin'
+import Button from '../../components/ui/Button'
+import { TransactionItem } from '../../components/ui/TransactionItem'
+import { ItemList } from '../../components/ui/ItemList'
+import { TransactionFilters } from '../../components/ui/TransactionFilters'
+import { getTransactionById, getTransactionsForUser } from '../../services/transactionService'
+import { exportTransactions } from '../../services/generateReportService'
+import { triggerDownload } from '../../utils/reportHelper'
+import DashboardHeader from './components/DashboardHeader'
 
 const DashboardPage = () => {
-  const [walletBalance, setWalletBalance] = useState(null)
-  const [walletCurrency, setWalletCurrency] = useState('')
-  const [currencies, setCurrencies] = useState([])
-  const [selectedCurrency, setSelectedCurrency] = useState('')
-  const [displayBalance, setDisplayBalance] = useState(null)
-
   // Promenjen state: inicijalno prazan niz umesto mock-a
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(false)
@@ -27,7 +19,6 @@ const DashboardPage = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [detailsLoading, setDetailsLoading] = useState(false)
-  const [accountNumber, setAccountNumber] = useState('')
 
   // --- LOGIKA ZA EXPORT (Download) ---
   const handleMonthlyExport = async (format) => {
@@ -90,47 +81,6 @@ const DashboardPage = () => {
     }
   }
 
-  // --- LOGIKA ZA BALANS ---
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [wallet, currencyOptions] = await Promise.all([getWalletBalance(), getCurrencies()])
-        setWalletBalance(wallet.balance)
-        setAccountNumber(wallet.account_number)
-        setWalletCurrency(wallet.currency)
-        setSelectedCurrency(wallet.currency)
-        setDisplayBalance(wallet.balance)
-        setCurrencies(currencyOptions)
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error)
-      }
-    }
-    loadData()
-  }, [])
-
-  // Konverzija balansa
-  useEffect(() => {
-    const convertBalance = async () => {
-      if (walletBalance === null || !walletCurrency || !selectedCurrency) return
-      if (selectedCurrency === walletCurrency) {
-        setDisplayBalance(walletBalance)
-        return
-      }
-      try {
-        const rate = await getExchangeRate(walletCurrency, selectedCurrency)
-        setDisplayBalance(walletBalance * rate)
-      } catch (error) {
-        console.error('Failed to convert balance:', error)
-      }
-    }
-    convertBalance()
-  }, [selectedCurrency, walletBalance, walletCurrency])
-
-  const formattedBalance =
-    displayBalance !== null
-      ? `${selectedCurrency} ${displayBalance.toLocaleString('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : 'Loading...'
-
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -140,55 +90,7 @@ const DashboardPage = () => {
 
         <main className="p-8 overflow-y-auto">
           <div className="max-w-6xl mx-auto space-y-10">
-            <header className="flex flex-col md:flex-row items-stretch justify-between gap-6">
-              {/* LEVI PANEL: Dashboard naslov */}
-              <div className="relative bg-primary/10 p-8 rounded-[2.5rem] border border-primary/20 flex-1 flex flex-col justify-center">
-                {/* Dekorativni krugovi */}
-                <div className="absolute -left-4 -top-4 w-32 h-32 bg-primary/15 rounded-full blur-3xl"></div>
-                <div className="absolute right-10 bottom-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
-
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-2 w-10 bg-primary rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)]"></div>
-                    <span className="text-[11px] font-black text-primary-dark uppercase tracking-[0.2em]">
-                      Live Overview
-                    </span>
-                  </div>
-
-                  <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-1">
-                    Dashboard
-                  </h1>
-
-                  <p className="text-gray-700 font-semibold opacity-90">
-                    Welcome back! Here's what's happening with your money.
-                  </p>
-
-                  <p className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
-                    <span className="font-mono text-sm font-black text-gray-400 tracking-[0.2em]">
-                      {accountNumber.match(/.{1,4}/g)?.join(' ') || accountNumber}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              {/* DESNI PANEL: InfoCard */}
-              <div className="w-full md:w-96 flex">
-                <InfoCard
-                  title="Total Balance"
-                  value={formattedBalance}
-                  action={
-                    <div className="w-full">
-                      <Select
-                        value={selectedCurrency}
-                        onChange={(e) => setSelectedCurrency(e.target.value)}
-                        options={currencies.map((c) => ({ value: c.value, label: c.value }))}
-                        className="bg-transparent border-none text-sm font-bold text-primary-dark w-full"
-                      />
-                    </div>
-                  }
-                />
-              </div>
-            </header>
+            <DashboardHeader />
 
             <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
               <TransactionFilters onFilterChange={setFilters} />
