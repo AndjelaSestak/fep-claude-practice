@@ -5,7 +5,7 @@ const PaymentCard = ({
   cardNumber,
   accountNumber,
   cardType,
-  status = 'verified',
+  status = 'active',
   onBlock,
   onUnblock,
   onReportStolen,

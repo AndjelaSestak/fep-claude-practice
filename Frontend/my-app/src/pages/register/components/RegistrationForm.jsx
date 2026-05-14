@@ -60,7 +60,12 @@ const RegistrationForm = () => {
           </FormField>
 
           <FormField label="Email" required>
-            <Input name="email" value={formData.email} onChange={handleChange} error={errors.email} />
+            <Input
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+            />
           </FormField>
 
           <FormField label="City">
@@ -68,7 +73,12 @@ const RegistrationForm = () => {
           </FormField>
 
           <FormField label="Address">
-            <Input name="address" value={formData.address} onChange={handleChange} error={errors.address} />
+            <Input
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              error={errors.address}
+            />
           </FormField>
 
           <FormField label="Date of Birth">

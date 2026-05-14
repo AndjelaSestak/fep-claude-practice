@@ -15,7 +15,7 @@ const getReportTypeStyle = (reportType) =>
 
 const CardReportsDialog = ({ open, onClose, reportsLoading, selectedCardReports }) => (
   <Dialog open={open} onClose={onClose}>
-    <DialogContent>
+    <DialogContent className="flex flex-col max-h-[80vh]">
       <h2 className="text-lg font-semibold text-gray-900">Card reports</h2>
       <p className="text-sm text-slate-600 mt-1 mb-5">
         {reportsLoading ? 'Loading reports...' : `${selectedCardReports.length} report(s) found.`}
@@ -24,29 +24,28 @@ const CardReportsDialog = ({ open, onClose, reportsLoading, selectedCardReports 
       {!reportsLoading && selectedCardReports.length === 0 ? (
         <p className="py-10 text-center text-sm text-gray-500">No reports found for this card.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="overflow-y-auto flex-1 space-y-2 -mr-6 pr-6">
           {!reportsLoading &&
             selectedCardReports.map((report, index) => {
               const { card: cardStyle, text: textStyle } = getReportTypeStyle(report.report_type)
               return (
-              <div
-                key={`${report.report_type}-${report.created_at}-${index}`}
-                className={`rounded-lg border p-4 ${cardStyle}`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span
-                    className={`text-sm font-semibold ${textStyle}`}
-                  >
-                    {formatReportType(report.report_type)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {report.created_at
-                      ? new Date(report.created_at).toLocaleString()
-                      : 'Unknown date'}
-                  </span>
+                <div
+                  key={`${report.report_type}-${report.created_at}-${index}`}
+                  className={`rounded-lg border p-4 ${cardStyle}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`text-sm font-semibold ${textStyle}`}>
+                      {formatReportType(report.report_type)}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {report.created_at
+                        ? new Date(report.created_at).toLocaleString()
+                        : 'Unknown date'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )})}
+              )
+            })}
         </div>
       )}
     </DialogContent>
