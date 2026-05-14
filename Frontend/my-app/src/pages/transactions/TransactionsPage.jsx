@@ -21,8 +21,8 @@ const TransactionsPage = () => {
     detailsLoading,
     newTransactionOpen,
     setNewTransactionOpen,
-    fetchTransactions,
-    handleExport,
+    refetchTransactions,
+    exportTransactions,
     handleTransactionClick,
     nextPage,
     prevPage,
@@ -38,7 +38,7 @@ const TransactionsPage = () => {
         <main className="p-8 overflow-y-auto">
           <div className="max-w-5xl mx-auto space-y-6">
             <TransactionHeader
-              handleExport={handleExport}
+              handleExport={exportTransactions}
               setNewTransactionOpen={setNewTransactionOpen}
             />
             <TransactionListSection
@@ -50,7 +50,7 @@ const TransactionsPage = () => {
                 resetPage()
               }}
               onTransactionClick={handleTransactionClick}
-              onTransactionCancel={fetchTransactions}
+              onTransactionCancel={refetchTransactions}
             />
 
             <Pagination
@@ -67,7 +67,7 @@ const TransactionsPage = () => {
       <NewTransactionModal
         open={newTransactionOpen}
         onClose={() => setNewTransactionOpen(false)}
-        onSuccess={fetchTransactions}
+        onSuccess={refetchTransactions}
       />
 
       <TransactionDetailsModal
