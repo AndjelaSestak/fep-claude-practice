@@ -1,45 +1,22 @@
-import { useState } from 'react'
 import Button from '../../../components/ui/Button'
 import { ItemList } from '../../../components/ui/ItemList'
 import { TransactionFilters } from '../../../components/ui/TransactionFilters'
 import { TransactionItem } from '../../../components/ui/TransactionItem'
-import useTransactions from '../../../hooks/useTransactions'
-import { exportTransactions } from '../../../services/generateReportService'
-import { getTransactionById } from '../../../services/transactionService'
-import { triggerDownload } from '../../../utils/reportHelper'
+import { useTransactions } from '../../../hooks/useTransactions'
 import MonthlyExportActions from './MonthlyExportActions'
 
 const DashboardTransactions = () => {
-  const [filters, setFilters] = useState({ search: '', type: 'all', direction: 'all' })
-  const [selectedTransaction, setSelectedTransaction] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [detailsLoading, setDetailsLoading] = useState(false)
-
-  const { transactions, isLoading } = useTransactions(filters)
-
-  const handleMonthlyExport = async (format) => {
-    try {
-      const blobData = await exportTransactions(format, null, null, null, 'current_month')
-      triggerDownload(blobData, `mesecni_izvestaj.${format}`)
-    } catch (error) {
-      console.error('Desila se greska pri preuzimanju mesecnog izvestaja:', error)
-    }
-  }
-
-  const handleTransactionClick = async (id) => {
-    setDetailsLoading(true)
-    setIsModalOpen(true)
-
-    try {
-      const data = await getTransactionById(id)
-      setSelectedTransaction(data)
-    } catch (error) {
-      console.error('Neuspesno ucitavanje detalja:', error)
-      setIsModalOpen(false)
-    } finally {
-      setDetailsLoading(false)
-    }
-  }
+  const {
+    filteredTransactions,
+    loading,
+    setFilters,
+    selectedTransaction,
+    isModalOpen,
+    setIsModalOpen,
+    detailsLoading,
+    handleTransactionClick,
+    exportTransactions
+  } = useTransactions()
 
   return (
     <>
@@ -48,15 +25,15 @@ const DashboardTransactions = () => {
       </div>
 
       <div className="space-y-2">
-        <MonthlyExportActions onExport={handleMonthlyExport} />
+        <MonthlyExportActions onExport={exportTransactions} />
 
         <ItemList
           title="Transactions"
-          description={isLoading ? 'Loading...' : `Showing ${transactions.length} results`}
+          description={loading ? 'Loading...' : `Showing ${filteredTransactions.length} results`}
           emptyMessage="No transactions found."
         >
           <div className="grid gap-3">
-            {transactions.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <div
                 key={transaction.id}
                 onClick={() => handleTransactionClick(transaction.id)}
@@ -132,7 +109,7 @@ const DashboardTransactions = () => {
                   className="w-full"
                   size="lg"
                   onClick={() => setIsModalOpen(false)}
-                  disabled={isLoading}
+                  disabled={loading}
                 >
                   Close
                 </Button>
