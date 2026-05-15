@@ -6,51 +6,58 @@ import { getCurrencies, getExchangeRate, getWalletBalance } from '../services/wa
 export const useBalance = () => {
   const [selectedCurrency, setSelectedCurrency] = useState('')
 
-  const walletQuery = useQuery({
+  const {
+    data: wallet,
+    isLoading: isWalletLoading,
+    error: walletError
+  } = useQuery({
     queryKey: queryKeys.wallet.walletBalance,
     queryFn: getWalletBalance
   })
 
-  const currenciesQuery = useQuery({
+  const {
+    data: currencies = [],
+    isLoading: isCurrenciesLoading,
+    error: currenciesError
+  } = useQuery({
     queryKey: queryKeys.currencies.all,
     queryFn: getCurrencies
   })
 
-  const wallet = walletQuery.data
   const walletCurrency = wallet?.currency
   const walletBalance = wallet?.balance
 
   const activeCurrency = selectedCurrency || walletCurrency
-  const FetchedExchangeRate =
-    Boolean(walletCurrency) && Boolean(activeCurrency) && walletCurrency !== activeCurrency
+  const shouldFetchExchangeRate = Boolean(walletCurrency && walletCurrency !== activeCurrency)
 
-  const exchangeRateQuery = useQuery({
+  const {
+    data: exchangeRate,
+    isLoading: isExchangeRateLoading,
+    error: exchangeRateError
+  } = useQuery({
     queryKey: queryKeys.currencies.exchangeRate(walletCurrency, activeCurrency),
     queryFn: () => getExchangeRate(walletCurrency, activeCurrency),
-    enabled: FetchedExchangeRate
+    enabled: shouldFetchExchangeRate
   })
 
-  const exchangeRate = exchangeRateQuery.data
-  let displayBalance = null
-
-  if (walletBalance != null) {
-    displayBalance = walletBalance
-  }
-
-  if (FetchedExchangeRate && exchangeRate != null) {
-    displayBalance = walletBalance * exchangeRate
-  }
+  const hasWalletBalance = walletBalance != null
+  const hasExchangeRate = exchangeRate != null
+  const displayBalance = !hasWalletBalance
+    ? null
+    : shouldFetchExchangeRate && hasExchangeRate
+      ? walletBalance * exchangeRate
+      : walletBalance
 
   return {
     accountNumber: wallet?.account_number ?? '',
     walletBalance,
     walletCurrency,
-    currencies: currenciesQuery.data ?? [],
+    currencies,
     selectedCurrency: activeCurrency ?? '',
     setSelectedCurrency,
     displayBalance,
     exchangeRate,
-    isLoading: walletQuery.isLoading || currenciesQuery.isLoading || exchangeRateQuery.isLoading,
-    error: walletQuery.error || currenciesQuery.error || exchangeRateQuery.error
+    isLoading: isWalletLoading || isCurrenciesLoading || isExchangeRateLoading,
+    error: walletError || currenciesError || exchangeRateError
   }
 }
