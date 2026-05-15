@@ -41,14 +41,12 @@ export const useContactForm = () => {
       })
     } catch (err) {
       const detail = err.response?.data?.detail
-      let textToShow = 'Slanje poruke nije uspelo. Pokušajte ponovo.'
-
+      let textToShow = 'Sending message failed. Please try again.'
       if (Array.isArray(detail)) {
-        textToShow = detail.map((e) => `Polje ${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', ')
+        textToShow = detail.map((e) => `Field ${e.loc[e.loc.length - 1]}: ${e.msg}`).join(', ')
       } else if (typeof detail === 'string') {
         textToShow = detail
       }
-
       toast.error(textToShow)
     } finally {
       setLoading(false)
