@@ -121,7 +121,6 @@ def verify_card(db: Session, data: CardVerify, background_tasks, current_user: U
     ).first()
     if not card:
         raise CardNotFoundError("Card not found")
-
     verification = db.query(EmailVerification).filter(
         EmailVerification.card_id == data.card_id,
         EmailVerification.token == data.otp_code,

@@ -24,7 +24,8 @@ export const queryKeys = {
     detail: (templateId) => ['templates', templateId]
   },
   transactions: {
-    all: (filters = {}) => ['transactions', filters],
-    detail: (transactionId) => ['transactions', transactionId]
+    all: ['transactions'],
+    list: (filters = {}) => ['transactions', 'list', filters],
+    detail: (transactionId) => ['transactions', 'detail', transactionId]
   }
 }
