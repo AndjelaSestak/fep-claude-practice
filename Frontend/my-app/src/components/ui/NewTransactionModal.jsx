@@ -12,17 +12,10 @@ import FormField from './FormField'
 import Input from './InputField'
 import Select from './Select'
 import Button from './Button'
-import AlertDialog, {
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel
-} from './AlertDialog'
 import PinModal from './PinModal'
 import { getMyCards, verifyCardPin } from '../../services/cardService'
 import { getSupportedCurrencies, createTransaction } from '../../services/transactionService'
+import { toast } from 'react-toastify'
 
 const EMPTY_FORM = {
   card_id: '',
@@ -47,9 +40,6 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
   const [cards, setCards] = useState([])
   const [currencies, setCurrencies] = useState([])
   const [loading, setLoading] = useState(false)
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  const [successDialogOpen, setSuccessDialogOpen] = useState(false)
 
   const [pinDialogOpen, setPinDialogOpen] = useState(false)
   const [pendingFormData, setPendingFormData] = useState(null)
@@ -72,8 +62,7 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
         )
         setCurrencies(currenciesData)
       } catch {
-        setErrorMessage('Failed to load form data. Please try again.')
-        setErrorDialogOpen(true)
+        toast.error('Failed to load form data. Please try again.')
       }
     }
 
@@ -92,8 +81,7 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
     e.preventDefault()
     const recipientAccountNumber = getAccountNumberDigits(formData.recipient_account_number)
     if (recipientAccountNumber.length !== ACCOUNT_NUMBER_LENGTH) {
-      setErrorMessage('Recipient account number must contain exactly 16 digits.')
-      setErrorDialogOpen(true)
+      toast.error('Recipient account number must contain exactly 16 digits.')
       return
     }
 
@@ -114,7 +102,9 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
         recipient_account_number: getAccountNumberDigits(pendingFormData.recipient_account_number),
         reference: pendingFormData.reference || null
       })
-      setSuccessDialogOpen(true)
+      toast.success('Transaction submitted successfully!')
+      onClose()
+      onSuccess?.()
     } catch (err) {
       if (pinDialogOpen) throw err
       const data = err.response?.data
@@ -128,8 +118,7 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
       } else if (typeof data?.detail === 'string') {
         message = data.detail
       }
-      setErrorMessage(message)
-      setErrorDialogOpen(true)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -226,7 +215,7 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
         </DialogContent>
       </Dialog>
 
-      {/* PIN VERIFICATION */}
+    
       <PinModal
         open={pinDialogOpen}
         onClose={() => setPinDialogOpen(false)}
@@ -234,39 +223,6 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
         loading={loading}
       />
 
-      {/* SUCCESS */}
-      <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Transaction submitted</AlertDialogTitle>
-          <AlertDialogDescription>
-            Your transaction has been submitted and is being processed.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogAction
-            onClick={() => {
-              setSuccessDialogOpen(false)
-              onClose()
-              onSuccess?.()
-            }}
-          >
-            Done
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialog>
-
-      {/* ERROR */}
-      <AlertDialog open={errorDialogOpen} onClose={() => setErrorDialogOpen(false)}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Transaction failed</AlertDialogTitle>
-          <AlertDialogDescription>
-            <span className="whitespace-pre-line">{errorMessage}</span>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>Close</AlertDialogCancel>
-        </AlertDialogFooter>
-      </AlertDialog>
     </>
   )
 }

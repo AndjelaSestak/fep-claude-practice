@@ -2,14 +2,7 @@ import { useState } from 'react'
 import { cn } from '../../utils/cn'
 import { ArrowUpRight, ArrowDownLeft, Clock, X } from 'lucide-react'
 import Button from './Button'
-import AlertDialog, {
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel
-} from './AlertDialog'
+import AlertDialog from './AlertDialog'
 import { cancelTransaction } from '../../services/transactionService'
 
 export function TransactionItem({ transaction, className, onCancel }) {
@@ -144,20 +137,15 @@ export function TransactionItem({ transaction, className, onCancel }) {
         {renderRight()}
       </div>
 
-      <AlertDialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Cancel transaction?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to cancel this transaction? This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setConfirmOpen(false)}>Keep it</AlertDialogCancel>
-          <AlertDialogAction onClick={handleCancel} disabled={loading}>
-            {loading ? 'Cancelling...' : 'Yes, cancel'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialog>
+      <AlertDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Cancel transaction?"
+        description="Are you sure you want to cancel this transaction? This action cannot be undone."
+        confirmLabel={loading ? 'Cancelling...' : 'Yes, cancel'}
+        onConfirm={handleCancel}
+        confirmDisabled={loading}
+      />
     </>
   )
 }
