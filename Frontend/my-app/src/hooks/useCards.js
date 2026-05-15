@@ -20,10 +20,14 @@ export const useCards = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [cardToDelete, setCardToDelete] = useState(null)
 
+  const [actionDialogOpen, setActionDialogOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null)
+
   const [reportsDialogOpen, setReportsDialogOpen] = useState(false)
   const [activeReportCardId, setActiveReportCardId] = useState(null)
 
-  const invalidateCards = () => queryClient.invalidateQueries({ queryKey: queryKeys.cards.all, exact: true })
+  const invalidateCards = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.cards.all, exact: true })
 
   const optimisticUpdate = (status) => async (cardId) => {
     await queryClient.cancelQueries({ queryKey: queryKeys.cards.all, exact: true })
@@ -130,10 +134,31 @@ export const useCards = () => {
     })
   }
 
-  const handleBlock = (cardId) => blockMutation.mutate(cardId)
-  const handleUnblock = (cardId) => unblockMutation.mutate(cardId)
-  const handleReportLost = (cardId) => reportLostMutation.mutate(cardId)
-  const handleReportStolen = (cardId) => reportStolenMutation.mutate(cardId)
+  const mutationMap = {
+    block: blockMutation,
+    unblock: unblockMutation,
+    reportLost: reportLostMutation,
+    reportStolen: reportStolenMutation
+  }
+
+  const openActionDialog = (type, cardId) => {
+    setPendingAction({ type, cardId })
+    setActionDialogOpen(true)
+  }
+
+  const confirmAction = () => {
+    mutationMap[pendingAction.type].mutate(pendingAction.cardId, {
+      onSettled: () => {
+        setActionDialogOpen(false)
+        setPendingAction(null)
+      }
+    })
+  }
+
+  const handleBlock = (cardId) => openActionDialog('block', cardId)
+  const handleUnblock = (cardId) => openActionDialog('unblock', cardId)
+  const handleReportLost = (cardId) => openActionDialog('reportLost', cardId)
+  const handleReportStolen = (cardId) => openActionDialog('reportStolen', cardId)
 
   const handleViewReports = (cardId) => {
     setActiveReportCardId(cardId)
@@ -148,6 +173,10 @@ export const useCards = () => {
     handleRemove,
     confirmDelete,
     setDeleteDialogOpen,
+    actionDialogOpen,
+    pendingAction,
+    confirmAction,
+    setActionDialogOpen,
     handleBlock,
     handleUnblock,
     handleReportLost,
