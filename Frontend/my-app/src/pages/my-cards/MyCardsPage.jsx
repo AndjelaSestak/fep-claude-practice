@@ -8,6 +8,7 @@ import CardsList from './components/CardsList'
 import CardReportsDialog from './components/CardReportsDialog'
 import { useCards } from '../../hooks/useCards'
 
+
 const MyCardsPage = () => {
   const navigate = useNavigate()
   const {
@@ -17,6 +18,10 @@ const MyCardsPage = () => {
     cardToDelete,
     confirmDelete,
     handleRemove,
+    actionDialogOpen,
+    pendingAction,
+    confirmAction,
+    setActionDialogOpen,
     handleBlock,
     handleUnblock,
     handleReportLost,
@@ -70,6 +75,16 @@ const MyCardsPage = () => {
         description={`Are you sure you want to remove card ending in ${cardToDelete?.card_number_masked?.slice(-4)}? This action cannot be undone.`}
         confirmLabel="Remove"
         onConfirm={confirmDelete}
+        cancelLabel="Cancel"
+      />
+
+      <AlertDialog
+        open={actionDialogOpen}
+        onClose={() => setActionDialogOpen(false)}
+        title={pendingAction?.config?.title}
+        description={pendingAction?.config?.description}
+        confirmLabel={pendingAction?.config?.confirmLabel}
+        onConfirm={confirmAction}
         cancelLabel="Cancel"
       />
 
