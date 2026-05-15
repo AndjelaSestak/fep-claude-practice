@@ -1,6 +1,6 @@
 import InfoCard from '../../../components/ui/InfoCard'
 import Select from '../../../components/ui/Select'
-import useBalance from '../../../hooks/useBalance'
+import { useBalance } from '../../../hooks/useBalance'
 
 const DashboardHeader = () => {
   const { accountNumber, currencies, selectedCurrency, setSelectedCurrency, displayBalance } =

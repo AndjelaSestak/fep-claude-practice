@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '../lib/queryKeys'
 import { getCurrencies, getExchangeRate, getWalletBalance } from '../services/walletService'
 
-const useBalance = () => {
+export const useBalance = () => {
   const [selectedCurrency, setSelectedCurrency] = useState('')
 
   const walletQuery = useQuery({
@@ -54,5 +54,3 @@ const useBalance = () => {
     error: walletQuery.error || currenciesQuery.error || exchangeRateQuery.error
   }
 }
-
-export default useBalance
