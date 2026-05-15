@@ -8,29 +8,6 @@ import CardsList from './components/CardsList'
 import CardReportsDialog from './components/CardReportsDialog'
 import { useCards } from '../../hooks/useCards'
 
-const ACTION_CONFIG = {
-  block: {
-    title: 'Block card',
-    description:
-      'Are you sure you want to block this card? You will not be able to use it until you unblock it.',
-    confirmLabel: 'Block'
-  },
-  unblock: {
-    title: 'Unblock card',
-    description: 'Are you sure you want to unblock this card?',
-    confirmLabel: 'Unblock'
-  },
-  reportLost: {
-    title: 'Report as lost',
-    description: 'Are you sure you want to report this card as lost?',
-    confirmLabel: 'Report Lost'
-  },
-  reportStolen: {
-    title: 'Report as stolen',
-    description: 'Are you sure you want to report this card as stolen?',
-    confirmLabel: 'Report Stolen'
-  }
-}
 
 const MyCardsPage = () => {
   const navigate = useNavigate()
@@ -104,9 +81,9 @@ const MyCardsPage = () => {
       <AlertDialog
         open={actionDialogOpen}
         onClose={() => setActionDialogOpen(false)}
-        title={ACTION_CONFIG[pendingAction?.type]?.title}
-        description={ACTION_CONFIG[pendingAction?.type]?.description}
-        confirmLabel={ACTION_CONFIG[pendingAction?.type]?.confirmLabel}
+        title={pendingAction?.config?.title}
+        description={pendingAction?.config?.description}
+        confirmLabel={pendingAction?.config?.confirmLabel}
         onConfirm={confirmAction}
         cancelLabel="Cancel"
       />
