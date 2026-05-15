@@ -14,16 +14,43 @@ import {
 // TODO: move getApiError to a shared utility and replace local invalidateQueries calls with a shared helper per hook
 const getApiError = (err, fallback) => err?.response?.data?.detail || fallback
 
+const ACTION_CONFIG = {
+  block: {
+    title: 'Block card',
+    description: 'Are you sure you want to block this card? You will not be able to use it until you unblock it.',
+    confirmLabel: 'Block'
+  },
+  unblock: {
+    title: 'Unblock card',
+    description: 'Are you sure you want to unblock this card?',
+    confirmLabel: 'Unblock'
+  },
+  reportLost: {
+    title: 'Report as lost',
+    description: 'Are you sure you want to report this card as lost?',
+    confirmLabel: 'Report Lost'
+  },
+  reportStolen: {
+    title: 'Report as stolen',
+    description: 'Are you sure you want to report this card as stolen?',
+    confirmLabel: 'Report Stolen'
+  }
+}
+
 export const useCards = () => {
   const queryClient = useQueryClient()
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [cardToDelete, setCardToDelete] = useState(null)
 
+  const [actionDialogOpen, setActionDialogOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null)
+
   const [reportsDialogOpen, setReportsDialogOpen] = useState(false)
   const [activeReportCardId, setActiveReportCardId] = useState(null)
 
-  const invalidateCards = () => queryClient.invalidateQueries({ queryKey: queryKeys.cards.all, exact: true })
+  const invalidateCards = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.cards.all, exact: true })
 
   const optimisticUpdate = (status) => async (cardId) => {
     await queryClient.cancelQueries({ queryKey: queryKeys.cards.all, exact: true })
@@ -130,10 +157,24 @@ export const useCards = () => {
     })
   }
 
-  const handleBlock = (cardId) => blockMutation.mutate(cardId)
-  const handleUnblock = (cardId) => unblockMutation.mutate(cardId)
-  const handleReportLost = (cardId) => reportLostMutation.mutate(cardId)
-  const handleReportStolen = (cardId) => reportStolenMutation.mutate(cardId)
+  const openActionDialog = (mutate, cardId, config) => {
+    setPendingAction({ mutate, cardId, config })
+    setActionDialogOpen(true)
+  }
+
+  const confirmAction = () => {
+    pendingAction.mutate(pendingAction.cardId, {
+      onSettled: () => {
+        setActionDialogOpen(false)
+        setPendingAction(null)
+      }
+    })
+  }
+
+  const handleBlock = (cardId) => openActionDialog(blockMutation.mutate, cardId, ACTION_CONFIG.block)
+  const handleUnblock = (cardId) => openActionDialog(unblockMutation.mutate, cardId, ACTION_CONFIG.unblock)
+  const handleReportLost = (cardId) => openActionDialog(reportLostMutation.mutate, cardId, ACTION_CONFIG.reportLost)
+  const handleReportStolen = (cardId) => openActionDialog(reportStolenMutation.mutate, cardId, ACTION_CONFIG.reportStolen)
 
   const handleViewReports = (cardId) => {
     setActiveReportCardId(cardId)
@@ -148,6 +189,10 @@ export const useCards = () => {
     handleRemove,
     confirmDelete,
     setDeleteDialogOpen,
+    actionDialogOpen,
+    pendingAction,
+    confirmAction,
+    setActionDialogOpen,
     handleBlock,
     handleUnblock,
     handleReportLost,

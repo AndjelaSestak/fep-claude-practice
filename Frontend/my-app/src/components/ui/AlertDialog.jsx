@@ -30,10 +30,10 @@ const AlertDialog = ({
         </div>
 
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose}>
             {cancelLabel}
           </Button>
-          <Button variant="default" onClick={onConfirm} disabled={confirmDisabled}>
+          <Button type="button" variant="default" onClick={onConfirm} disabled={confirmDisabled}>
             {confirmLabel}
           </Button>
         </div>
