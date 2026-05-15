@@ -10,14 +10,13 @@ import {
   reportStolenCard,
   getCardReports
 } from '../services/cardReportService'
-
-// TODO: move getApiError to a shared utility and replace local invalidateQueries calls with a shared helper per hook
-const getApiError = (err, fallback) => err?.response?.data?.detail || fallback
+import { getApiErrorMessage } from '../utils/getApiErrorMessage'
 
 const ACTION_CONFIG = {
   block: {
     title: 'Block card',
-    description: 'Are you sure you want to block this card? You will not be able to use it until you unblock it.',
+    description:
+      'Are you sure you want to block this card? You will not be able to use it until you unblock it.',
     confirmLabel: 'Block'
   },
   unblock: {
@@ -76,7 +75,7 @@ export const useCards = () => {
   })
 
   useEffect(() => {
-    if (isCardsError) toast.error(getApiError(cardsError, 'Failed to load cards.'))
+    if (isCardsError) toast.error(getApiErrorMessage(cardsError, 'Failed to load cards.'))
   }, [isCardsError, cardsError])
 
   const {
@@ -91,7 +90,8 @@ export const useCards = () => {
   })
 
   useEffect(() => {
-    if (isReportsError) toast.error(getApiError(reportsError, 'Failed to load card reports.'))
+    if (isReportsError)
+      toast.error(getApiErrorMessage(reportsError, 'Failed to load card reports.'))
   }, [isReportsError, reportsError])
 
   const deleteMutation = useMutation({
@@ -100,7 +100,7 @@ export const useCards = () => {
       invalidateCards()
       toast.success('Card removed successfully.')
     },
-    onError: (err) => toast.error(getApiError(err, 'Failed to remove card.'))
+    onError: (err) => toast.error(getApiErrorMessage(err, 'Failed to remove card.'))
   })
 
   const blockMutation = useMutation({
@@ -109,7 +109,7 @@ export const useCards = () => {
     onSuccess: () => toast.success('Card blocked.'),
     onError: (err, vars, context) => {
       rollback(err, vars, context)
-      toast.error(getApiError(err, 'Failed to block card.'))
+      toast.error(getApiErrorMessage(err, 'Failed to block card.'))
     }
   })
 
@@ -119,7 +119,7 @@ export const useCards = () => {
     onSuccess: () => toast.success('Card unblocked.'),
     onError: (err, vars, context) => {
       rollback(err, vars, context)
-      toast.error(getApiError(err, 'Failed to unblock card.'))
+      toast.error(getApiErrorMessage(err, 'Failed to unblock card.'))
     }
   })
 
@@ -129,7 +129,7 @@ export const useCards = () => {
     onSuccess: () => toast.success('Card reported as lost.'),
     onError: (err, vars, context) => {
       rollback(err, vars, context)
-      toast.error(getApiError(err, 'Failed to report lost card.'))
+      toast.error(getApiErrorMessage(err, 'Failed to report lost card.'))
     }
   })
 
@@ -139,7 +139,7 @@ export const useCards = () => {
     onSuccess: () => toast.success('Card reported as stolen.'),
     onError: (err, vars, context) => {
       rollback(err, vars, context)
-      toast.error(getApiError(err, 'Failed to report stolen card.'))
+      toast.error(getApiErrorMessage(err, 'Failed to report stolen card.'))
     }
   })
 
@@ -171,10 +171,14 @@ export const useCards = () => {
     })
   }
 
-  const handleBlock = (cardId) => openActionDialog(blockMutation.mutate, cardId, ACTION_CONFIG.block)
-  const handleUnblock = (cardId) => openActionDialog(unblockMutation.mutate, cardId, ACTION_CONFIG.unblock)
-  const handleReportLost = (cardId) => openActionDialog(reportLostMutation.mutate, cardId, ACTION_CONFIG.reportLost)
-  const handleReportStolen = (cardId) => openActionDialog(reportStolenMutation.mutate, cardId, ACTION_CONFIG.reportStolen)
+  const handleBlock = (cardId) =>
+    openActionDialog(blockMutation.mutate, cardId, ACTION_CONFIG.block)
+  const handleUnblock = (cardId) =>
+    openActionDialog(unblockMutation.mutate, cardId, ACTION_CONFIG.unblock)
+  const handleReportLost = (cardId) =>
+    openActionDialog(reportLostMutation.mutate, cardId, ACTION_CONFIG.reportLost)
+  const handleReportStolen = (cardId) =>
+    openActionDialog(reportStolenMutation.mutate, cardId, ACTION_CONFIG.reportStolen)
 
   const handleViewReports = (cardId) => {
     setActiveReportCardId(cardId)
