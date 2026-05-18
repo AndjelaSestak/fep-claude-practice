@@ -3,36 +3,22 @@ import Sidebar from '../../components/layout/SideBar'
 import NavBarAfterLogin from '../../components/layout/NavBarAfterLogin'
 import PageHeader from '../../components/ui/PageHeader'
 import Button from '../../components/ui/Button'
-import AlertDialog from '../../components/ui/AlertDialog'
 import CardsList from './components/CardsList'
-import CardReportsDialog from './components/CardReportsDialog'
-import { useCards } from '../../hooks/useCards'
+import CardsModals from './components/CardsModals'
+import { CardsProvider, useCardsContext } from '../../context/CardsContext'
 
-
-const MyCardsPage = () => {
+const MyCardsContent = () => {
   const navigate = useNavigate()
   const {
     cards,
     loading,
-    deleteDialogOpen,
-    cardToDelete,
-    confirmDelete,
-    handleRemove,
-    actionDialogOpen,
-    pendingAction,
-    confirmAction,
-    setActionDialogOpen,
     handleBlock,
     handleUnblock,
     handleReportLost,
     handleReportStolen,
-    reportsDialogOpen,
-    reportsLoading,
-    selectedCardReports,
-    handleViewReports,
-    setDeleteDialogOpen,
-    setReportsDialogOpen
-  } = useCards()
+    handleRemove,
+    handleViewReports
+  } = useCardsContext()
 
   return (
     <div className="flex h-screen bg-slate-100">
@@ -68,34 +54,15 @@ const MyCardsPage = () => {
         </main>
       </div>
 
-      <AlertDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        title="Remove card"
-        description={`Are you sure you want to remove card ending in ${cardToDelete?.card_number_masked?.slice(-4)}? This action cannot be undone.`}
-        confirmLabel="Remove"
-        onConfirm={confirmDelete}
-        cancelLabel="Cancel"
-      />
-
-      <AlertDialog
-        open={actionDialogOpen}
-        onClose={() => setActionDialogOpen(false)}
-        title={pendingAction?.config?.title}
-        description={pendingAction?.config?.description}
-        confirmLabel={pendingAction?.config?.confirmLabel}
-        onConfirm={confirmAction}
-        cancelLabel="Cancel"
-      />
-
-      <CardReportsDialog
-        open={reportsDialogOpen}
-        onClose={() => setReportsDialogOpen(false)}
-        reportsLoading={reportsLoading}
-        selectedCardReports={selectedCardReports}
-      />
+      <CardsModals />
     </div>
   )
 }
+
+const MyCardsPage = () => (
+  <CardsProvider>
+    <MyCardsContent />
+  </CardsProvider>
+)
 
 export default MyCardsPage

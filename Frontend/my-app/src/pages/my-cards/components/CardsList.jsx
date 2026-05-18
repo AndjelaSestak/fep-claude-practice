@@ -1,10 +1,4 @@
 import PaymentCard from './card/PaymentCard'
-import { getLastFourDigits } from '../../../utils/formatters'
-
-const CARD_TYPE_MAP = {
-  1: 'Visa',
-  2: 'Mastercard'
-}
 
 const CardsList = ({
   cards,
@@ -25,10 +19,7 @@ const CardsList = ({
       {cards.map((card) => (
         <PaymentCard
           key={card.id}
-          cardNumber={getLastFourDigits(card.card_number_masked)}
-          accountNumber={card.account_number}
-          cardType={CARD_TYPE_MAP[card.card_type_id] || 'Unknown'}
-          status={card.status}
+          card={card}
           onBlock={() => onBlock(card.id)}
           onUnblock={() => onUnblock(card.id)}
           onReportStolen={() => onReportStolen(card.id)}
