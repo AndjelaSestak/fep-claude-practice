@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react'
 import { login as apiLogin, logout as apiLogout, getMe } from '../services/authService'
+import { queryClient } from '../lib/queryClient'
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext(null)
@@ -36,6 +37,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     await apiLogout()
     setUser(null)
+    queryClient.clear()
   }
 
   const refreshUser = async () => {
@@ -52,4 +54,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   )
 }
-

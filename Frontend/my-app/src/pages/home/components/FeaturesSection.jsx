@@ -36,7 +36,9 @@ const features = [
 ]
 
 const FeatureCard = ({ icon, title, desc, featured }) => (
-  <div className={`p-6 rounded-xl border ${featured ? 'border-green-400 bg-white' : 'border-gray-100 bg-white'}`}>
+  <div
+    className={`p-6 rounded-xl border ${featured ? 'border-green-400 bg-white' : 'border-gray-100 bg-white'}`}
+  >
     <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mb-4">
       {createElement(icon, { size: 22, className: 'text-green-500' })}
     </div>
@@ -48,9 +50,7 @@ const FeatureCard = ({ icon, title, desc, featured }) => (
 const FeaturesSection = () => (
   <section className="px-8 py-16 bg-gray-50">
     <div className="text-center mb-12">
-      <h2 className="text-3xl font-bold text-gray-900">
-        Everything You Need to Manage Your Money
-      </h2>
+      <h2 className="text-3xl font-bold text-gray-900">Everything You Need to Manage Your Money</h2>
       <p className="text-gray-500 mt-4 max-w-2xl mx-auto">
         SecureBank provides all the tools you need to take control of your financial life.
       </p>

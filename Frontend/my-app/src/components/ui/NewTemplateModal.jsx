@@ -12,14 +12,7 @@ import FormField from './FormField'
 import Input from './InputField'
 import Select from './Select'
 import Button from './Button'
-import AlertDialog, {
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel
-} from './AlertDialog'
+import AlertDialog from './AlertDialog'
 import { getMyCards } from '../../services/cardService'
 import { getSupportedCurrencies } from '../../services/transactionService'
 import { createTemplate, updateTemplate } from '../../services/templateService'
@@ -368,37 +361,27 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={successDialogOpen} onClose={() => setSuccessDialogOpen(false)}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {isEditMode ? 'Template updated' : 'Template created'}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            Your template has been {isEditMode ? 'updated' : 'saved'} and is ready to use.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogAction
-            onClick={() => {
-              setSuccessDialogOpen(false)
-              onClose()
-              onSuccess?.()
-            }}
-          >
-            Done
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialog>
+      <AlertDialog
+        open={successDialogOpen}
+        onClose={() => setSuccessDialogOpen(false)}
+        title={isEditMode ? 'Template updated' : 'Template created'}
+        description={`Your template has been ${isEditMode ? 'updated' : 'saved'} and is ready to use.`}
+        confirmLabel="Done"
+        onConfirm={() => {
+          setSuccessDialogOpen(false)
+          onClose()
+          onSuccess?.()
+        }}
+      />
 
-      <AlertDialog open={errorDialogOpen} onClose={() => setErrorDialogOpen(false)}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Failed to {isEditMode ? 'update' : 'create'} template</AlertDialogTitle>
-          <AlertDialogDescription>{errorMessage}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setErrorDialogOpen(false)}>Close</AlertDialogCancel>
-        </AlertDialogFooter>
-      </AlertDialog>
+      <AlertDialog
+        open={errorDialogOpen}
+        onClose={() => setErrorDialogOpen(false)}
+        title={`Failed to ${isEditMode ? 'update' : 'create'} template`}
+        description={errorMessage}
+        confirmLabel="Close"
+        onConfirm={() => setErrorDialogOpen(false)}
+      />
     </>
   )
 }

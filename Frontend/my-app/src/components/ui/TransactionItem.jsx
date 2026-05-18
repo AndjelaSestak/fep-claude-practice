@@ -1,20 +1,14 @@
-import { useState } from 'react'
 import { cn } from '../../utils/cn'
 import { ArrowUpRight, ArrowDownLeft, Clock, X } from 'lucide-react'
 import Button from './Button'
-import AlertDialog, {
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel
-} from './AlertDialog'
-import { cancelTransaction } from '../../services/transactionService'
+import AlertDialog from './AlertDialog'
+import { useTransactionItem } from '../../hooks/useTransactionitem'
 
 export function TransactionItem({ transaction, className, onCancel }) {
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const { confirmOpen, setConfirmOpen, loading, handleCancel } = useTransactionItem({
+    transaction,
+    onCancel
+  })
 
   const isIncoming = transaction.direction === 'incoming'
   const status = transaction.status
@@ -36,19 +30,6 @@ export function TransactionItem({ transaction, className, onCancel }) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   })}`
-
-  const handleCancel = async () => {
-    setLoading(true)
-    try {
-      await cancelTransaction(transaction.id)
-      setConfirmOpen(false)
-      onCancel?.()
-    } catch {
-      setConfirmOpen(false)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const renderIcon = () => {
     if (isPending) {
@@ -105,7 +86,7 @@ export function TransactionItem({ transaction, className, onCancel }) {
             variant="destructive"
             size="sm"
             onClick={(e) => {
-              e.stopPropagation() // Zaustavlja otvaranje TransactionDetails modala
+              e.stopPropagation()
               setConfirmOpen(true)
             }}
           >
@@ -144,20 +125,15 @@ export function TransactionItem({ transaction, className, onCancel }) {
         {renderRight()}
       </div>
 
-      <AlertDialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Cancel transaction?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to cancel this transaction? This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setConfirmOpen(false)}>Keep it</AlertDialogCancel>
-          <AlertDialogAction onClick={handleCancel} disabled={loading}>
-            {loading ? 'Cancelling...' : 'Yes, cancel'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialog>
+      <AlertDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Cancel transaction?"
+        description="Are you sure you want to cancel this transaction? This action cannot be undone."
+        confirmLabel={loading ? 'Cancelling...' : 'Yes, cancel'}
+        cancelLabel="Keep it"
+        onConfirm={handleCancel}
+      />
     </>
   )
 }

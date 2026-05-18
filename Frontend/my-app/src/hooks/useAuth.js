@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { AuthContext } from '../context/AuthContext'
 import { register as apiRegister } from '../services/authService'
+import { getApiErrorMessage } from '../utils/getApiErrorMessage'
 
 export const useAuth = () => {
   const {
@@ -23,8 +24,7 @@ export const useAuth = () => {
       navigate('/dashboard')
     },
     onError: (err) => {
-      const message = err?.response?.data?.detail || err?.message || 'Invalid email or password'
-      toast.error(message)
+      toast.error(getApiErrorMessage(err, 'Invalid email or password'))
     }
   })
 
@@ -38,11 +38,10 @@ export const useAuth = () => {
     mutationFn: apiRegister,
     onSuccess: (_, variables) => {
       toast.success('Account created! Please verify your email.')
-      navigate('/verify_email', { state: { email: variables.email } })
+      navigate(`/verify_email?email=${variables.email}`)
     },
     onError: (err) => {
-      const message = err?.response?.data?.detail || err?.message || 'Registration failed. Please try again.'
-      toast.error(message)
+      toast.error(getApiErrorMessage(err, 'Registration failed. Please try again.'))
     }
   })
 
