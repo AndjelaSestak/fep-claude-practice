@@ -1,16 +1,5 @@
 import { cn } from '../../utils/cn'
-/*const columns = [
-  { key: "id", header: "ID" },
-  { key: "name", header: "Name" },
-  { key: "email", header: "Email" },
-  { key: "role", header: "Role" },
-];
 
-const data = [
-  { id: 1, name: "Vladimir", email: "vlada@gmail.com", role: "Admin" },
-  { id: 2, name: "Marko", email: "marko@gmail.com", role: "User" },
-  { id: 3, name: "Jovana", email: "jovana@gmail.com", role: "Moderator" },
-];*/
 export function DataTable({ title, description, columns = [], data = [], className }) {
   return (
     <section className={cn('rounded-2xl border border-border bg-surface p-6 shadow-sm', className)}>

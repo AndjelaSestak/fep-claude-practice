@@ -1,4 +1,3 @@
-import React from 'react'
 import { Search } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import InputField from './InputField'
@@ -16,12 +15,10 @@ import InputField from './InputField'
 export default function SearchBar({ value, onChange, placeholder = 'Search...', className }) {
   return (
     <div className={cn('relative w-full max-w-lg', className)}>
-      {/* Search icon */}
       <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
         <Search className="h-5 w-5 text-gray-400" />
       </div>
 
-      {/* InputField component */}
       <InputField
         value={value}
         onChange={onChange}

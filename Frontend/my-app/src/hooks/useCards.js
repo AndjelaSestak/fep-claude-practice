@@ -106,7 +106,10 @@ export const useCards = () => {
   const blockMutation = useMutation({
     mutationFn: blockCard,
     onMutate: optimisticUpdate('blocked'),
-    onSuccess: () => toast.success('Card blocked.'),
+    onSuccess: (_, cardId) => {
+      toast.success('Card blocked.')
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards.reports(cardId) })
+    },
     onError: (err, vars, context) => {
       rollback(err, vars, context)
       toast.error(getApiErrorMessage(err, 'Failed to block card.'))
@@ -116,7 +119,10 @@ export const useCards = () => {
   const unblockMutation = useMutation({
     mutationFn: unblockCard,
     onMutate: optimisticUpdate('active'),
-    onSuccess: () => toast.success('Card unblocked.'),
+    onSuccess: (_, cardId) => {
+      toast.success('Card unblocked.')
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards.reports(cardId) })
+    },
     onError: (err, vars, context) => {
       rollback(err, vars, context)
       toast.error(getApiErrorMessage(err, 'Failed to unblock card.'))
@@ -126,7 +132,10 @@ export const useCards = () => {
   const reportLostMutation = useMutation({
     mutationFn: reportLostCard,
     onMutate: optimisticUpdate('reported_lost'),
-    onSuccess: () => toast.success('Card reported as lost.'),
+    onSuccess: (_, cardId) => {
+      toast.success('Card reported as lost.')
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards.reports(cardId) })
+    },
     onError: (err, vars, context) => {
       rollback(err, vars, context)
       toast.error(getApiErrorMessage(err, 'Failed to report lost card.'))
@@ -136,7 +145,10 @@ export const useCards = () => {
   const reportStolenMutation = useMutation({
     mutationFn: reportStolenCard,
     onMutate: optimisticUpdate('reported_stolen'),
-    onSuccess: () => toast.success('Card reported as stolen.'),
+    onSuccess: (_, cardId) => {
+      toast.success('Card reported as stolen.')
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards.reports(cardId) })
+    },
     onError: (err, vars, context) => {
       rollback(err, vars, context)
       toast.error(getApiErrorMessage(err, 'Failed to report stolen card.'))
