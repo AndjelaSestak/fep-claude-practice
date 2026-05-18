@@ -1,35 +1,21 @@
 import Sidebar from '../../components/layout/SideBar'
 import NavBarAfterLogin from '../../components/layout/NavBarAfterLogin'
-import { useTemplates } from '../../hooks/useTemplates'
+import { TemplatesProvider, useTemplatesContext } from '../../context/TemplatesContext'
 import TemplatesHeader from './components/TemplatesHeader'
 import TemplateSection from './components/TemplateSection'
 import TemplatesModals from './components/TemplatesModals'
 
-const TemplatesPage = () => {
+const TemplatesContent = () => {
   const {
     singleTemplates,
     recurringTemplates,
-    newTemplateOpen,
     setNewTemplateOpen,
-    editTarget,
     setEditTarget,
-    deleteTarget,
     setDeleteTarget,
-    confirmDelete,
-    deactivateTarget,
-    setDeactivateTarget,
-    confirmDeactivate,
     handleActivate,
     handleExecuteClick,
-    pinDialogOpen,
-    onPinClose,
-    onPinConfirm,
-    pinLoading,
-    executeSuccessOpen,
-    onExecuteSuccessClose,
-    executeErrorOpen,
-    onExecuteErrorClose
-  } = useTemplates()
+    setDeactivateTarget
+  } = useTemplatesContext()
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -42,7 +28,6 @@ const TemplatesPage = () => {
             <TemplateSection
               label="Single Templates"
               templates={singleTemplates}
-              isRecurring={false}
               onExecute={handleExecuteClick}
               onEdit={setEditTarget}
               onDelete={setDeleteTarget}
@@ -50,7 +35,6 @@ const TemplatesPage = () => {
             <TemplateSection
               label="Recurring Templates"
               templates={recurringTemplates}
-              isRecurring={true}
               onEdit={setEditTarget}
               onDelete={setDeleteTarget}
               onActivate={handleActivate}
@@ -59,29 +43,15 @@ const TemplatesPage = () => {
           </div>
         </main>
       </div>
-
-      <TemplatesModals
-        newTemplateOpen={newTemplateOpen}
-        onNewTemplateClose={() => setNewTemplateOpen(false)}
-        editTarget={editTarget}
-        onEditClose={() => setEditTarget(null)}
-        deleteTarget={deleteTarget}
-        onDeleteCancel={() => setDeleteTarget(null)}
-        onDeleteConfirm={confirmDelete}
-        deactivateTarget={deactivateTarget}
-        onDeactivateCancel={() => setDeactivateTarget(null)}
-        onDeactivateConfirm={confirmDeactivate}
-        executeSuccessOpen={executeSuccessOpen}
-        onExecuteSuccessClose={onExecuteSuccessClose}
-        executeErrorOpen={executeErrorOpen}
-        onExecuteErrorClose={onExecuteErrorClose}
-        pinDialogOpen={pinDialogOpen}
-        onPinClose={onPinClose}
-        onPinConfirm={onPinConfirm}
-        pinLoading={pinLoading}
-      />
+      <TemplatesModals />
     </div>
   )
 }
+
+const TemplatesPage = () => (
+  <TemplatesProvider>
+    <TemplatesContent />
+  </TemplatesProvider>
+)
 
 export default TemplatesPage

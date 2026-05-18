@@ -1,22 +1,23 @@
 import { FileText, Play, Pencil, Trash2, RefreshCw, XCircle } from 'lucide-react'
 import Button from './Button'
 
-const TemplateCard = ({
-  title,
-  provider,
-  amount,
-  currency = 'RSD',
-  cardType,
-  cardNumber,
-  isRecurring = false,
-  isActive = false,
-  frequency,
-  onExecute,
-  onEdit,
-  onDelete,
-  onDeactivate,
-  onActivate
-}) => {
+const TemplateCard = ({ template, onExecute, onEdit, onDelete, onDeactivate, onActivate }) => {
+  const {
+    name,
+    recipient,
+    amount,
+    currency = 'RSD',
+    card,
+    type,
+    recurring_transactions
+  } = template
+
+  const isRecurring = type === 'recurring'
+  const isActive = recurring_transactions?.[0]?.is_active ?? false
+  const frequency = recurring_transactions?.[0]?.frequency
+  const cardType = card?.card_type?.name
+  const cardNumber = card?.card_number_masked
+
   const ToggleIcon = isActive ? XCircle : RefreshCw
   const toggleLabel = isActive ? 'Deactivate' : 'Activate'
   const toggleAction = isActive ? onDeactivate : onActivate
@@ -57,8 +58,8 @@ const TemplateCard = ({
       </div>
 
       <div className="relative z-10">
-        <h3 className="font-semibold text-gray-900 text-base">{title}</h3>
-        <p className="text-gray-500 text-sm">{provider}</p>
+        <h3 className="font-semibold text-gray-900 text-base">{name}</h3>
+        <p className="text-gray-500 text-sm">{recipient}</p>
       </div>
 
       <div className="relative z-10">
