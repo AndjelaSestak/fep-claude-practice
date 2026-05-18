@@ -4,9 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { createCard } from '../services/cardService'
 import { useAuth } from './useAuth'
-
-// TODO: move getApiError to a shared utility
-const getApiError = (err, fallback) => err?.response?.data?.detail || fallback
+import { getApiErrorMessage } from '../utils/getApiErrorMessage'
 
 export const useCreateCard = () => {
   const navigate = useNavigate()
@@ -25,7 +23,7 @@ export const useCreateCard = () => {
       setCardTypeId('')
       setAddCardSuccessDialogOpen(true)
     },
-    onError: (err) => toast.error(getApiError(err, 'Failed to create card.'))
+    onError: (err) => toast.error(getApiErrorMessage(err, 'Failed to create card.'))
   })
 
   const handleAddCardSubmit = (e) => {

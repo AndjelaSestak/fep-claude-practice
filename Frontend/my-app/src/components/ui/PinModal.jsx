@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import AlertDialog, {
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel
-} from './AlertDialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
+} from './Dialog'
+import Button from './Button'
 import InputField from './InputField'
 
 const PinModal = ({ open, onClose, onConfirm, loading }) => {
@@ -24,7 +26,9 @@ const PinModal = ({ open, onClose, onConfirm, loading }) => {
       setPinError('Please enter your 4-digit PIN.')
       return
     }
+
     setPinError('')
+
     try {
       await onConfirm(pin)
       setPin('')
@@ -35,35 +39,37 @@ const PinModal = ({ open, onClose, onConfirm, loading }) => {
   }
 
   return (
-    <AlertDialog open={open} onClose={handleClose}>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Enter Card PIN</AlertDialogTitle>
-        <AlertDialogDescription>
-          Please enter your 4-digit card PIN to confirm the transaction.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
+    <Dialog open={open} onClose={handleClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Enter Card PIN</DialogTitle>
+          <DialogDescription>
+            Please enter your 4-digit card PIN to confirm the transaction.
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="px-1 pb-2">
-        <InputField
-          type="password"
-          inputMode="numeric"
-          maxLength={4}
-          placeholder="••••"
-          value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-          className="text-center text-2xl tracking-[0.5em] font-mono"
-          autoFocus
-        />
-        {pinError && <p className="mt-2 text-sm text-red-600 text-center">{pinError}</p>}
-      </div>
+        <div className="px-1 pb-2 mt-6">
+          <InputField
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="****"
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            className="text-center text-2xl tracking-[0.5em] font-mono"
+            autoFocus
+          />
+          {pinError && <p className="mt-2 text-sm text-red-600 text-center">{pinError}</p>}
+        </div>
 
-      <AlertDialogFooter>
-        <AlertDialogCancel onClick={handleClose}>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={handleConfirm} disabled={loading || pin.length < 4}>
-          {loading ? 'Verifying...' : 'Confirm'}
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialog>
+        <DialogFooter>
+          <DialogClose onClose={handleClose}>Cancel</DialogClose>
+          <Button type="button" onClick={handleConfirm} disabled={loading || pin.length < 4}>
+            {loading ? 'Verifying...' : 'Confirm'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
