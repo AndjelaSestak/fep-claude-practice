@@ -114,7 +114,7 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
     ).first()
 
     if not recipient_wallet:
-        raise WalletNotFoundError('Recipient wallet not found')
+        return
 
     converted_amount = convert_amount(
         float(transaction.amount),
