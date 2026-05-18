@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { resendVerificationEmail, verifyEmail } from '../services/authService'
 import cardService from '../services/cardService'
 
 export const useOTPVerification = () => {
-  const location = useLocation()
   const navigate = useNavigate()
 
   const [otp, setOtp] = useState('')
   const [resendCooldown, setResendCooldown] = useState(0)
 
-  const email = location.state?.email || ''
-  const type = location.state?.type || ''
-  const cardId = location.state?.cardId || ''
+  const [searchParams] = useSearchParams()
+
+  const email = searchParams.get('email') || ''
+  const type = searchParams.get('type') || ''
+  const cardId = searchParams.get('cardId') || ''
 
   useEffect(() => {
     if (!email) navigate('/register')
