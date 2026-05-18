@@ -38,9 +38,7 @@ export const useCreateCard = () => {
 
   const handleVerifyNow = () => {
     setAddCardSuccessDialogOpen(false)
-    navigate('/verify_email', {
-      state: { email: user?.email, type: 'card', cardId: createdCardId }
-    })
+    navigate(`/verify_email?email=${user?.email}&type=card&cardId=${createdCardId}`)
   }
 
   const handleCloseAddCardDialog = () => setAddCardSuccessDialogOpen(false)

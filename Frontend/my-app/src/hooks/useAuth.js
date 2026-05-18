@@ -38,7 +38,7 @@ export const useAuth = () => {
     mutationFn: apiRegister,
     onSuccess: (_, variables) => {
       toast.success('Account created! Please verify your email.')
-      navigate('/verify_email', { state: { email: variables.email } })
+      navigate(`/verify_email?email=${variables.email}`)
     },
     onError: (err) => {
       const message =
