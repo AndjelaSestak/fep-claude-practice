@@ -16,8 +16,8 @@ export const queryKeys = {
       toCurrency
     ]
   },
-  dashboard: {
-    walletBalance: ['dashboard', 'wallet_balance']
+  wallet: {
+    walletBalance: ['wallet', 'balance']
   },
   templates: {
     all: ['templates'],
