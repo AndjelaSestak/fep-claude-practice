@@ -1,6 +1,6 @@
 import Sidebar from '../../components/layout/SideBar'
 import NavBarAfterLogin from '../../components/layout/NavBarAfterLogin'
-import NewTransactionModal from '../../components/ui/NewTransactionModal'
+import NewTransactionModal from '../../components/ui/newTransactionModal/NewTransactionModal'
 import { TransactionDetailsModal } from '../transactions/components/TransactionDetailsModal'
 import { Pagination } from '../../components/ui/Pagination'
 import { TransactionListSection } from '../transactions/components/TransactionListSection'
