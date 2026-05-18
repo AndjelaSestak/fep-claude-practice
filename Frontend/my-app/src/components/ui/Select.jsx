@@ -1,18 +1,40 @@
-const Select = ({ options, value, onChange, placeholder, ...props }) => {
+import ReactSelect from 'react-select'
+
+const Select = ({
+  options = [],
+  value,
+  onChange,
+  name,
+  required,
+  disabled,
+  isDisabled,
+  ...props
+}) => {
+  const selectedOption = options.find((option) => option.value === value) ?? null
+
   return (
-    <select
-      value={value}
-      onChange={onChange}
-      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+    <ReactSelect
       {...props}
-    >
-      {placeholder && <option value="">{placeholder}</option>}
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+      name={name}
+      options={options}
+      value={selectedOption}
+      onChange={(option) =>
+        onChange?.({
+          target: {
+            name,
+            value: option?.value ?? ''
+          }
+        })
+      }
+      isDisabled={disabled || isDisabled}
+      isClearable={!required}
+      required={required}
+      menuPortalTarget={document.body}
+      menuPosition="fixed"
+      styles={{
+        menuPortal: (base) => ({ ...base, zIndex: 9999 })
+      }}
+    />
   )
 }
 
