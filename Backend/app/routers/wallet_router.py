@@ -1,18 +1,24 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from app.utils.permissions import RequireRole
+from app.repositories.wallet_repository import WalletRepository
 from app.models.user import User
-from app.services.wallet_service import get_wallet_balance
-from app.dependencies import get_db
-from app.dependencies import get_current_user
-
+from app.services.wallet_service import WalletService
+from app.dependencies import get_async_db
+from app.utils.permissions import AsyncRequireRole
+from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/wallet", tags=["Wallet"])
 
-require_user = RequireRole(["user"])
+require_user = AsyncRequireRole(["user"])
+
+def get_wallet_service(
+        db: AsyncSession = Depends(get_async_db)
+) -> WalletService:
+    return WalletService(
+        wallet_repository=WalletRepository(db),
+    )
 
 @router.get("/me/balance")
-def get_current_wallet_balance(
+async def get_current_wallet_balance(
     current_user: User = Depends(require_user),
-    db: Session = Depends(get_db),
+    service: WalletService = Depends(get_wallet_service)
 ):
-    return get_wallet_balance(db, current_user)
+    return await service.get_wallet_balance(current_user)
