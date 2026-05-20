@@ -1,6 +1,6 @@
 const InfoCard = ({ title, value, icon: Icon, iconColor = 'text-primary-dark', action }) => {
   return (
-    <div className="relative overflow-hidden bg-primary/10 p-8 rounded-[2.5rem] border border-primary/20 flex flex-col justify-between h-full transition-all hover:shadow-lg hover:shadow-primary/5">
+    <div className="relative bg-primary/10 p-8 rounded-[2.5rem] border border-primary/20 flex flex-col justify-between h-full transition-all hover:shadow-lg hover:shadow-primary/5">
       <div className="absolute -right-4 -top-4 w-32 h-32 bg-primary/15 rounded-full blur-3xl opacity-60"></div>
 
       <div className="relative z-10 space-y-4">
