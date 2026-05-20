@@ -21,7 +21,10 @@ from app.utils.errors import CardNotFoundError, DatabaseTransactionError, Invali
 PENDING_DELAY_SECONDS = 10
 
 def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None, limit: int = 10, offset: int = 0,):
-    query = db.query(Transaction).filter(Transaction.user_id == user_id)
+    query = db.query(Transaction).filter(
+        or_(Transaction.user_id == user_id,
+            Transaction.recipient_account_number == db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar_subquery())
+    )
 
     if search:
         search_pattern = f"%{search}%"
@@ -75,12 +78,17 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
         sender_account_number=wallet.account_number,
         reference=request.reference,
         status=TransactionStatus.pending,
-        direction=TransactionDirection.outgoing
     )
     try:
         db.add(transaction)
         db.commit()
         db.refresh(transaction)
+        # set non-persistent/computed attribute after refresh so SQLAlchemy
+        # doesn't attempt to map it to a DB column that no longer exists
+        try:
+            transaction.direction = TransactionDirection.outgoing
+        except Exception:
+            pass
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while creating the transaction. Please try again.")
     return transaction
@@ -123,29 +131,6 @@ def _process_recipient(db: Session, transaction: Transaction) -> None:
     )
     recipient_wallet.balance = float(recipient_wallet.balance) + converted_amount
 
-    recipient_card = db.query(Card).filter(
-        Card.wallet_id == recipient_wallet.id,
-        Card.status == CardStatus.active
-    ).first()
-
-    if not recipient_card:
-        raise CardNotFoundError('Recipient card not found')
-
-    incoming_txn = Transaction(
-        user_id=recipient_wallet.user_id,
-        card_id=recipient_card.id,
-        type=transaction.type,
-        amount=converted_amount,
-        currency=recipient_wallet.currency,
-        recipient=transaction.recipient,
-        recipient_account_number=transaction.recipient_account_number,
-        sender=transaction.sender,
-        sender_account_number=transaction.sender_account_number,
-        reference=transaction.reference,
-        status=TransactionStatus.completed,
-        direction=TransactionDirection.incoming
-    )
-    db.add(incoming_txn)
 
 
 def complete_pending_transaction(db: Session, transaction: Transaction) -> None:
@@ -189,15 +174,40 @@ def process_expired_pending_transactions(db: Session) -> None:
     
 
 def get_transaction_by_id(db: Session, transaction_id: int, user_id: int):
-    return db.query(Transaction).filter(
-        Transaction.id == transaction_id,
-        Transaction.user_id == user_id
-    ).first()
+    user_account = db.query(Wallet.account_number).filter(
+        Wallet.user_id == user_id
+    ).scalar()
 
-def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> Transaction:
     transaction = db.query(Transaction).filter(
         Transaction.id == transaction_id,
-        Transaction.user_id == current_user.id
+        or_(
+            Transaction.user_id == user_id,
+            Transaction.recipient_account_number == user_account
+        )
+    ).first()
+
+    if transaction:
+        try:
+            if user_account and transaction.sender_account_number == user_account:
+                transaction.direction = TransactionDirection.outgoing
+            else:
+                transaction.direction = TransactionDirection.incoming
+        except Exception:
+            transaction.direction = TransactionDirection.incoming
+
+    return transaction
+
+def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> Transaction:
+    user_account = db.query(Wallet.account_number).filter(
+        Wallet.user_id == current_user.id
+    ).scalar_subquery()
+
+    transaction = db.query(Transaction).filter(
+        Transaction.id == transaction_id,
+        or_(
+            Transaction.user_id == current_user.id,
+            Transaction.recipient_account_number == user_account
+        )
     ).first()
 
     if not transaction:
@@ -206,6 +216,13 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
     if transaction.status != TransactionStatus.pending:
         raise BadRequestError("Only pending transactions can be cancelled")
 
+    actual_account = db.query(Wallet.account_number).filter(
+        Wallet.user_id == current_user.id
+    ).scalar()
+
+    if transaction.sender_account_number != actual_account:
+        raise BadRequestError("Only the sender can cancel a transaction")
+
     transaction.status = TransactionStatus.cancelled
     try:
         db.commit()
@@ -213,21 +230,44 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while cancelling the transaction. Please try again.")
 
+    # compute direction before returning so response model has it
+    try:
+        actual_account = db.query(Wallet.account_number).filter(Wallet.user_id == current_user.id).scalar()
+    except Exception:
+        actual_account = None
+
+    try:
+        if actual_account and transaction.sender_account_number == actual_account:
+            transaction.direction = TransactionDirection.outgoing
+        else:
+            transaction.direction = TransactionDirection.incoming
+    except Exception:
+        transaction.direction = TransactionDirection.incoming
+
     return transaction
 
 
 def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None, limit: int | None = None, offset: int = 0):
     
-    query = db.query(Transaction).filter(Transaction.user_id == user_id)
+    user_account = db.query(Wallet.account_number).filter(
+        Wallet.user_id == user_id
+    ).scalar_subquery()
 
-    # 1. Filter za Period (Dashboard)
+    query = db.query(Transaction).filter(
+        or_(
+            Transaction.user_id == user_id,
+            Transaction.recipient_account_number == user_account
+        )
+    )
+
+    
     if period == "current_month":
         from datetime import datetime, timezone
         today = datetime.now(timezone.utc)
         start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         query = query.filter(Transaction.created_at >= start_of_month)
 
-    # 2. Filter za Search (Pretraga po recipientu, senderu ili referenci)
+   
     if search:
         search_pattern = f"%{search}%"
         query = query.filter(
@@ -236,13 +276,17 @@ def get_filtered_transactions(db: Session, user_id: int, search=None, type=None,
             (Transaction.reference.ilike(search_pattern))
         )
 
-    # 3. Filter za Type (single / recurring)
+    
     if type and type != "all":
         query = query.filter(Transaction.type == type)
 
-    # 4. Filter za Direction (incoming / outgoing)
+
     if direction and direction != "all":
-        query = query.filter(Transaction.direction == direction)
+        if direction == "incoming":
+            query = query.filter(Transaction.sender_account_number != user_account)
+        elif direction == "outgoing":
+            query = query.filter(Transaction.sender_account_number == user_account)
+
 
     query = query.order_by(Transaction.created_at.desc())
 
@@ -250,4 +294,19 @@ def get_filtered_transactions(db: Session, user_id: int, search=None, type=None,
         query = query.offset(offset).limit(limit)
 
     results = query.all()
+
+    try:
+        actual_account = db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar()
+    except Exception:
+        actual_account = None
+
+    for t in results:
+        try:
+            if actual_account and t.sender_account_number == actual_account:
+                t.direction = TransactionDirection.outgoing
+            else:
+                t.direction = TransactionDirection.incoming
+        except Exception:
+            t.direction = TransactionDirection.incoming
+
     return results

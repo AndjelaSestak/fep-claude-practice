@@ -34,7 +34,6 @@ class Transaction(Base):
     reference: Mapped[str] = mapped_column(Text, nullable=True)
     status: Mapped[TransactionStatus] = mapped_column(Enum(TransactionStatus), default=TransactionStatus.pending)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    direction: Mapped[TransactionDirection] = mapped_column(Enum(TransactionDirection))
     recurring_transaction_id: Mapped[int] = mapped_column(Integer, ForeignKey("recurring_transactions.id"), nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="transactions")

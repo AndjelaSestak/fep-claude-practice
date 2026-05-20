@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
+import { queryKeys } from '../lib/queryKeys'
 import { getMyCards, verifyCardPin } from '../services/cardService'
 import { getSupportedCurrencies, createTransaction } from '../services/transactionService'
 
@@ -24,6 +25,7 @@ export const formatAccountNumber = (value) =>
     .trim()
 
 export const useNewTransaction = ({ open, onClose, onSuccess }) => {
+  const queryClient = useQueryClient()
   const [formData, setFormData] = useState(EMPTY_FORM)
   const [pinDialogOpen, setPinDialogOpen] = useState(false)
   const [pendingFormData, setPendingFormData] = useState(null)
@@ -71,6 +73,7 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
     onSuccess: () => {
       setPinDialogOpen(false)
       toast.success('Your transaction has been submitted and is being processed.')
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.list() })
       onClose()
       onSuccess?.()
     },

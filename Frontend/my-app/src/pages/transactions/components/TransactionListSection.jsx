@@ -1,19 +1,24 @@
 import { TransactionFilters } from '../../../components/ui/TransactionFilters'
 import { ItemList } from '../../../components/ui/ItemList'
 import { TransactionItem } from '../../../components/ui/TransactionItem'
+import { useTransactionContext } from '../../../context/TransactionContext'
+import { useBalance } from '../../../hooks/useBalance'
 
-export const TransactionListSection = ({
-  loading,
-  page,
-  filteredTransactions,
-  onFilterChange,
-  onTransactionClick,
-  onTransactionCancel
-}) => {
+export const TransactionListSection = () => {
+  const {
+    filteredTransactions,
+    loading,
+    page,
+    setFilters,
+    resetPage,
+    refetchTransactions,
+    handleTransactionClick
+  } = useTransactionContext()
+  const { accountNumber } = useBalance()
   return (
     <>
       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-        <TransactionFilters onFilterChange={onFilterChange} />
+        <TransactionFilters onFilterChange={setFilters} />
       </div>
 
       <ItemList title="Transaction History" description={loading ? 'Loading...' : `Page ${page}`}>
@@ -22,10 +27,14 @@ export const TransactionListSection = ({
             filteredTransactions.map((t) => (
               <div
                 key={t.id}
-                onClick={() => onTransactionClick(t.id)}
+                onClick={() => handleTransactionClick(t.id)}
                 className="cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <TransactionItem transaction={t} onCancel={onTransactionCancel} />
+                <TransactionItem
+                  transaction={t}
+                  onCancel={refetchTransactions}
+                  currentUserAccountNumber={accountNumber}
+                />
               </div>
             ))
           ) : (
