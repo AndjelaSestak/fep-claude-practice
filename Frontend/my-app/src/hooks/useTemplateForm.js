@@ -4,39 +4,12 @@ import { queryKeys } from '../lib/queryKeys'
 import { getMyCards } from '../services/cardService'
 import { getSupportedCurrencies } from '../services/transactionService'
 import { createTemplate, updateTemplate } from '../services/templateService'
-
-export const FREQUENCIES = [
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'yearly', label: 'Yearly' }
-]
-
-const EMPTY_FORM = {
-  name: '',
-  type: 'single',
-  recipient: '',
-  recipient_account_number: '',
-  amount: '',
-  currency: '',
-  card_id: '',
-  reference: '',
-  frequency: 'monthly',
-  start_date: '',
-  end_date: ''
-}
-
-const ACCOUNT_NUMBER_LENGTH = 16
-
-export const getAccountNumberDigits = (value) =>
-  String(value ?? '')
-    .replace(/\D/g, '')
-    .slice(0, ACCOUNT_NUMBER_LENGTH)
-
-export const formatAccountNumber = (value) =>
-  getAccountNumberDigits(value)
-    .replace(/(.{4})/g, '$1 ')
-    .trim()
+import {
+  getAccountNumberDigits,
+  formatAccountNumber,
+  ACCOUNT_NUMBER_LENGTH
+} from '../utils/formatters'
+import { FREQUENCIES, EMPTY_FORM_TEMPLATES } from '../utils/constants'
 
 const padDatePart = (value) => String(value).padStart(2, '0')
 
@@ -77,8 +50,8 @@ export const useTemplateForm = ({ open, onClose, onSuccess, template }) => {
   const recurringTransaction = template?.recurring_transactions?.[0]
 
   const initialFormData = useMemo(() => {
-    if (!open) return EMPTY_FORM
-    return isEditMode ? templateToForm(template) : EMPTY_FORM
+    if (!open) return EMPTY_FORM_TEMPLATES
+    return isEditMode ? templateToForm(template) : EMPTY_FORM_TEMPLATES
   }, [open, isEditMode, template])
 
   const [formData, setFormData] = useState(initialFormData)

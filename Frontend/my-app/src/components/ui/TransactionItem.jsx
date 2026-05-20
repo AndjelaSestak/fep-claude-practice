@@ -11,7 +11,6 @@ export function TransactionItem({ transaction, className, onCancel, currentUserA
     currentUserAccountNumber
   })
 
-  //const isIncoming = transaction.direction === 'incoming'
   const status = transaction.status
   const isPending = status === 'pending'
   const isCancelled = status === 'cancelled'
