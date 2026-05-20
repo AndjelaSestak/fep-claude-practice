@@ -2,7 +2,6 @@ import { TransactionFilters } from '../../../components/ui/TransactionFilters'
 import { ItemList } from '../../../components/ui/ItemList'
 import { TransactionItem } from '../../../components/ui/TransactionItem'
 import { useTransactionContext } from '../../../context/TransactionContext'
-import { useBalance } from '../../../hooks/useBalance'
 
 export const TransactionListSection = () => {
   const {
@@ -14,7 +13,6 @@ export const TransactionListSection = () => {
     refetchTransactions,
     handleTransactionClick
   } = useTransactionContext()
-  const { accountNumber } = useBalance()
   return (
     <>
       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
@@ -30,11 +28,7 @@ export const TransactionListSection = () => {
                 onClick={() => handleTransactionClick(t.id)}
                 className="cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <TransactionItem
-                  transaction={t}
-                  onCancel={refetchTransactions}
-                  currentUserAccountNumber={accountNumber}
-                />
+                <TransactionItem transaction={t} onCancel={refetchTransactions} />
               </div>
             ))
           ) : (

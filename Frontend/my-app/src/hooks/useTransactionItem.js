@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { queryKeys } from '../lib/queryKeys'
 import { cancelTransaction } from '../services/transactionService'
 
-export const useTransactionItem = ({ transaction, onCancel, currentUserAccountNumber }) => {
+export const useTransactionItem = ({ transaction, onCancel }) => {
   const queryClient = useQueryClient()
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const isIncoming = transaction.sender_account_number !== currentUserAccountNumber
+  const isIncoming = transaction.direction === 'incoming'
 
   const cancelMutation = useMutation({
     mutationFn: () => cancelTransaction(transaction.id),

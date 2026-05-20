@@ -4,11 +4,10 @@ import Button from './Button'
 import AlertDialog from './AlertDialog'
 import { useTransactionItem } from '../../hooks/useTransactionitem'
 
-export function TransactionItem({ transaction, className, onCancel, currentUserAccountNumber }) {
+export function TransactionItem({ transaction, className, onCancel }) {
   const { confirmOpen, setConfirmOpen, loading, handleCancel, isIncoming } = useTransactionItem({
     transaction,
-    onCancel,
-    currentUserAccountNumber
+    onCancel
   })
 
   const status = transaction.status

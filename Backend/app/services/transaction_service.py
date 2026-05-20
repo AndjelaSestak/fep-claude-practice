@@ -20,10 +20,42 @@ from app.utils.errors import CardNotFoundError, DatabaseTransactionError, Invali
 
 PENDING_DELAY_SECONDS = 10
 
-def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None, limit: int = 10, offset: int = 0,):
+
+def _set_transaction_direction(db: Session, transactions, user_id: int) -> None:
+    if not isinstance(transactions, list):
+        transactions = [transactions]
+    
+    try:
+        actual_account = db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar()
+    except Exception:
+        actual_account = None
+
+    for t in transactions:
+        try:
+            if actual_account and t.sender_account_number == actual_account:
+                t.direction = TransactionDirection.outgoing
+            else:
+                t.direction = TransactionDirection.incoming
+        except Exception:
+            t.direction = TransactionDirection.incoming
+
+
+def getTransactionByUser(
+    db: Session,
+    user_id: int,
+    search: Optional[str] = None,
+    type: Optional[str] = None,
+    direction: Optional[str] = None,
+    limit: int = 10,
+    offset: int = 0,
+):
+    user_account = db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar_subquery()
+
     query = db.query(Transaction).filter(
-        or_(Transaction.user_id == user_id,
-            Transaction.recipient_account_number == db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar_subquery())
+        or_(
+            Transaction.user_id == user_id,
+            Transaction.recipient_account_number == user_account
+        )
     )
 
     if search:
@@ -33,9 +65,19 @@ def getTransactionByUser(db: Session, user_id: int, search: Optional[str] = None
             (Transaction.sender.ilike(search_pattern)) |
             (Transaction.reference.ilike(search_pattern))
         )
-        
 
-    return query.order_by(Transaction.created_at.desc()).offset(offset).limit(limit).all()
+    if type and type != "all":
+        query = query.filter(Transaction.type == type)
+
+    if direction and direction != "all":
+        if direction == "incoming":
+            query = query.filter(Transaction.sender_account_number != user_account)
+        elif direction == "outgoing":
+            query = query.filter(Transaction.sender_account_number == user_account)
+
+    results = query.order_by(Transaction.created_at.desc()).offset(offset).limit(limit).all()
+    _set_transaction_direction(db, results, user_id)
+    return results
 
 def create_transaction(db: Session, request: CreateTransactionRequest, current_user: User) -> Transaction:
     supported_currencies = [c["value"] for c in get_supported_currencies()]
@@ -83,12 +125,7 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
         db.add(transaction)
         db.commit()
         db.refresh(transaction)
-        # set non-persistent/computed attribute after refresh so SQLAlchemy
-        # doesn't attempt to map it to a DB column that no longer exists
-        try:
-            transaction.direction = TransactionDirection.outgoing
-        except Exception:
-            pass
+        _set_transaction_direction(db, transaction, current_user.id)
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while creating the transaction. Please try again.")
     return transaction
@@ -187,13 +224,7 @@ def get_transaction_by_id(db: Session, transaction_id: int, user_id: int):
     ).first()
 
     if transaction:
-        try:
-            if user_account and transaction.sender_account_number == user_account:
-                transaction.direction = TransactionDirection.outgoing
-            else:
-                transaction.direction = TransactionDirection.incoming
-        except Exception:
-            transaction.direction = TransactionDirection.incoming
+        _set_transaction_direction(db, transaction, user_id)
 
     return transaction
 
@@ -230,20 +261,7 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while cancelling the transaction. Please try again.")
 
-    # compute direction before returning so response model has it
-    try:
-        actual_account = db.query(Wallet.account_number).filter(Wallet.user_id == current_user.id).scalar()
-    except Exception:
-        actual_account = None
-
-    try:
-        if actual_account and transaction.sender_account_number == actual_account:
-            transaction.direction = TransactionDirection.outgoing
-        else:
-            transaction.direction = TransactionDirection.incoming
-    except Exception:
-        transaction.direction = TransactionDirection.incoming
-
+    _set_transaction_direction(db, transaction, current_user.id)
     return transaction
 
 
@@ -294,19 +312,5 @@ def get_filtered_transactions(db: Session, user_id: int, search=None, type=None,
         query = query.offset(offset).limit(limit)
 
     results = query.all()
-
-    try:
-        actual_account = db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar()
-    except Exception:
-        actual_account = None
-
-    for t in results:
-        try:
-            if actual_account and t.sender_account_number == actual_account:
-                t.direction = TransactionDirection.outgoing
-            else:
-                t.direction = TransactionDirection.incoming
-        except Exception:
-            t.direction = TransactionDirection.incoming
-
+    _set_transaction_direction(db, results, user_id)
     return results

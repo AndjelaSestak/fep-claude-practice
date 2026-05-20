@@ -51,3 +51,15 @@ export const ACTION_CONFIG_CARDS = {
     confirmLabel: 'Report Stolen'
   }
 }
+
+export const TYPE_OPTIONS = [
+  { value: 'all', label: 'All Types' },
+  { value: 'single', label: 'Single' },
+  { value: 'recurring', label: 'Recurring' }
+]
+
+export const DIRECTION_OPTIONS = [
+  { value: 'all', label: 'All Directions' },
+  { value: 'incoming', label: 'Incoming' },
+  { value: 'outgoing', label: 'Outgoing' }
+]

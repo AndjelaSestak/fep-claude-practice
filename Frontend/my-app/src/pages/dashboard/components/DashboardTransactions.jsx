@@ -4,10 +4,8 @@ import { TransactionFilters } from '../../../components/ui/TransactionFilters'
 import { TransactionItem } from '../../../components/ui/TransactionItem'
 import { useTransactions } from '../../../hooks/useTransactions'
 import MonthlyExportActions from './MonthlyExportActions'
-import { useBalance } from '../../../hooks/useBalance'
 
 const DashboardTransactions = () => {
-  const { accountNumber } = useBalance()
   const {
     filteredTransactions,
     loading,
@@ -41,10 +39,7 @@ const DashboardTransactions = () => {
                 onClick={() => handleTransactionClick(transaction.id)}
                 className="cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <TransactionItem
-                  transaction={transaction}
-                  currentUserAccountNumber={accountNumber}
-                />
+                <TransactionItem transaction={transaction} />
               </div>
             ))}
           </div>
