@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends
-from app.repositories.wallet_repository import WalletRepository
-from app.models.user import User
-from app.services.wallet_service import WalletService
-from app.dependencies import get_async_db
-from app.utils.permissions import AsyncRequireRole
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.dependencies import get_async_db
+from app.models.user import User
+from app.repositories.wallet_repository import WalletRepository
+from app.schemas.wallet import WalletBalanceResponse
+from app.services.wallet_service import WalletService
+from app.utils.permissions import AsyncRequireRole
+
 router = APIRouter(prefix="/wallet", tags=["Wallet"])
 
 require_user = AsyncRequireRole(["user"])
@@ -16,7 +19,7 @@ def get_wallet_service(
         wallet_repository=WalletRepository(db),
     )
 
-@router.get("/me/balance")
+@router.get("/me/balance", response_model=WalletBalanceResponse)
 async def get_current_wallet_balance(
     current_user: User = Depends(require_user),
     service: WalletService = Depends(get_wallet_service)
