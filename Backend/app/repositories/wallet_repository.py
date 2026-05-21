@@ -10,7 +10,7 @@ class WalletRepository(BaseRepository[Wallet]):
     def __init__(self, db: AsyncSession):
         super().__init__(db)
 
-    async def get_wallet_by_user_id(self, user_id: int) -> Wallet:
+    async def get_wallet_by_user_id(self, user_id: int) -> Wallet | None:
         try:
             result = await self.db.execute(
                 select(Wallet).where(
