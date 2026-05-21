@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.card import Card
 from app.models.card_type import CardType
@@ -16,7 +17,9 @@ class CardRepository(BaseRepository[Card]):
     async def get_all_by_user(self, user_id: int) -> list[Card]:
         try:
             result = await self.db.execute(
-                select(Card).where(
+                select(Card)
+                .options(selectinload(Card.wallet))
+                .where(
                     Card.user_id == user_id,
                     Card.is_deleted == False,
                 )
@@ -28,24 +31,11 @@ class CardRepository(BaseRepository[Card]):
     async def get_by_id_and_user(self, card_id: int, user_id: int) -> Card:
         try:
             result = await self.db.execute(
-                select(Card).where(
+                select(Card)
+                .options(selectinload(Card.wallet))
+                .where(
                     Card.id == card_id,
                     Card.user_id == user_id,
-                    Card.is_deleted == False,
-                )
-            )
-            card = result.scalar_one_or_none()
-        except SQLAlchemyError as e:
-            raise DatabaseTransactionError("An error occurred while fetching the card.") from e
-        if not card:
-            raise CardNotFoundError("Card not found")
-        return card
-
-    async def get_by_id(self, card_id: int) -> Card:
-        try:
-            result = await self.db.execute(
-                select(Card).where(
-                    Card.id == card_id,
                     Card.is_deleted == False,
                 )
             )

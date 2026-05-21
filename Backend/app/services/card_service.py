@@ -100,7 +100,7 @@ class CardService:
             otp=otp_code,
         )
 
-        return new_card
+        return await self.card_repository.get_by_id_and_user(new_card.id, current_user.id)
 
     async def verify_card(
         self,
@@ -108,7 +108,7 @@ class CardService:
         background_tasks: BackgroundTasks,
         current_user: User,
     ) -> dict:
-        card = await self.card_repository.get_by_id(data.card_id)
+        card = await self.card_repository.get_by_id_and_user(data.card_id, current_user.id)
 
         verification = await self.card_repository.get_card_verification(data.card_id, data.otp_code)
         if not verification:
