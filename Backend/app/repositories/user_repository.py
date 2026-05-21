@@ -16,11 +16,11 @@ class UserRepository(BaseRepository[User]):
             result = await self.db.execute(
                 select(User).where(User.is_deleted == False)
             )
-            return list(result.scalars().all())
-        except SQLAlchemyError:
-            raise DatabaseTransactionError("An error occurred while fetching users.")
-        
-    async def get_by_id(self, user_id: int) -> User | None:
+            return result.scalars().all()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError("An error occurred while fetching users.") from e
+
+    async def get_by_id_or_raise(self, user_id: int) -> User:
         try:
             result = await self.db.execute(
                 select(User).where(
@@ -29,8 +29,8 @@ class UserRepository(BaseRepository[User]):
                 )
             )
             user = result.scalar_one_or_none()
-        except SQLAlchemyError:
-            raise DatabaseTransactionError("An error occurred while fetching the user.")
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError("An error occurred while fetching the user.") from e
         if not user:
             raise UserNotFoundError("User not found.")
         return user

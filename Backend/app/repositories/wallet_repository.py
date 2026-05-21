@@ -19,10 +19,8 @@ class WalletRepository(BaseRepository[Wallet]):
                 )
             )
             wallet = result.scalar_one_or_none()
-        except SQLAlchemyError:
-            raise DatabaseTransactionError("An error occurred while fetching the wallet.")
-        if not wallet:
-            raise WalletNotFoundError("Wallet not found.")
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError("An error occurred while fetching the wallet.") from e
         return wallet
 
     def deactivate(self, wallet: Wallet) -> Wallet:

@@ -18,13 +18,14 @@ class UserService:
     async def get_all_users(self) -> list[User]:
         return await self.user_repository.get_all()
 
-    async def get_user_by_id(self, user_id: int) -> User:
-        return await self.user_repository.get_by_id(user_id)
+    async def get_user_by_id_or_raise(self, user_id: int) -> User:
+        return await self.user_repository.get_by_id_or_raise(user_id)
 
     async def delete_current_user(self, current_user: User) -> None:
         self.user_repository.soft_delete(current_user)
         wallet = await self.wallet_repository.get_wallet_by_user_id(current_user.id)
-        self.wallet_repository.deactivate(wallet)
+        if wallet is not None:
+            self.wallet_repository.deactivate(wallet)
 
     async def update_current_user(
         self,
