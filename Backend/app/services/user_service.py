@@ -2,7 +2,7 @@ from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.user import UserPasswordUpdate, UserUpdate
-from app.utils.errors import BadRequestError
+from app.utils.errors import BadRequestError, UserNotFoundError
 from app.utils.security import get_password_hash, verify_password
 
 
@@ -18,8 +18,12 @@ class UserService:
     async def get_all_users(self) -> list[User]:
         return await self.user_repository.get_all()
 
-    async def get_user_by_id_or_raise(self, user_id: int) -> User:
-        return await self.user_repository.get_by_id_or_raise(user_id)
+    async def get_user_by_id(self, user_id: int) -> User:
+        user = await self.user_repository.get_by_id(user_id)
+        if not user:
+            raise UserNotFoundError("User not found.")
+        return user
+            
 
     async def delete_current_user(self, current_user: User) -> None:
         self.user_repository.soft_delete(current_user)

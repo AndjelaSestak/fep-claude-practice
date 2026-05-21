@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.wallet import Wallet
 from app.repositories.base_repository import BaseRepository
-from app.utils.errors import DatabaseTransactionError, WalletNotFoundError
+from app.utils.errors import DatabaseTransactionError
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -18,10 +18,9 @@ class WalletRepository(BaseRepository[Wallet]):
                     Wallet.is_active == True,
                 )
             )
-            wallet = result.scalar_one_or_none()
+            return result.scalar_one_or_none()
         except SQLAlchemyError as e:
             raise DatabaseTransactionError("An error occurred while fetching the wallet.") from e
-        return wallet
 
     def deactivate(self, wallet: Wallet) -> Wallet:
         wallet.is_active = False
