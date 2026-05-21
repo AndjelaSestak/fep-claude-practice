@@ -6,7 +6,8 @@ from weasyprint import HTML
 from sqlalchemy.orm import Session
 from typing import Optional
 from sqlalchemy import String, or_
-from app.models.transaction import Transaction, TransactionStatus, TransactionDirection, TransactionType
+from app.utils.enums import TransactionDirection,TransactionStatus, TransactionType
+from app.models.transaction import Transaction
 from app.models.card import Card, CardStatus
 from app.models.wallet import Wallet
 from app.models.user import User
@@ -40,14 +41,13 @@ def _set_transaction_direction(db: Session, transactions, user_id: int) -> None:
             t.direction = TransactionDirection.incoming
 
 
-def getTransactionByUser(
+def _build_user_transactions_query(
     db: Session,
     user_id: int,
     search: Optional[str] = None,
     type: Optional[str] = None,
     direction: Optional[str] = None,
-    limit: int = 10,
-    offset: int = 0,
+    period: Optional[str] = None,
 ):
     user_account = db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar_subquery()
 
@@ -57,6 +57,12 @@ def getTransactionByUser(
             Transaction.recipient_account_number == user_account
         )
     )
+
+    if period == "current_month":
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc)
+        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        query = query.filter(Transaction.created_at >= start_of_month)
 
     if search:
         search_pattern = f"%{search}%"
@@ -75,7 +81,20 @@ def getTransactionByUser(
         elif direction == "outgoing":
             query = query.filter(Transaction.sender_account_number == user_account)
 
-    results = query.order_by(Transaction.created_at.desc()).offset(offset).limit(limit).all()
+    return query.order_by(Transaction.created_at.desc())
+
+
+def get_transaction_by_user(
+    db: Session,
+    user_id: int,
+    search: Optional[str] = None,
+    type: Optional[str] = None,
+    direction: Optional[str] = None,
+    limit: int = 10,
+    offset: int = 0,
+):
+    query = _build_user_transactions_query(db, user_id, search=search, type=type, direction=direction)
+    results = query.offset(offset).limit(limit).all()
     _set_transaction_direction(db, results, user_id)
     return results
 
@@ -267,46 +286,14 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
 
 def get_filtered_transactions(db: Session, user_id: int, search=None, type=None, direction=None, period=None, limit: int | None = None, offset: int = 0):
     
-    user_account = db.query(Wallet.account_number).filter(
-        Wallet.user_id == user_id
-    ).scalar_subquery()
-
-    query = db.query(Transaction).filter(
-        or_(
-            Transaction.user_id == user_id,
-            Transaction.recipient_account_number == user_account
-        )
+    query = _build_user_transactions_query(
+        db,
+        user_id,
+        search=search,
+        type=type,
+        direction=direction,
+        period=period,
     )
-
-    
-    if period == "current_month":
-        from datetime import datetime, timezone
-        today = datetime.now(timezone.utc)
-        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        query = query.filter(Transaction.created_at >= start_of_month)
-
-   
-    if search:
-        search_pattern = f"%{search}%"
-        query = query.filter(
-            (Transaction.recipient.ilike(search_pattern)) |
-            (Transaction.sender.ilike(search_pattern)) |
-            (Transaction.reference.ilike(search_pattern))
-        )
-
-    
-    if type and type != "all":
-        query = query.filter(Transaction.type == type)
-
-
-    if direction and direction != "all":
-        if direction == "incoming":
-            query = query.filter(Transaction.sender_account_number != user_account)
-        elif direction == "outgoing":
-            query = query.filter(Transaction.sender_account_number == user_account)
-
-
-    query = query.order_by(Transaction.created_at.desc())
 
     if limit is not None:
         query = query.offset(offset).limit(limit)

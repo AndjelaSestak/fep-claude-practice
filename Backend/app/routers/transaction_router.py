@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.schemas.transaction import CreateTransactionRequest, TransactionResponse
 
 
+
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
 require_user = RequireRole(["user"])
@@ -34,7 +35,7 @@ def get_all_transactions_for_user(
     limit: int = 10,
     offset: int = 0,
 ):
-    transactions = transaction_service.getTransactionByUser(
+    transactions = transaction_service.get_transaction_by_user(
         db,
         user_id=current_user.id,
         search=search,
@@ -55,39 +56,6 @@ def create_transaction(
     transaction = transaction_service.create_transaction(db=db, request=request, current_user=current_user)
     background_tasks.add_task(transaction_service.process_transaction, transaction.id)
     return transaction
-
-@router.get("/export")
-async def export_transactions(
-    format: str = Query(..., pattern="^(csv|pdf)$"),
-    search: str = None,
-    type: str = None,
-    direction: str = None,
-    period: str = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_user)
-):
-
-    transactions = transaction_service.get_filtered_transactions(
-        db, current_user.id, search, type, direction, period
-    )
-
-    filename_base = f"izvestaj_{date.today()}"
-
-    if format == "csv":
-        csv_data = transaction_service.generate_csv_report(transactions)
-        return StreamingResponse(
-            iter([csv_data]),
-            media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename={filename_base}.csv"}
-        )
-
-    if format == "pdf":
-        pdf_data = transaction_service.generate_pdf_report(transactions, current_user.email)
-        return Response(
-            content=pdf_data,
-            media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename={filename_base}.pdf"}
-        )
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)
 def read_transaction(

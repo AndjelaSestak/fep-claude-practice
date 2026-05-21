@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator
 from datetime import datetime
-from app.models.transaction import TransactionStatus, TransactionDirection, TransactionType
+from app.utils.enums import TransactionStatus, TransactionDirection, TransactionType
 
 class CreateTransactionRequest(BaseModel):
     card_id: int

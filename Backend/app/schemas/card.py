@@ -1,11 +1,9 @@
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator, ConfigDict, model_validator, computed_field
 from datetime import datetime, timezone
-from app.models.card import CardStatus
+from app.utils.enums import CardStatus
 
 
-# Minimal wallet projection used only inside CardResponse to expose account_number
-# without touching the Card model or making an extra service call.
 class _WalletBrief(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     account_number: str

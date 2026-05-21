@@ -9,12 +9,12 @@ from app.services import generate_report_service, transaction_service
 from app.utils.permissions import RequireRole
 
 
-router = APIRouter(prefix="/generate_report", tags=["Generate Report"])
+router = APIRouter(prefix="/generate_report/export", tags=["Generate Report"])
 
 require_user = RequireRole(["user"])
 
 
-@router.get("/export/csv")
+@router.get("/csv")
 async def export_transactions_csv(
     search: str = None,
     type: str = None,
@@ -40,7 +40,7 @@ async def export_transactions_csv(
     )
 
 
-@router.get("/export/pdf")
+@router.get("/pdf")
 async def export_transactions_pdf(
     search: str = None,
     type: str = None,
