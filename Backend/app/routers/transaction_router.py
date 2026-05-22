@@ -1,8 +1,6 @@
-from datetime import date
-from typing import Annotated, Optional
+from typing import Annotated
 
-from fastapi import APIRouter, Query, BackgroundTasks, Depends, Response, status
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Query, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
 from app.utils.permissions import RequireRole
 from app.utils.errors import TransactionNotFoundError
@@ -11,9 +9,7 @@ from app.utils.enums import TransactionFilterParams
 
 from app.database import get_db
 from app.services import transaction_service
-from app.dependencies import get_current_user
 from app.services.exchange_rate_service import get_supported_currencies
-from sqlalchemy.orm import Session
 from app.schemas.transaction import CreateTransactionRequest, TransactionResponse
 
 
