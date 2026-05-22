@@ -4,7 +4,7 @@ import FormWrapper from '../../../components/ui/FormWrapper'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/InputField'
 import Button from '../../../components/ui/Button'
-import Checkbox from '../../../components/ui/Checkbox'
+import { changePasswordSchema } from '../../../schemas/settings'
 
 const PasswordManagementForm = () => {
   const [passwordData, setPasswordData] = useState({
@@ -12,9 +12,9 @@ const PasswordManagementForm = () => {
     new_password: '',
     confirm_new_password: ''
   })
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
   const { changePassword, isChangePasswordPending } = useSettings()
+
+  const [errors, setErrors] = useState({})
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -23,11 +23,22 @@ const PasswordManagementForm = () => {
       ...prev,
       [name]: value
     }))
+    setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
   const handlePasswordSubmit = (event) => {
     event.preventDefault()
-    changePassword(passwordData)
+    const result = changePasswordSchema.safeParse(passwordData)
+    if (!result.success) {
+      const fieldErrors = {}
+      result.error.issues.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message
+      })
+      setErrors(fieldErrors)
+      return
+    }
+    setErrors({})
+    changePassword(result.data)
   }
 
   return (
@@ -43,45 +54,36 @@ const PasswordManagementForm = () => {
         <FormField label="Current Password" required>
           <Input
             name="current_password"
-            type={showCurrentPassword ? 'text' : 'password'}
+            type="password"
             value={passwordData.current_password}
             onChange={handleChange}
             placeholder="Current Password"
             className="w-full"
-          />
-          <Checkbox
-            label="Show current password"
-            checked={showCurrentPassword}
-            onChange={(event) => setShowCurrentPassword(event.target.checked)}
-            className="mt-2"
+            error={errors.current_password}
           />
         </FormField>
 
         <FormField label="New Password" required>
           <Input
             name="new_password"
-            type={showNewPassword ? 'text' : 'password'}
+            type="password"
             value={passwordData.new_password}
             onChange={handleChange}
             placeholder="New Password"
             className="w-full"
+            error={errors.new_password}
           />
         </FormField>
 
         <FormField label="Confirm New Password" required>
           <Input
             name="confirm_new_password"
-            type={showNewPassword ? 'text' : 'password'}
+            type="password"
             value={passwordData.confirm_new_password}
             onChange={handleChange}
             placeholder="Confirm New Password"
             className="w-full"
-          />
-          <Checkbox
-            label="Show new password"
-            checked={showNewPassword}
-            onChange={(event) => setShowNewPassword(event.target.checked)}
-            className="mt-2"
+            error={errors.confirm_new_password}
           />
         </FormField>
 

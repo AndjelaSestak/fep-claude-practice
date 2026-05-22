@@ -16,6 +16,7 @@ import AlertDialog from './AlertDialog'
 import { getMyCards } from '../../services/cardService'
 import { getSupportedCurrencies } from '../../services/transactionService'
 import { createTemplate, updateTemplate } from '../../services/templateService'
+import { createTemplateSchema } from '../../schemas/template'
 
 const FREQUENCIES = [
   { value: 'daily', label: 'Daily' },
@@ -38,12 +39,10 @@ const EMPTY_FORM = {
   end_date: ''
 }
 
-const ACCOUNT_NUMBER_LENGTH = 16
-
 const getAccountNumberDigits = (value) =>
   String(value ?? '')
     .replace(/\D/g, '')
-    .slice(0, ACCOUNT_NUMBER_LENGTH)
+    .slice(0, 16)
 
 const formatAccountNumber = (value) =>
   getAccountNumberDigits(value)
@@ -98,10 +97,14 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
   const [errorDialogOpen, setErrorDialogOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [errors, setErrors] = useState({})
 
   useEffect(() => {
     if (!open) return
     setFormData(isEditMode ? templateToForm(template) : EMPTY_FORM)
+    setErrors({})
+    setErrorMessage('')
+    setErrorDialogOpen(false)
   }, [open, isEditMode, template])
 
   useEffect(() => {
@@ -135,34 +138,54 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
       ...prev,
       [name]: name === 'recipient_account_number' ? formatAccountNumber(value) : value
     }))
+    setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
   const isRecurring = formData.type === 'recurring'
   const isStartDateLocked =
     isEditMode && isRecurring && recurringTransaction?.has_executed_transactions
 
+  const handleClose = () => {
+    setErrors({})
+    setErrorMessage('')
+    setErrorDialogOpen(false)
+    onClose()
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const recipientAccountNumber = getAccountNumberDigits(formData.recipient_account_number)
-    if (recipientAccountNumber.length !== ACCOUNT_NUMBER_LENGTH) {
-      setErrorMessage('Recipient account number must contain exactly 16 digits.')
-      setErrorDialogOpen(true)
+
+    const result = createTemplateSchema.safeParse(formData)
+
+    if (!result.success) {
+      const fieldErrors = {}
+
+      result.error.issues.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message
+      })
+
+      setErrors(fieldErrors)
       return
     }
+
+    setErrors({})
+
+    const validData = result.data
+    const recipientAccountNumber = getAccountNumberDigits(validData.recipient_account_number)
 
     setLoading(true)
     try {
       const payload = {
-        name: formData.name,
-        recipient: formData.recipient,
+        name: validData.name,
+        recipient: validData.recipient,
         recipient_account_number: recipientAccountNumber,
-        amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        card_id: parseInt(formData.card_id),
-        reference: formData.reference || null,
-        frequency: isRecurring ? formData.frequency : null,
-        start_date: isRecurring ? toUTCISOString(formData.start_date) : null,
-        end_date: isRecurring && formData.end_date ? formData.end_date : null
+        amount: parseFloat(validData.amount),
+        currency: validData.currency,
+        card_id: parseInt(validData.card_id),
+        reference: validData.reference || null,
+        frequency: isRecurring ? validData.frequency : null,
+        start_date: isRecurring ? toUTCISOString(validData.start_date) : null,
+        end_date: isRecurring && validData.end_date ? validData.end_date : null
       }
 
       if (!isEditMode) {
@@ -177,7 +200,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
         const originalStartDate = toDatetimeLocalValue(
           template.recurring_transactions?.[0]?.next_run_at
         )
-        if (formData.start_date === originalStartDate) {
+        if (validData.start_date === originalStartDate) {
           delete payload.start_date
         }
       }
@@ -199,14 +222,14 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
 
   return (
     <>
-      <Dialog open={open} onClose={onClose}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <Dialog open={open} onClose={handleClose}>
+        <DialogContent className="max-w-lg  overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditMode ? 'Edit Template' : 'Create Template'}</DialogTitle>
             <DialogDescription>Save transaction details for quick reuse.</DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-4 space-y-4" noValidate>
             <FormField label="Template Name" required>
               <Input
                 name="name"
@@ -214,6 +237,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                 onChange={handleChange}
                 placeholder="e.g., Monthly Rent"
                 required
+                error={errors.name}
               />
             </FormField>
 
@@ -253,6 +277,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                 onChange={handleChange}
                 placeholder="Recipient name"
                 required
+                error={errors.recipient}
               />
             </FormField>
 
@@ -265,6 +290,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                 inputMode="numeric"
                 maxLength={19}
                 required
+                error={errors.recipient_account_number}
               />
             </FormField>
 
@@ -280,6 +306,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                     onChange={handleChange}
                     placeholder="0.00"
                     required
+                    error={errors.amount}
                   />
                 </FormField>
               </div>
@@ -292,6 +319,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                     placeholder="Select currency"
                     options={currencies}
                     required
+                    error={errors.currency}
                   />
                 </FormField>
               </div>
@@ -305,6 +333,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                 placeholder="Select a card"
                 options={cards}
                 required
+                error={errors.card_id}
               />
             </FormField>
 
@@ -326,6 +355,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                     onChange={handleChange}
                     options={FREQUENCIES}
                     required
+                    error={errors.frequency}
                   />
                 </FormField>
 
@@ -337,6 +367,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
                     onChange={handleChange}
                     disabled={isStartDateLocked}
                     required
+                    error={errors.start_date}
                   />
                 </FormField>
 
@@ -352,7 +383,9 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
             )}
 
             <DialogFooter>
-              <DialogClose onClose={onClose}>Cancel</DialogClose>
+              <DialogClose type="button" onClose={handleClose}>
+                Cancel
+              </DialogClose>
               <Button type="submit" disabled={loading}>
                 {loading ? 'Saving...' : isEditMode ? 'Save Changes' : 'Create Template'}
               </Button>
@@ -369,7 +402,7 @@ const NewTemplateModal = ({ open, onClose, onSuccess, template = null }) => {
         confirmLabel="Done"
         onConfirm={() => {
           setSuccessDialogOpen(false)
-          onClose()
+          handleClose()
           onSuccess?.()
         }}
       />

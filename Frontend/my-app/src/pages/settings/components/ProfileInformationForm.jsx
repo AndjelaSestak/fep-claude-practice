@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { toast } from 'react-toastify'
 import { useSettings } from '../../../hooks/useSettings'
 import FormWrapper from '../../../components/ui/FormWrapper'
 import FormField from '../../../components/ui/FormField'
@@ -29,7 +28,6 @@ const ProfileInformationForm = () => {
         fieldErrors[err.path[0]] = err.message
       })
       setErrors(fieldErrors)
-      toast.error('Please fix the errors before continuing.')
       return
     }
 
