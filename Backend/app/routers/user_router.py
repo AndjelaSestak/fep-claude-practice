@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Response
 
+from app.dependencies import get_user_service
 from app.models.user import User
 from app.schemas.user import UserPasswordUpdate, UserResponse, UserUpdate
 from app.services.user_service import UserService
 from app.utils.permissions import AsyncRequireRole
-from app.dependencies import get_user_service
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
