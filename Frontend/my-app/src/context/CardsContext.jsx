@@ -1,7 +1,6 @@
 import { createContext, useContext } from 'react'
 import { useCards } from '../hooks/useCards'
 
-// eslint-disable-next-line react-refresh/only-export-components
 const CardsContext = createContext(null)
 
 export const CardsProvider = ({ children }) => {

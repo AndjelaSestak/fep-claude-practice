@@ -47,7 +47,7 @@ export const getTransactionsForUser = async (
     if (direction) params.direction = direction
     if (period) params.period = period
 
-    const response = await api.get('/transactions/all', { params })
+    const response = await api.get('/transactions/', { params })
     return response.data
   } catch (error) {
     console.error('Error fetching transactions:', error)

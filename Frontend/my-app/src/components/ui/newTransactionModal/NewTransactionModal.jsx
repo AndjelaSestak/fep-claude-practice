@@ -10,6 +10,7 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
     currencies,
     loading,
     pinDialogOpen,
+    errors,
     setPinDialogOpen,
     handleChange,
     handleSubmit,
@@ -19,7 +20,7 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
 
   return (
     <>
-      <Dialog open={open} onClose={onClose}>
+      <Dialog open={open} onClose={handleClose}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>New Transaction</DialogTitle>
@@ -32,7 +33,8 @@ const NewTransactionModal = ({ open, onClose, onSuccess }) => {
             loading={loading}
             handleChange={handleChange}
             handleSubmit={handleSubmit}
-            handleClose={handleClose}
+            onClose={handleClose}
+            errors={errors}
           />
         </DialogContent>
       </Dialog>
