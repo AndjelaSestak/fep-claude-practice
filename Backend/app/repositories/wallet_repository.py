@@ -25,3 +25,4 @@ class WalletRepository(BaseRepository[Wallet]):
     def deactivate(self, wallet: Wallet) -> Wallet:
         wallet.is_active = False
         return wallet
+    
