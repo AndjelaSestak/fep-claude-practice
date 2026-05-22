@@ -117,7 +117,8 @@ class CardService:
         if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
             raise OTPExpiredError("OTP code has expired")
 
-        self.card_repository.mark_verified(card, verification)
+        card.is_email_verified = True
+        verification.is_used = True
 
         details = _pending_card_details.pop(card.id, None)
         if details:
@@ -150,5 +151,5 @@ class CardService:
 
     async def soft_delete_card(self, current_user: User, card_id: int) -> dict:
         card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
-        self.card_repository.soft_delete(card)
+        self.card_repository.delete(card)
         return {"message": "Card deleted successfully"}

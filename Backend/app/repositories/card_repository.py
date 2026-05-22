@@ -72,11 +72,10 @@ class CardRepository(BaseRepository[Card]):
         except SQLAlchemyError as e:
             raise DatabaseTransactionError("An error occurred while fetching the card verification.") from e
 
-    def soft_delete(self, card: Card) -> Card:
-        card.is_deleted = True
+    def delete(self, card: Card, soft_delete: bool = True) -> Card:
+        if soft_delete:
+            card.is_deleted = True
+        else:
+            self.db.delete(card)
         return card
 
-    def mark_verified(self, card: Card, verification: EmailVerification) -> Card:
-        card.is_email_verified = True
-        verification.is_used = True
-        return card
