@@ -2,15 +2,7 @@ import { FileText, Play, Pencil, Trash2, RefreshCw, XCircle } from 'lucide-react
 import Button from './Button'
 
 const TemplateCard = ({ template, onExecute, onEdit, onDelete, onDeactivate, onActivate }) => {
-  const {
-    name,
-    recipient,
-    amount,
-    currency = 'RSD',
-    card,
-    type,
-    recurring_transactions
-  } = template
+  const { name, recipient, amount, currency = 'RSD', card, type, recurring_transactions } = template
 
   const isRecurring = type === 'recurring'
   const isActive = recurring_transactions?.[0]?.is_active ?? false

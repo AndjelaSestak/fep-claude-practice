@@ -1,16 +1,9 @@
 from sqlalchemy import Integer, Boolean, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
-import enum
-
+from app.utils.enums import VerificationPurpose
 from app.database import Base
 
-class VerificationPurpose(str, enum.Enum):
-    registration = "registration"
-    password_reset = "password_reset"
-    card_verification = "card_verification"
-    card_report = "card_report"
-    
 
 class EmailVerification(Base):
     __tablename__ = "email_verifications"

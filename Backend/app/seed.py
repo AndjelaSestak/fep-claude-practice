@@ -10,7 +10,8 @@ from app.models.user import User
 from app.models.card_type import CardType
 from app.models.wallet import Wallet
 from app.models.card import Card, CardStatus
-from app.models.transaction import Transaction, TransactionType, TransactionStatus, TransactionDirection
+from app.utils.enums import  TransactionType, TransactionStatus, TransactionDirection
+from app.models.transaction import Transaction
 from app.utils.security import get_password_hash
 
 ACCOUNT_NUMBER_TEST = "1000000000000002"

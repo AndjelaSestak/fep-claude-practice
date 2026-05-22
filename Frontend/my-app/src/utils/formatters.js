@@ -13,3 +13,13 @@ export const formatReportType = (reportType) => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
 }
+
+export const ACCOUNT_NUMBER_LENGTH = 16
+
+export const getAccountNumberDigits = (value) =>
+  value.replace(/\D/g, '').slice(0, ACCOUNT_NUMBER_LENGTH)
+
+export const formatAccountNumber = (value) =>
+  getAccountNumberDigits(value)
+    .replace(/(.{4})/g, '$1 ')
+    .trim()
