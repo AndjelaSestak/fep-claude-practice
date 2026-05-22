@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { toast } from 'react-toastify'
 import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/InputField'
 import { useAuth } from '../../../hooks/useAuth'
@@ -19,7 +18,6 @@ const LoginForm = () => {
         fieldErrors[err.path[0]] = err.message
       })
       setErrors(fieldErrors)
-      toast.error('Please fix the errors before continuing.')
       return
     }
     setErrors({})
