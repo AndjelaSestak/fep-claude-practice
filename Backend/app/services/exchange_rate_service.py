@@ -45,7 +45,7 @@ class ExchangeRateService:
         rate = await self.fetch_exchange_rate(from_currency, to_currency)
         return round(amount * rate, 2)
 
-
+## Synchronous versions of the above methods for backward compatibility. Should be removed in the future when all code is updated to use async methods.
 def fetch_exchange_rate(from_currency: str, to_currency: str) -> float:
     from_currency = from_currency.upper()
     to_currency = to_currency.upper()
