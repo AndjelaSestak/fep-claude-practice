@@ -1,31 +1,20 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
+import { queryKeys } from '../lib/queryKeys'
 import { getMyCards, verifyCardPin } from '../services/cardService'
 import { getSupportedCurrencies, createTransaction } from '../services/transactionService'
 import { createTransactionSchema } from '../schemas/transactions'
-
-const EMPTY_FORM = {
-  card_id: '',
-  amount: '',
-  currency: '',
-  recipient: '',
-  recipient_account_number: '',
-  reference: ''
-}
-
-const ACCOUNT_NUMBER_LENGTH = 16
-
-export const getAccountNumberDigits = (value) =>
-  value.replace(/\D/g, '').slice(0, ACCOUNT_NUMBER_LENGTH)
-
-export const formatAccountNumber = (value) =>
-  getAccountNumberDigits(value)
-    .replace(/(.{4})/g, '$1 ')
-    .trim()
+import {
+  getAccountNumberDigits,
+  formatAccountNumber,
+  ACCOUNT_NUMBER_LENGTH
+} from '../utils/formatters'
+import { EMPTY_FORM_TRANSACTION } from '../utils/constants'
 
 export const useNewTransaction = ({ open, onClose, onSuccess }) => {
-  const [formData, setFormData] = useState(EMPTY_FORM)
+  const queryClient = useQueryClient()
+  const [formData, setFormData] = useState(EMPTY_FORM_TRANSACTION)
   const [pinDialogOpen, setPinDialogOpen] = useState(false)
   const [pendingFormData, setPendingFormData] = useState(null)
   const [errors, setErrors] = useState({})
@@ -46,7 +35,7 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
   })
 
   const handleClose = () => {
-    setFormData(EMPTY_FORM)
+    setFormData(EMPTY_FORM_TRANSACTION)
     setErrors({})
     setPendingFormData(null)
     setPinDialogOpen(false)
@@ -79,6 +68,7 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
       setErrors({})
       setPendingFormData(null)
       toast.success('Your transaction has been submitted and is being processed.')
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.list() })
       onClose()
       onSuccess?.()
     },

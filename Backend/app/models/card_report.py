@@ -1,14 +1,9 @@
 from sqlalchemy import Integer, Boolean, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
-import enum
 from app.database import Base
+from app.utils.enums import ReportType
 
-class ReportType(str, enum.Enum):
-    lost = "lost"
-    stolen = "stolen"
-    manual_block = "manual_block"
-    admin_block = "admin_block"
 
 class CardReport(Base):
     __tablename__ = "card_reports"

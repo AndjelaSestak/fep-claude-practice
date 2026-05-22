@@ -53,18 +53,8 @@ export const useTransactions = () => {
   }, [transactionDetailsQuery.isError, transactionDetailsQuery.error])
 
   const filteredTransactions = useMemo(() => {
-    let result = [...transactions]
-
-    if (filters.type !== 'all') {
-      result = result.filter((t) => t.type?.toLowerCase() === filters.type.toLowerCase())
-    }
-
-    if (filters.direction !== 'all') {
-      result = result.filter((t) => t.direction?.toLowerCase() === filters.direction.toLowerCase())
-    }
-
-    return result
-  }, [transactions, filters])
+    return transactions
+  }, [transactions])
 
   const exportTransactionsMutation = useMutation({
     mutationFn: (format) =>

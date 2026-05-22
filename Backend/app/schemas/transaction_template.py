@@ -2,8 +2,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from decimal import Decimal
 from typing import Optional, List
 from datetime import datetime, date
-from app.models.transaction import TransactionType
-from app.models.recurring_transaction import Frequency
+from app.utils.enums import TransactionType, Frequency
+
 
 
 class TransactionTemplateBase(BaseModel):
