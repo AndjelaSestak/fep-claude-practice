@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Query, BackgroundTasks, Depends, Response, status
 from fastapi.responses import StreamingResponse
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.utils.permissions import RequireRole
 from app.utils.errors import TransactionNotFoundError
 from app.models.user import User
+from app.utils.enums import TransactionFilterParams
 
 from app.dependencies import get_db
 from app.services import transaction_service
@@ -25,24 +26,20 @@ require_user = RequireRole(["user"])
 def get_currencies(current_user: User = Depends(require_user)):
     return get_supported_currencies()
 
-@router.get("/all", status_code=status.HTTP_200_OK)
+@router.get("/",response_model=list[TransactionResponse], status_code=status.HTTP_200_OK)
 def get_all_transactions_for_user(
+    filters: Annotated[TransactionFilterParams, Query()],
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
-    search: Optional[str] = Query(None),
-    type: str = Query("all"),
-    direction: Optional[str] = Query(None),
-    limit: int = 10,
-    offset: int = 0,
 ):
     transactions = transaction_service.get_transaction_by_user(
         db,
         user_id=current_user.id,
-        search=search,
-        type=type,
-        direction=direction,
-        limit=limit,
-        offset=offset,
+        search=filters.search,
+        type=filters.type,
+        direction=filters.direction,
+        limit=filters.limit,
+        offset=filters.offset,
     )
     return transactions
 

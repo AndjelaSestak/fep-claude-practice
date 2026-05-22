@@ -1,8 +1,12 @@
 import enum
+from typing import Optional
+
+from pydantic import BaseModel
 
 class TransactionType(str, enum.Enum):
    recurring = "recurring"
    single = "single"
+   all = "all"
 
 class TransactionStatus(str, enum.Enum):
     pending = "pending"
@@ -13,6 +17,7 @@ class TransactionStatus(str, enum.Enum):
 class TransactionDirection(str, enum.Enum):
     incoming = "incoming"
     outgoing = "outgoing"
+    all = "all"
 
 class ReportType(str, enum.Enum):
     lost = "lost"
@@ -38,3 +43,11 @@ class Frequency(str, enum.Enum):
     weekly = "weekly"
     monthly = "monthly"
     yearly = "yearly"
+
+class TransactionFilterParams(BaseModel):
+    search: Optional[str] = None
+    type: TransactionType = TransactionType.single
+    direction: TransactionDirection = TransactionDirection.all
+    period: Optional[str] = None
+    limit: int = 10
+    offset: int = 0

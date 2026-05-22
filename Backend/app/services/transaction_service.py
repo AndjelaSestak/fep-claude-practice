@@ -14,6 +14,7 @@ from app.models.user import User
 from app.schemas.transaction import CreateTransactionRequest
 from app.services.exchange_rate_service import convert_amount, get_supported_currencies
 from app.database import SessionLocal
+from datetime import datetime, timezone
 from app.utils.datetime import utc_now
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.errors import CardNotFoundError, DatabaseTransactionError, InvalidTokenError, TransactionNotFoundError, WalletNotFoundError, BadRequestError
@@ -22,10 +23,15 @@ from app.utils.errors import CardNotFoundError, DatabaseTransactionError, Invali
 PENDING_DELAY_SECONDS = 10
 
 
-def _set_transaction_direction(db: Session, transactions, user_id: int) -> None:
-    if not isinstance(transactions, list):
-        transactions = [transactions]
-    
+def _set_transaction_direction(db: Session, transactions: list[Transaction], user_id: int) -> None:
+
+    """
+Determines and sets the direction (incoming/outgoing) for each transaction
+based on whether the user is the sender or recipient.
+
+Called after fetching transactions to enrich them with direction info
+since direction is no longer stored in the database.
+"""    
     try:
         actual_account = db.query(Wallet.account_number).filter(Wallet.user_id == user_id).scalar()
     except Exception:
@@ -59,7 +65,6 @@ def _build_user_transactions_query(
     )
 
     if period == "current_month":
-        from datetime import datetime, timezone
         today = datetime.now(timezone.utc)
         start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         query = query.filter(Transaction.created_at >= start_of_month)
@@ -72,13 +77,13 @@ def _build_user_transactions_query(
             (Transaction.reference.ilike(search_pattern))
         )
 
-    if type and type != "all":
+    if type and type != TransactionType.all:
         query = query.filter(Transaction.type == type)
 
-    if direction and direction != "all":
-        if direction == "incoming":
+    if direction and direction != TransactionDirection.all:
+        if direction == TransactionDirection.incoming:
             query = query.filter(Transaction.sender_account_number != user_account)
-        elif direction == "outgoing":
+        elif direction == TransactionDirection.outgoing:
             query = query.filter(Transaction.sender_account_number == user_account)
 
     return query.order_by(Transaction.created_at.desc())

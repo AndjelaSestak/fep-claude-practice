@@ -1,13 +1,14 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, Response
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Response, Query
+from sqlalchemy.orm import  Session
+from typing import Annotated
 
 from app.dependencies import get_db
 from app.models.user import User
 from app.services import generate_report_service, transaction_service
 from app.utils.permissions import RequireRole
-
+from app.utils.enums import TransactionFilterParams
 
 router = APIRouter(prefix="/generate_report/export", tags=["Generate Report"])
 
@@ -16,15 +17,12 @@ require_user = RequireRole(["user"])
 
 @router.get("/csv")
 async def export_transactions_csv(
-    search: str = None,
-    type: str = None,
-    direction: str = None,
-    period: str = None,
+    filters: Annotated[TransactionFilterParams, Query()],
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user)
 ):
     transactions = transaction_service.get_filtered_transactions(
-        db, current_user.id, search, type, direction, period
+        db, current_user.id,  filters.search, filters.type, filters.direction, filters.period
     )
 
     filename_base = f"izvestaj_{date.today()}"
@@ -42,15 +40,12 @@ async def export_transactions_csv(
 
 @router.get("/pdf")
 async def export_transactions_pdf(
-    search: str = None,
-    type: str = None,
-    direction: str = None,
-    period: str = None,
+    filters: Annotated[TransactionFilterParams, Query()],
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user)
 ):
     transactions = transaction_service.get_filtered_transactions(
-        db, current_user.id, search, type, direction, period
+        db, current_user.id, filters.search, filters.type, filters.direction, filters.period
     )
 
     filename_base = f"izvestaj_{date.today()}"
