@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.mypy]
+python_executable = "/Users/andjelasestak/PaymentService/Commit-Pray/Backend/venv/bin/python"
+ignore_missing_imports = true
