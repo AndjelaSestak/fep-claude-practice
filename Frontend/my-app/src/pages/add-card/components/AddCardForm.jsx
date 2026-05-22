@@ -1,7 +1,7 @@
 import Button from '../../../components/ui/Button'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/InputField'
-import FilterBar from '../../../components/ui/FilterBar'
+import ReactSelect from 'react-select'
 import FormWrapper from '../../../components/ui/FormWrapper'
 import AlertDialog from '../../../components/ui/AlertDialog'
 import { useCreateCard } from '../../../hooks/useCreateCard'
@@ -56,11 +56,11 @@ const AddCardForm = () => {
             </FormField>
 
             <FormField label="Card Type" required>
-              <FilterBar
-                label="Select card type"
+              <ReactSelect
                 options={CARD_TYPE_OPTIONS}
-                value={cardTypeId}
-                onChange={setCardTypeId}
+                value={CARD_TYPE_OPTIONS.find((o) => o.value === cardTypeId) ?? null}
+                onChange={(opt) => setCardTypeId(opt?.value ?? '')}
+                placeholder="Select card type"
               />
             </FormField>
 

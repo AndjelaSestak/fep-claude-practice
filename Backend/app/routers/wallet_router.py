@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_async_db
+from app.database import get_async_db
 from app.models.user import User
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.wallet import WalletBalanceResponse

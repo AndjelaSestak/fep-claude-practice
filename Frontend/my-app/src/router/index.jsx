@@ -16,6 +16,7 @@ import ResetPasswordPage from '../pages/reset-password/ResetPasswordPage'
 import AddCardPage from '../pages/add-card/AddCardPage'
 import MyCardsPage from '../pages/my-cards/MyCardsPage'
 import TemplatesPage from '../pages/templates/TemplatesPage'
+import NewTransactionPage from '../pages/new-transaction/NewTransactionPage'
 
 const router = createBrowserRouter([
   {
@@ -85,6 +86,10 @@ const router = createBrowserRouter([
   {
     path: '/templates',
     element: <TemplatesPage />
+  },
+  {
+    path: '/new-transaction',
+    element: <NewTransactionPage />
   }
 ])
 
