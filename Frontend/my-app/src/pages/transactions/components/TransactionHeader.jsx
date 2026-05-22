@@ -1,10 +1,13 @@
+import { useNavigate } from 'react-router-dom'
 import PageHeader from '../../../components/ui/PageHeader'
 import Button from '../../../components/ui/Button'
 import { FileSpreadsheet, FileText, Plus } from 'lucide-react'
 import { useTransactionContext } from '../../../context/TransactionContext'
 
 const TransactionHeader = () => {
-  const { exportTransactions, setNewTransactionOpen } = useTransactionContext()
+  const { exportTransactions } = useTransactionContext()
+  const navigate = useNavigate()
+
   return (
     <PageHeader
       label="Management"
@@ -32,7 +35,7 @@ const TransactionHeader = () => {
         </div>
 
         <Button
-          onClick={() => setNewTransactionOpen(true)}
+          onClick={() => navigate('/new-transaction')}
           className="shadow-lg shadow-primary/20 hover:scale-105 transition-transform px-6 rounded-2xl font-bold"
         >
           <Plus size={16} /> New Transaction

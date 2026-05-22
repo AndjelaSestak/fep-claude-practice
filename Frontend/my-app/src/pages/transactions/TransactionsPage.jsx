@@ -1,6 +1,5 @@
 import Sidebar from '../../components/layout/SideBar'
 import NavBarAfterLogin from '../../components/layout/NavBarAfterLogin'
-import NewTransactionModal from '../../components/ui/newTransactionModal/NewTransactionModal'
 import { TransactionDetailsModal } from '../transactions/components/TransactionDetailsModal'
 import { Pagination } from '../../components/ui/Pagination'
 import { TransactionListSection } from '../transactions/components/TransactionListSection'
@@ -12,11 +11,17 @@ const TransactionsContent = () => {
     transactions,
     limit,
     page,
-    newTransactionOpen,
-    setNewTransactionOpen,
+    setFilters,
+    filteredTransactions,
+    selectedTransaction,
+    isModalOpen,
+    setIsModalOpen,
+    detailsLoading,
     refetchTransactions,
+    handleTransactionClick,
     nextPage,
     prevPage,
+    resetPage,
     loading
   } = useTransactionContext()
 
@@ -28,7 +33,18 @@ const TransactionsContent = () => {
         <main className="p-8 overflow-y-auto">
           <div className="max-w-5xl mx-auto space-y-6">
             <TransactionHeader />
-            <TransactionListSection />
+            <TransactionListSection
+              loading={loading}
+              page={page}
+              filteredTransactions={filteredTransactions}
+              onFilterChange={(newFilters) => {
+                setFilters(newFilters)
+                resetPage()
+              }}
+              onTransactionClick={handleTransactionClick}
+              onTransactionCancel={refetchTransactions}
+            />
+
             <Pagination
               page={page}
               onPrev={prevPage}
@@ -40,12 +56,12 @@ const TransactionsContent = () => {
         </main>
       </div>
 
-      <NewTransactionModal
-        open={newTransactionOpen}
-        onClose={() => setNewTransactionOpen(false)}
-        onSuccess={refetchTransactions}
+      <TransactionDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        loading={detailsLoading}
+        transaction={selectedTransaction}
       />
-      <TransactionDetailsModal />
     </div>
   )
 }
