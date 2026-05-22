@@ -1,6 +1,14 @@
+from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator, ConfigDict, model_validator, computed_field
-from datetime import datetime, timezone
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+)
+
 from app.utils.enums import CardStatus
 
 

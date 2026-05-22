@@ -1,29 +1,30 @@
-import sys
 import os
-from datetime import date, timezone, datetime
+import sys
+from datetime import date
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database import SessionLocal
-from app.models.role import Role
-from app.models.user import User
-from app.models.card_type import CardType
-from app.models.wallet import Wallet
 from app.models.card import Card, CardStatus
-from app.utils.enums import  TransactionType, TransactionStatus, TransactionDirection
+from app.models.card_type import CardType
+from app.models.role import Role
 from app.models.transaction import Transaction
+from app.models.user import User
+from app.models.wallet import Wallet
+from app.utils.enums import TransactionDirection, TransactionStatus, TransactionType
 from app.utils.security import get_password_hash
 
 ACCOUNT_NUMBER_TEST = "1000000000000002"
 ACCOUNT_NUMBER_JANE = "1000000000000003"
+
 
 def seed():
     db = SessionLocal()
     try:
         # ── 1. Roles ─────────────────────────────────────────────────────────
         for role_data in [
-            {"name": "admin",   "description": "Administrator role with full access"},
-            {"name": "user",    "description": "Standard user role"},
+            {"name": "admin", "description": "Administrator role with full access"},
+            {"name": "user", "description": "Standard user role"},
             {"name": "visitor", "description": "Visitor role with limited access"},
         ]:
             if not db.query(Role).filter(Role.name == role_data["name"]).first():
@@ -33,33 +34,39 @@ def seed():
 
         # ── 2. Users ─────────────────────────────────────────────────────────
         admin_role = db.query(Role).filter(Role.name == "admin").first()
-        user_role  = db.query(Role).filter(Role.name == "user").first()
+        user_role = db.query(Role).filter(Role.name == "user").first()
 
         if admin_role and user_role:
             for u_data in [
                 {
-                    "name": "Admin User", "email": "admin@example.com",
+                    "name": "Admin User",
+                    "email": "admin@example.com",
                     "password_hash": get_password_hash("password123"),
                     "role_id": admin_role.id,
-                    "city": "Novi Sad", "address": "Centar 1",
+                    "city": "Novi Sad",
+                    "address": "Centar 1",
                     "date_of_birth": date(1985, 3, 10),
-                    "is_email_verified": True,   # must be True to allow login
+                    "is_email_verified": True,  # must be True to allow login
                     "is_deleted": False,
                 },
                 {
-                    "name": "Test User", "email": "user@example.com",
+                    "name": "Test User",
+                    "email": "user@example.com",
                     "password_hash": get_password_hash("password123"),
                     "role_id": user_role.id,
-                    "city": "Beograd", "address": "Bulevar 2",
+                    "city": "Beograd",
+                    "address": "Bulevar 2",
                     "date_of_birth": date(1990, 5, 15),
                     "is_email_verified": True,
                     "is_deleted": False,
                 },
                 {
-                    "name": "Jane Doe", "email": "jane@example.com",
+                    "name": "Jane Doe",
+                    "email": "jane@example.com",
                     "password_hash": get_password_hash("password123"),
                     "role_id": user_role.id,
-                    "city": "Nis", "address": "Glavna 3",
+                    "city": "Nis",
+                    "address": "Glavna 3",
                     "date_of_birth": date(1995, 10, 20),
                     "is_email_verified": True,
                     "is_deleted": False,
@@ -85,65 +92,111 @@ def seed():
         jane_user = db.query(User).filter(User.email == "jane@example.com").first()
 
         for user, account_number, balance, currency in [
-            (test_user,  ACCOUNT_NUMBER_TEST,  5000.00,  "RSD"),
-            (jane_user,  ACCOUNT_NUMBER_JANE,  12000.00, "RSD"),
+            (test_user, ACCOUNT_NUMBER_TEST, 5000.00, "RSD"),
+            (jane_user, ACCOUNT_NUMBER_JANE, 12000.00, "RSD"),
         ]:
             if user and not db.query(Wallet).filter(Wallet.user_id == user.id).first():
-                db.add(Wallet(
-                    user_id=user.id,
-                    balance=balance,
-                    account_number=account_number,
-                    currency=currency,
-                ))
+                db.add(
+                    Wallet(
+                        user_id=user.id,
+                        balance=balance,
+                        account_number=account_number,
+                        currency=currency,
+                    )
+                )
                 print(f"Wallet for '{user.email}' added ({account_number}).")
         db.commit()
 
         # ── 5. Cards ──────────────────────────────────────────────────────────
-        visa_type   = db.query(CardType).filter(CardType.name == "Visa").first()
+        visa_type = db.query(CardType).filter(CardType.name == "Visa").first()
         master_type = db.query(CardType).filter(CardType.name == "MasterCard").first()
-        test_wallet = db.query(Wallet).filter(Wallet.user_id == test_user.id).first() if test_user else None
-        jane_wallet = db.query(Wallet).filter(Wallet.user_id == jane_user.id).first() if jane_user else None
+        test_wallet = (
+            db.query(Wallet).filter(Wallet.user_id == test_user.id).first()
+            if test_user
+            else None
+        )
+        jane_wallet = (
+            db.query(Wallet).filter(Wallet.user_id == jane_user.id).first()
+            if jane_user
+            else None
+        )
 
-        if test_user and jane_user and visa_type and master_type and test_wallet and jane_wallet:
+        if (
+            test_user
+            and jane_user
+            and visa_type
+            and master_type
+            and test_wallet
+            and jane_wallet
+        ):
             for c_data in [
                 {
-                    "user_id": test_user.id, "card_type_id": master_type.id,
+                    "user_id": test_user.id,
+                    "card_type_id": master_type.id,
                     "wallet_id": test_wallet.id,
                     "card_number_masked": "**** **** **** 5678",
                     "cardholder_name": "TEST USER",
-                    "expiry_month": 4, "expiry_year": 2030,
+                    "expiry_month": 4,
+                    "expiry_year": 2030,
                     "status": CardStatus.active,
                     "card_pin": get_password_hash("1234"),
                     "is_email_verified": True,
                     "is_deleted": False,
                 },
                 {
-                    "user_id": jane_user.id, "card_type_id": visa_type.id,
+                    "user_id": jane_user.id,
+                    "card_type_id": visa_type.id,
                     "wallet_id": jane_wallet.id,
                     "card_number_masked": "**** **** **** 9012",
                     "cardholder_name": "JANE DOE",
-                    "expiry_month": 4, "expiry_year": 2030,
+                    "expiry_month": 4,
+                    "expiry_year": 2030,
                     "status": CardStatus.active,
                     "card_pin": get_password_hash("4321"),
                     "is_email_verified": True,
                     "is_deleted": False,
                 },
             ]:
-                if not db.query(Card).filter(Card.card_number_masked == c_data["card_number_masked"]).first():
+                if (
+                    not db.query(Card)
+                    .filter(Card.card_number_masked == c_data["card_number_masked"])
+                    .first()
+                ):
                     db.add(Card(**c_data))
-                    print(f"Card '**** {c_data['card_number_masked'][-4:]}' added for '{c_data['cardholder_name']}'.")
+                    print(
+                        f"Card '**** {c_data['card_number_masked'][-4:]}'"
+                        f" added for '{c_data['cardholder_name']}'."
+                    )
             db.commit()
 
         # ── 6. Transactions ───────────────────────────────────────────────────
-        test_card = db.query(Card).filter(Card.card_number_masked == "**** **** **** 5678").first()
-        jane_card = db.query(Card).filter(Card.card_number_masked == "**** **** **** 9012").first()
+        test_card = (
+            db.query(Card)
+            .filter(Card.card_number_masked == "**** **** **** 5678")
+            .first()
+        )
+        jane_card = (
+            db.query(Card)
+            .filter(Card.card_number_masked == "**** **** **** 9012")
+            .first()
+        )
 
-        if test_user and jane_user and test_card and jane_card and test_wallet and jane_wallet:
+        if (
+            test_user
+            and jane_user
+            and test_card
+            and jane_card
+            and test_wallet
+            and jane_wallet
+        ):
             if db.query(Transaction).count() == 0:
                 for t_data in [
                     {
-                        "user_id": test_user.id, "card_id": test_card.id,
-                        "type": TransactionType.single, "amount": 250.0, "currency": "RSD",
+                        "user_id": test_user.id,
+                        "card_id": test_card.id,
+                        "type": TransactionType.single,
+                        "amount": 250.0,
+                        "currency": "RSD",
                         "recipient": "Online Store",
                         "recipient_account_number": "1000000000000099",
                         "sender": "Test User",
@@ -153,8 +206,11 @@ def seed():
                         "direction": TransactionDirection.outgoing,
                     },
                     {
-                        "user_id": jane_user.id, "card_id": jane_card.id,
-                        "type": TransactionType.single, "amount": 150.0, "currency": "RSD",
+                        "user_id": jane_user.id,
+                        "card_id": jane_card.id,
+                        "type": TransactionType.single,
+                        "amount": 150.0,
+                        "currency": "RSD",
                         "recipient": "Restaurant",
                         "recipient_account_number": "1000000000000098",
                         "sender": "Jane Doe",
@@ -164,8 +220,11 @@ def seed():
                         "direction": TransactionDirection.outgoing,
                     },
                     {
-                        "user_id": test_user.id, "card_id": test_card.id,
-                        "type": TransactionType.single, "amount": 3000.0, "currency": "RSD",
+                        "user_id": test_user.id,
+                        "card_id": test_card.id,
+                        "type": TransactionType.single,
+                        "amount": 3000.0,
+                        "currency": "RSD",
                         "recipient": "Test User",
                         "recipient_account_number": test_wallet.account_number,
                         "sender": "Jane Doe",
@@ -185,6 +244,7 @@ def seed():
         db.rollback()
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed()

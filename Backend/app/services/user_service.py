@@ -23,7 +23,6 @@ class UserService:
         if not user:
             raise UserNotFoundError("User not found.")
         return user
-            
 
     async def delete_current_user(self, current_user: User) -> None:
         self.user_repository.soft_delete(current_user)

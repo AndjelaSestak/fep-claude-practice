@@ -1,10 +1,12 @@
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any
+
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.user import User
 from app.repositories.base_repository import BaseRepository
 from app.utils.errors import DatabaseTransactionError
-from sqlalchemy.exc import SQLAlchemyError
 
 
 class UserRepository(BaseRepository[User]):
@@ -13,12 +15,12 @@ class UserRepository(BaseRepository[User]):
 
     async def get_all(self) -> list[User]:
         try:
-            result = await self.db.execute(
-                select(User).where(User.is_deleted == False)
-            )
+            result = await self.db.execute(select(User).where(User.is_deleted == False))
             return result.scalars().all()
         except SQLAlchemyError as e:
-            raise DatabaseTransactionError("An error occurred while fetching users.") from e
+            raise DatabaseTransactionError(
+                "An error occurred while fetching users."
+            ) from e
 
     async def get_by_id(self, user_id: int) -> User | None:
         try:
@@ -30,8 +32,10 @@ class UserRepository(BaseRepository[User]):
             )
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
-            raise DatabaseTransactionError("An error occurred while fetching the user.") from e
-        
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the user."
+            ) from e
+
     def soft_delete(self, user: User) -> User:
         user.is_deleted = True
         return user

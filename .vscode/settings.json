@@ -16,5 +16,8 @@
   },
   "[javascriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportUndefinedVariable": "none"
   }
 }
