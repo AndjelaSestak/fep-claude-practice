@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { queryKeys } from '../lib/queryKeys'
 import { getMyCards, verifyCardPin } from '../services/cardService'
 import { getSupportedCurrencies, createTransaction } from '../services/transactionService'
+import { createTransactionSchema } from '../schemas/transactions'
 import {
   getAccountNumberDigits,
   formatAccountNumber,
@@ -16,6 +17,7 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState(EMPTY_FORM_TRANSACTION)
   const [pinDialogOpen, setPinDialogOpen] = useState(false)
   const [pendingFormData, setPendingFormData] = useState(null)
+  const [errors, setErrors] = useState({})
 
   const { data: cards = [] } = useQuery({
     queryKey: ['cards'],
@@ -34,6 +36,9 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
 
   const handleClose = () => {
     setFormData(EMPTY_FORM_TRANSACTION)
+    setErrors({})
+    setPendingFormData(null)
+    setPinDialogOpen(false)
     onClose()
   }
 
@@ -43,6 +48,7 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
       ...prev,
       [name]: name === 'recipient_account_number' ? formatAccountNumber(value) : value
     }))
+    setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
   const transactionMutation = useMutation({
@@ -59,6 +65,8 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
     },
     onSuccess: () => {
       setPinDialogOpen(false)
+      setErrors({})
+      setPendingFormData(null)
       toast.success('Your transaction has been submitted and is being processed.')
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.list() })
       onClose()
@@ -83,12 +91,22 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const digits = getAccountNumberDigits(formData.recipient_account_number)
-    if (digits.length !== ACCOUNT_NUMBER_LENGTH) {
-      toast.error('Recipient account number must contain exactly 16 digits.')
+
+    const result = createTransactionSchema.safeParse(formData)
+
+    if (!result.success) {
+      const fieldErrors = {}
+
+      result.error.issues.forEach((err) => {
+        fieldErrors[err.path[0]] = err.message
+      })
+
+      setErrors(fieldErrors)
       return
     }
-    setPendingFormData(formData)
+
+    setErrors({})
+    setPendingFormData(result.data)
     setPinDialogOpen(true)
   }
 
@@ -98,6 +116,7 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
     currencies,
     loading: transactionMutation.isPending,
     pinDialogOpen,
+    errors,
     setPinDialogOpen,
     handleChange,
     handleSubmit,

@@ -1,12 +1,10 @@
-from typing import Optional
-
-from pydantic import ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     DATABASE_URL: str
+    ASYNC_DATABASE_URL: str | None = None
 
 # JWT
     SECRET_KEY: str
