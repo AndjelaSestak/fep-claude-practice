@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Response, Query
 from sqlalchemy.orm import  Session
 from typing import Annotated
 
-from app.dependencies import get_db
+from app.database import get_db
 from app.models.user import User
 from app.services import generate_report_service, transaction_service
 from app.utils.permissions import RequireRole

@@ -18,7 +18,7 @@ from app.utils.security import create_access_token, create_refresh_token, decode
 from app.services.email_types import send_verification_email, send_welcome_email, send_reset_password_email
 from fastapi import BackgroundTasks, Depends, Request
 from app.config import settings
-from app.dependencies import get_db
+from app.database import get_db
 
 from app.utils.errors import EmailAlreadyRegisteredError, InvalidOTPError, InvalidTokenError, NotAuthenticatedError, OTPExpiredError, RoleNotFoundError, DatabaseTransactionError, UserNotFoundError
 from app.utils.datetime import ensure_utc

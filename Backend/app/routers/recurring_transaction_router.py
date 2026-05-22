@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 from app.utils.permissions import RequireRole
 from app.utils.errors import TransactionNotFoundError
-from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.recurring_transaction import RecurringTransactionBase
-from app.dependencies import get_db
+from app.database import get_db
 from app.services.recurring_transaction_service import set_recurring_transaction_status
 from app.models.transaction_template import TransactionTemplate
 
