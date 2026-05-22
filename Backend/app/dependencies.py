@@ -1,36 +1,19 @@
-from typing import AsyncGenerator, Generator
-
 from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.utils.security import decode_token
 from app.utils.errors import InvalidTokenError, NotAuthenticatedError
 from app.models.user import User
-from app.database import AsyncSessionLocal, SessionLocal
+from app.database import get_async_db as _get_async_db
+from app.database import get_db as _get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
+from app.services.exchange_rate_service import ExchangeRateService
+from app.services.user_service import UserService
+from app.repositories.user_repository import UserRepository
+from app.repositories.wallet_repository import WalletRepository
 
-def get_db() -> Generator:
-    db = SessionLocal()
-    try:
-        yield db
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
-    finally:
-        db.close()
-
-async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as db:
-        try:
-            yield db
-            await db.commit()
-        except Exception:
-            await db.rollback()
-            raise
-
-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+def get_current_user(request: Request, db: Session = Depends(_get_db)) -> User:
     from jose import JWTError
     token = request.cookies.get("access_token")
     if not token:
@@ -47,7 +30,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
 
 async def get_current_user_async(
     request: Request,
-    db: AsyncSession = Depends(get_async_db),
+    db: AsyncSession = Depends(_get_async_db),
 ) -> User:
     from jose import JWTError
 
@@ -69,3 +52,12 @@ async def get_current_user_async(
     if not user:
         raise InvalidTokenError("User not found")
     return user
+
+def get_exchange_rate_service() -> ExchangeRateService:
+    return ExchangeRateService()
+
+def get_user_service(db: AsyncSession = Depends(_get_async_db)) -> UserService:
+    return UserService(
+        user_repository=UserRepository(db),
+        wallet_repository=WalletRepository(db),
+    )

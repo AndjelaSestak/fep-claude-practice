@@ -3,9 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List, Annotated
 
 from app.utils.permissions import RequireRole
-from app.dependencies import get_db
+from app.database import get_db
 from app.services import transaction_template_service, transaction_service
-from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.transaction_template import (
     TransactionTemplateCreate,

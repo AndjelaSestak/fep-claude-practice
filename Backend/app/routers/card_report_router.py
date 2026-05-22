@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
-from app.dependencies import get_db
+from app.database import get_db
 from app.schemas.card_report import CardReportRequest, CardStatusResponse
 from app.utils.permissions import RequireRole
 from app.models.user import User

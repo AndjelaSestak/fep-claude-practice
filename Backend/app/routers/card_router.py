@@ -4,9 +4,8 @@ from typing import List, Annotated
 
 from app.utils.permissions import RequireRole
 from app.schemas.card import CardCreate, CardResponse, CardVerify, CardPinVerify
-from app.dependencies import get_db
+from app.database import get_db
 from app.services.card_service import create_card, verify_card, verify_card_pin, get_user_cards, soft_delete_card, get_card_by_id
-from app.dependencies import get_current_user
 from app.models.user import User
 
 router = APIRouter(prefix="/cards", tags=["Cards"])

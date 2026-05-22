@@ -6,7 +6,7 @@ from app.utils.permissions import RequireRole
 from app.utils.errors import TransactionNotFoundError
 from app.models.user import User
 
-from app.dependencies import get_db
+from app.database import get_db
 from app.services import transaction_service
 from app.schemas.transaction import CreateTransactionRequest, TransactionResponse
 
@@ -70,4 +70,3 @@ def cancel_transaction(
     current_user: User = Depends(require_user)
 ):
     return transaction_service.cancel_transaction(db=db, transaction_id=transaction_id, current_user=current_user)
-
