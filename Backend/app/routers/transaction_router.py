@@ -1,40 +1,45 @@
-from typing import Optional
+from datetime import date
+from typing import Annotated, Optional
 
-from fastapi import APIRouter, Query, BackgroundTasks, Depends, status
+from fastapi import APIRouter, Query, BackgroundTasks, Depends, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from app.utils.permissions import RequireRole
 from app.utils.errors import TransactionNotFoundError
 from app.models.user import User
+from app.utils.enums import TransactionFilterParams
 
 from app.dependencies import get_db
 from app.services import transaction_service
+from app.dependencies import get_current_user
+from app.services.exchange_rate_service import get_supported_currencies
+from sqlalchemy.orm import Session
 from app.schemas.transaction import CreateTransactionRequest, TransactionResponse
+
 
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
 require_user = RequireRole(["user"])
 
-@router.get("/all", status_code=status.HTTP_200_OK)
+@router.get("/currencies", status_code=status.HTTP_200_OK)
+def get_currencies(current_user: User = Depends(require_user)):
+    return get_supported_currencies()
+
+@router.get("/",response_model=list[TransactionResponse], status_code=status.HTTP_200_OK)
 def get_all_transactions_for_user(
+    filters: Annotated[TransactionFilterParams, Query()],
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
-    search: Optional[str] = Query(None),
-    type: str = Query("all"),
-    direction: str = Query("all"),
-    period: Optional[str] = Query(None),
-    limit: int = 10,
-    offset: int = 0,
 ):
-    transactions = transaction_service.get_filtered_transactions(
+    transactions = transaction_service.get_transaction_by_user(
         db,
-        current_user.id,
-        search=search,
-        type=type,
-        direction=direction,
-        period=period,
-        limit=limit,
-        offset=offset,
+        user_id=current_user.id,
+        search=filters.search,
+        type=filters.type,
+        direction=filters.direction,
+        limit=filters.limit,
+        offset=filters.offset,
     )
     return transactions
 
@@ -70,4 +75,5 @@ def cancel_transaction(
     current_user: User = Depends(require_user)
 ):
     return transaction_service.cancel_transaction(db=db, transaction_id=transaction_id, current_user=current_user)
+
 

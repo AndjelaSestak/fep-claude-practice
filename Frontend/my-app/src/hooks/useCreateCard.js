@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { createCard } from '../services/cardService'
 import { useAuth } from './useAuth'
+import { queryKeys } from '../lib/queryKeys'
 import { getApiErrorMessage } from '../utils/getApiErrorMessage'
 
 export const useCreateCard = () => {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { user } = useAuth()
 
@@ -19,6 +21,7 @@ export const useCreateCard = () => {
   const createCardMutation = useMutation({
     mutationFn: createCard,
     onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.cards.all })
       setCreatedCardId(response.id)
       setCardTypeId('')
       setAddCardSuccessDialogOpen(true)

@@ -1,8 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
-from app.models.card_report import ReportType
-from app.models.card import CardStatus
+from app.utils.enums import ReportType, CardStatus
 
 class CardStatusResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

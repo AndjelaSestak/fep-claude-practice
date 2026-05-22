@@ -21,3 +21,14 @@ export const updateProfileSchema = z.object({
       message: 'You must be at least 18 years old'
     })
 })
+
+export const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(8, 'Current password must be at least 8 characters'),
+    new_password: z.string().min(8, 'New password must be at least 8 characters'),
+    confirm_new_password: z.string().min(8, 'Confirm new password must be at least 8 characters')
+  })
+  .refine((data) => data.new_password === data.confirm_new_password, {
+    message: 'New password and confirm new password must match',
+    path: ['confirm_new_password']
+  })

@@ -1,8 +1,10 @@
 import PageHeader from '../../../components/ui/PageHeader'
 import Button from '../../../components/ui/Button'
 import { FileSpreadsheet, FileText, Plus } from 'lucide-react'
+import { useTransactionContext } from '../../../context/TransactionContext'
 
-const TransactionHeader = ({ handleExport, setNewTransactionOpen }) => {
+const TransactionHeader = () => {
+  const { exportTransactions, setNewTransactionOpen } = useTransactionContext()
   return (
     <PageHeader
       label="Management"
@@ -14,7 +16,7 @@ const TransactionHeader = ({ handleExport, setNewTransactionOpen }) => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleExport('csv')}
+            onClick={() => exportTransactions('csv')}
             className="hover:bg-white rounded-xl text-primary-dark font-bold transition-all px-4"
           >
             <FileSpreadsheet size={16} /> CSV
@@ -22,7 +24,7 @@ const TransactionHeader = ({ handleExport, setNewTransactionOpen }) => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleExport('pdf')}
+            onClick={() => exportTransactions('pdf')}
             className="hover:bg-white rounded-xl text-primary-dark font-bold transition-all px-4"
           >
             <FileText size={16} /> PDF

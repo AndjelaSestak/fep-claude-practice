@@ -1,14 +1,9 @@
 from sqlalchemy import Integer, Boolean, Date, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, date
-import enum
+from app.utils.enums import Frequency
 from app.database import Base
 
-class Frequency(str, enum.Enum):
-    daily = "daily"
-    weekly = "weekly"
-    monthly = "monthly"
-    yearly = "yearly"
 
 class RecurringTransaction(Base):
     __tablename__ = "recurring_transactions"

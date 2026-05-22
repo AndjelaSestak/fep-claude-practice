@@ -3,15 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
 import enum
 from app.database import Base
-
-
-class CardStatus(str, enum.Enum):
-    active = "active"
-    blocked = "blocked"
-    expired = "expired"
-    reported_lost = "reported_lost"
-    reported_stolen = "reported_stolen"
-
+from app.utils.enums import CardStatus
 
 class Card(Base):
     __tablename__ = "cards"

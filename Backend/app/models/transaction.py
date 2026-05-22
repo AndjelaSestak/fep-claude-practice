@@ -1,22 +1,8 @@
 from sqlalchemy import Integer, Numeric, String, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
-import enum
 from app.database import Base
-
-class TransactionType(str, enum.Enum):
-   recurring = "recurring"
-   single = "single"
-
-class TransactionStatus(str, enum.Enum):
-    pending = "pending"
-    completed = "completed"
-    failed = "failed"
-    cancelled = "cancelled"
-
-class TransactionDirection(str, enum.Enum):
-    incoming = "incoming"
-    outgoing = "outgoing"
+from app.utils.enums import TransactionType, TransactionStatus
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -34,7 +20,6 @@ class Transaction(Base):
     reference: Mapped[str] = mapped_column(Text, nullable=True)
     status: Mapped[TransactionStatus] = mapped_column(Enum(TransactionStatus), default=TransactionStatus.pending)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    direction: Mapped[TransactionDirection] = mapped_column(Enum(TransactionDirection))
     recurring_transaction_id: Mapped[int] = mapped_column(Integer, ForeignKey("recurring_transactions.id"), nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="transactions")
