@@ -1,24 +1,14 @@
 from fastapi import APIRouter, Depends, Response
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.dependencies import get_async_db
 from app.models.user import User
-from app.repositories.user_repository import UserRepository
-from app.repositories.wallet_repository import WalletRepository
 from app.schemas.user import UserPasswordUpdate, UserResponse, UserUpdate
 from app.services.user_service import UserService
 from app.utils.permissions import AsyncRequireRole
+from app.dependencies import get_user_service
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 require_user = AsyncRequireRole(["user"])
-
-
-def get_user_service(db: AsyncSession = Depends(get_async_db)) -> UserService:
-    return UserService(
-        user_repository=UserRepository(db),
-        wallet_repository=WalletRepository(db),
-    )
 
 
 @router.get("/get_all_users", response_model=list[UserResponse])

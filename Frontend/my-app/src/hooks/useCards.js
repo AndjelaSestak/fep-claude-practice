@@ -11,30 +11,7 @@ import {
   getCardReports
 } from '../services/cardReportService'
 import { getApiErrorMessage } from '../utils/getApiErrorMessage'
-
-const ACTION_CONFIG = {
-  block: {
-    title: 'Block card',
-    description:
-      'Are you sure you want to block this card? You will not be able to use it until you unblock it.',
-    confirmLabel: 'Block'
-  },
-  unblock: {
-    title: 'Unblock card',
-    description: 'Are you sure you want to unblock this card?',
-    confirmLabel: 'Unblock'
-  },
-  reportLost: {
-    title: 'Report as lost',
-    description: 'Are you sure you want to report this card as lost?',
-    confirmLabel: 'Report Lost'
-  },
-  reportStolen: {
-    title: 'Report as stolen',
-    description: 'Are you sure you want to report this card as stolen?',
-    confirmLabel: 'Report Stolen'
-  }
-}
+import { ACTION_CONFIG_CARDS } from '../utils/constants'
 
 export const useCards = () => {
   const queryClient = useQueryClient()
@@ -184,13 +161,13 @@ export const useCards = () => {
   }
 
   const handleBlock = (cardId) =>
-    openActionDialog(blockMutation.mutate, cardId, ACTION_CONFIG.block)
+    openActionDialog(blockMutation.mutate, cardId, ACTION_CONFIG_CARDS.block)
   const handleUnblock = (cardId) =>
-    openActionDialog(unblockMutation.mutate, cardId, ACTION_CONFIG.unblock)
+    openActionDialog(unblockMutation.mutate, cardId, ACTION_CONFIG_CARDS.unblock)
   const handleReportLost = (cardId) =>
-    openActionDialog(reportLostMutation.mutate, cardId, ACTION_CONFIG.reportLost)
+    openActionDialog(reportLostMutation.mutate, cardId, ACTION_CONFIG_CARDS.reportLost)
   const handleReportStolen = (cardId) =>
-    openActionDialog(reportStolenMutation.mutate, cardId, ACTION_CONFIG.reportStolen)
+    openActionDialog(reportStolenMutation.mutate, cardId, ACTION_CONFIG_CARDS.reportStolen)
 
   const handleViewReports = (cardId) => {
     setActiveReportCardId(cardId)

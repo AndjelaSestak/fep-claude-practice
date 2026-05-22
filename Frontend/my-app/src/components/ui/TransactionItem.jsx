@@ -5,12 +5,11 @@ import AlertDialog from './AlertDialog'
 import { useTransactionItem } from '../../hooks/useTransactionitem'
 
 export function TransactionItem({ transaction, className, onCancel }) {
-  const { confirmOpen, setConfirmOpen, loading, handleCancel } = useTransactionItem({
+  const { confirmOpen, setConfirmOpen, loading, handleCancel, isIncoming } = useTransactionItem({
     transaction,
     onCancel
   })
 
-  const isIncoming = transaction.direction === 'incoming'
   const status = transaction.status
   const isPending = status === 'pending'
   const isCancelled = status === 'cancelled'

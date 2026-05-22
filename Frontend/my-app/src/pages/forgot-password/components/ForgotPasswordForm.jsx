@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { toast } from 'react-toastify'
 import { useMail } from '../../../hooks/useMail'
 import Button from '../../../components/ui/Button'
 import FormField from '../../../components/ui/FormField'
@@ -22,7 +21,6 @@ const ForgotPasswordForm = () => {
         fieldErrors[err.path[0]] = err.message
       })
       setErrors(fieldErrors)
-      toast.error('Please fix the errors before continuing.')
       return
     }
 

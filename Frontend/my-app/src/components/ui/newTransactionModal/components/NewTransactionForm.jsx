@@ -11,10 +11,11 @@ export const NewTransactionForm = ({
   loading,
   handleChange,
   handleSubmit,
-  onClose
+  onClose,
+  errors
 }) => {
   return (
-    <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+    <form onSubmit={handleSubmit} className="mt-4 space-y-4" noValidate>
       <FormField label="Card" required>
         <Select
           name="card_id"
@@ -23,6 +24,7 @@ export const NewTransactionForm = ({
           placeholder="Select a card"
           options={cards}
           required
+          error={errors.card_id}
         />
       </FormField>
 
@@ -38,6 +40,7 @@ export const NewTransactionForm = ({
               onChange={handleChange}
               placeholder="0.00"
               required
+              error={errors.amount}
             />
           </FormField>
         </div>
@@ -50,6 +53,7 @@ export const NewTransactionForm = ({
               placeholder="Select currency"
               options={currencies}
               required
+              error={errors.currency}
             />
           </FormField>
         </div>
@@ -62,6 +66,7 @@ export const NewTransactionForm = ({
           onChange={handleChange}
           placeholder="Full name of recipient"
           required
+          error={errors.recipient}
         />
       </FormField>
 
@@ -74,6 +79,7 @@ export const NewTransactionForm = ({
           inputMode="numeric"
           maxLength={19}
           required
+          error={errors.recipient_account_number}
         />
       </FormField>
 
