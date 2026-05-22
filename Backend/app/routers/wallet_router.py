@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 from app.utils.permissions import RequireRole
 from app.models.user import User
 from app.services.wallet_service import get_wallet_balance
-from app.dependencies import get_db
-from app.dependencies import get_current_user
+from app.database import get_db
 
 router = APIRouter(prefix="/wallet", tags=["Wallet"])
 

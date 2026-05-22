@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.utils.permissions import RequireRole
 from app.schemas.user import UserCreate, UserResponse
-from app.dependencies import get_db
+from app.database import get_db
 from app.services import auth_service
 from app.schemas.auth import LoginRequest, TokenResponse, ForgotPasswordRequest, MessageResponse,ResendEmailRequest, ResetPasswordRequest, VerifyOTP
 from app.utils.security import verify_password, create_access_token, create_refresh_token
