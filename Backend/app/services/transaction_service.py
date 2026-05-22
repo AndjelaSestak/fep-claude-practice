@@ -149,7 +149,7 @@ def create_transaction(db: Session, request: CreateTransactionRequest, current_u
         db.add(transaction)
         db.commit()
         db.refresh(transaction)
-        _set_transaction_direction(db, transaction, current_user.id)
+        _set_transaction_direction(db, [transaction], current_user.id)
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while creating the transaction. Please try again.")
     return transaction
@@ -248,7 +248,7 @@ def get_transaction_by_id(db: Session, transaction_id: int, user_id: int):
     ).first()
 
     if transaction:
-        _set_transaction_direction(db, transaction, user_id)
+        _set_transaction_direction(db, [transaction], user_id)
 
     return transaction
 
@@ -285,7 +285,7 @@ def cancel_transaction(db: Session, transaction_id: int, current_user: User) -> 
     except SQLAlchemyError:
         raise DatabaseTransactionError("An error occurred while cancelling the transaction. Please try again.")
 
-    _set_transaction_direction(db, transaction, current_user.id)
+    _set_transaction_direction(db, [transaction], current_user.id)
     return transaction
 
 
