@@ -1,14 +1,9 @@
 import AlertDialog from '../../../components/ui/AlertDialog'
 import PinModal from '../../../components/ui/PinModal'
-import NewTemplateModal from '../../../components/ui/newTemplateModal/NewTemplateModal'
 import { useTemplatesContext } from '../../../context/TemplatesContext'
 
 const TemplatesModals = () => {
   const {
-    newTemplateOpen,
-    setNewTemplateOpen,
-    editTarget,
-    setEditTarget,
     deleteTarget,
     setDeleteTarget,
     confirmDelete,
@@ -27,13 +22,6 @@ const TemplatesModals = () => {
 
   return (
     <>
-      <NewTemplateModal
-        open={newTemplateOpen || !!editTarget}
-        template={editTarget}
-        onClose={editTarget ? () => setEditTarget(null) : () => setNewTemplateOpen(false)}
-        onSuccess={editTarget ? () => setEditTarget(null) : () => setNewTemplateOpen(false)}
-      />
-
       <AlertDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
