@@ -1,19 +1,17 @@
-from typing import Optional
-
-from pydantic import ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-class Settings(BaseSettings):
 
+class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     DATABASE_URL: str
+    ASYNC_DATABASE_URL: str | None = None
 
-# JWT
+    # JWT
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
+
     # Mail
     MAIL_USERNAME: str
     MAIL_PASSWORD: str
@@ -22,9 +20,10 @@ class Settings(BaseSettings):
     MAIL_SERVER: str = "smtp.gmail.com"
     MAIL_STARTTLS: bool = True
     MAIL_SSL_TLS: bool = False
-    
+
     # App
     APP_ENV: str = "development"
     DEBUG: bool = False
 
-settings = Settings()
+
+settings = Settings()  # type: ignore[call-arg]

@@ -1,5 +1,14 @@
-from datetime import datetime, date
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator, field_validator
+from datetime import date, datetime
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
+
 
 class UserBase(BaseModel):
     name: str = Field(max_length=50)
@@ -19,6 +28,7 @@ class UserBase(BaseModel):
             raise ValueError("Email is required")
         return v.lower().strip()
 
+
 class UserCreate(UserBase):
     city: str | None = Field(default=None)
     address: str | None = Field(default=None)
@@ -26,11 +36,12 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8)
     confirm_password: str = Field(min_length=8)
 
-    @model_validator(mode='after')
-    def check_passwords_match(self) -> 'UserCreate':
+    @model_validator(mode="after")
+    def check_passwords_match(self) -> "UserCreate":
         if self.password != self.confirm_password:
-            raise ValueError('Passwords do not match')
+            raise ValueError("Passwords do not match")
         return self
+
 
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
@@ -43,6 +54,7 @@ class UserResponse(UserBase):
     created_at: datetime
     role_id: int | None = Field(default=None)
 
+
 class UserUpdate(BaseModel):
     name: str | None = Field(default=None, max_length=50)
     city: str | None = Field(default=None)
@@ -50,7 +62,7 @@ class UserUpdate(BaseModel):
     date_of_birth: date | None = Field(default=None)
 
     @field_validator("name", mode="before")
-    @classmethod    
+    @classmethod
     def validate_name(cls, v):
         if v is None:
             return v
@@ -61,7 +73,7 @@ class UserUpdate(BaseModel):
         if any(char.isdigit() for char in value):
             raise ValueError("Name cannot contain numbers")
         return value.title()
-    
+
     @field_validator("city")
     @classmethod
     def validate_city(cls, v):
@@ -81,7 +93,7 @@ class UserUpdate(BaseModel):
 
         value = v.strip()
         return value if value else None
-    
+
     @field_validator("date_of_birth", mode="before")
     @classmethod
     def parse_empty_date_of_birth(cls, v):
@@ -96,12 +108,15 @@ class UserUpdate(BaseModel):
             raise ValueError("Date of birth cannot be in the future")
         return v
 
+
 class UserPasswordUpdate(BaseModel):
     current_password: str
     new_password: str
     confirm_new_password: str
 
-    @field_validator("current_password", "new_password", "confirm_new_password", mode="before")
+    @field_validator(
+        "current_password", "new_password", "confirm_new_password", mode="before"
+    )
     @classmethod
     def validate_password_field_not_empty(cls, v):
         if v is None or str(v).strip() == "":

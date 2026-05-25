@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import Button from '../../../components/ui/Button'
 import FormField from '../../../components/ui/FormField'
 import FormWrapper from '../../../components/ui/FormWrapper'
@@ -49,7 +48,6 @@ const ResetPasswordForm = () => {
       })
 
       setErrors(fieldErrors)
-      toast.error('Please fix the errors before continuing.')
       return
     }
 

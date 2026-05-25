@@ -1,6 +1,14 @@
 import TemplateCard from '../../../components/ui/TemplateCard'
 
-const TemplateSection = ({ label, templates, onExecute, onEdit, onDelete, onActivate, onDeactivate }) => (
+const TemplateSection = ({
+  label,
+  templates,
+  onExecute,
+  onEdit,
+  onDelete,
+  onActivate,
+  onDeactivate
+}) => (
   <section className="space-y-4">
     <div className="flex items-center gap-3 mb-4">
       <div className="h-2 w-10 bg-primary rounded-full shadow-[0_0_12px_rgba(34,197,94,0.6)]" />

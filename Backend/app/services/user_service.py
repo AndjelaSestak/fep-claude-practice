@@ -1,62 +1,57 @@
-from app.utils.security import verify_password, get_password_hash
-from app.schemas.user import UserPasswordUpdate, UserUpdate
-from app.utils.errors import DatabaseTransactionError, UserNotFoundError, BadRequestError
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-
 from app.models.user import User
+from app.repositories.user_repository import UserRepository
+from app.repositories.wallet_repository import WalletRepository
+from app.schemas.user import UserPasswordUpdate, UserUpdate
+from app.utils.errors import BadRequestError, UserNotFoundError
+from app.utils.security import get_password_hash, verify_password
 
 
-def get_all_users(db: Session) -> list[User]:
+class UserService:
+    def __init__(
+        self,
+        user_repository: UserRepository,
+        wallet_repository: WalletRepository,
+    ) -> None:
+        self.user_repository = user_repository
+        self.wallet_repository = wallet_repository
 
-    return db.query(User).filter(User.is_deleted == False).all()
-    """
-    query = db.query(User)
-    query = query.filter(User.is_deleted == False)
-    users = query.all()
-    if not users:
-        raise UserNotFoundError("No users found in the database")
-    return users 
-    """
+    async def get_all_users(self) -> list[User]:
+        return await self.user_repository.get_all()
 
-def get_user_by_id(db: Session, user_id: int) -> User:
-    user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
-    if not user:
-        raise UserNotFoundError(f"User with id {user_id} not found") 
-    return user
+    async def get_user_by_id(self, user_id: int) -> User:
+        user = await self.user_repository.get_by_id(user_id)
+        if not user:
+            raise UserNotFoundError("User not found.")
+        return user
 
-def delete_current_user(db: Session, current_user: User) -> None:
-    if current_user.wallet:
-        current_user.wallet.is_active = False
+    async def delete_current_user(self, current_user: User) -> None:
+        self.user_repository.soft_delete(current_user)
+        wallet = await self.wallet_repository.get_wallet_by_user_id(current_user.id)
+        if wallet is not None:
+            self.wallet_repository.deactivate(wallet)
 
-    current_user.is_deleted = True
-    try:
-     db.commit()
-    except SQLAlchemyError:
-        raise DatabaseTransactionError("An error occurred while deleting user. Please try again.")
+    async def update_current_user(
+        self,
+        current_user: User,
+        user_data: UserUpdate,
+    ) -> User:
+        self.user_repository.update_fields(
+            current_user,
+            user_data.model_dump(exclude_unset=True),
+        )
+        return current_user
 
-def update_current_user(db: Session, current_user: User, user_data: UserUpdate) -> User:
+    async def change_password(
+        self,
+        current_user: User,
+        user_password_update: UserPasswordUpdate,
+    ) -> User:
+        if not verify_password(
+            user_password_update.current_password,
+            current_user.password_hash,
+        ):
+            raise BadRequestError("Current password is incorrect")
 
-    for key, value in user_data.model_dump(exclude_unset=True).items():
-        setattr(current_user, key, value)
-    
-    try:
-        db.commit()
-        db.refresh(current_user)
-    except SQLAlchemyError:
-        raise DatabaseTransactionError("An error occurred while updating user. Please try again.")
-    return current_user
-
-def change_password(db: Session, current_user: User, user_password_update: UserPasswordUpdate) -> User:
-   
-    if not verify_password(user_password_update.current_password, current_user.password_hash):
-        raise BadRequestError("Current password is incorrect")
-
-    hashed_new_password = get_password_hash(user_password_update.new_password)
-    current_user.password_hash = hashed_new_password
-    try:
-        db.commit()
-        db.refresh(current_user)
-    except SQLAlchemyError:
-        raise DatabaseTransactionError("An error occurred while changing password. Please try again.")
-    return current_user
+        hashed_new_password = get_password_hash(user_password_update.new_password)
+        self.user_repository.update_password_hash(current_user, hashed_new_password)
+        return current_user

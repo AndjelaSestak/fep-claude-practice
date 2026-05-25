@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import Button from '../../../components/ui/Button'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/InputField'
@@ -38,7 +37,6 @@ const RegistrationForm = () => {
         fieldErrors[err.path[0]] = err.message
       })
       setErrors(fieldErrors)
-      toast.error('Please fix the errors before continuing.')
       return
     }
 

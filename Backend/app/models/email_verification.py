@@ -1,16 +1,16 @@
-from sqlalchemy import Integer, Boolean, Text, DateTime, ForeignKey, Enum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
-import enum
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.utils.enums import VerificationPurpose
 
-class VerificationPurpose(str, enum.Enum):
-    registration = "registration"
-    password_reset = "password_reset"
-    card_verification = "card_verification"
-    card_report = "card_report"
-    
+if TYPE_CHECKING:
+    from app.models.card import Card
+    from app.models.user import User
+
 
 class EmailVerification(Base):
     __tablename__ = "email_verifications"
@@ -20,7 +20,9 @@ class EmailVerification(Base):
     card_id: Mapped[int] = mapped_column(Integer, ForeignKey("cards.id"), nullable=True)
     token: Mapped[str] = mapped_column(Text, unique=True)
     purpose: Mapped[VerificationPurpose] = mapped_column(Enum(VerificationPurpose))
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     is_used: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user: Mapped["User"] = relationship("User", back_populates="email_verifications")

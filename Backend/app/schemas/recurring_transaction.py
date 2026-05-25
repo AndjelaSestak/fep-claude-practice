@@ -2,7 +2,8 @@ from datetime import date, datetime
 
 from pydantic import BaseModel
 
-from app.models.recurring_transaction import Frequency
+from app.utils.enums import Frequency
+
 
 class RecurringTransactionBase(BaseModel):
     transaction_template_id: int
@@ -11,6 +12,7 @@ class RecurringTransactionBase(BaseModel):
     end_date: date | None = None
     start_date: date | None = None
     is_active: bool = True
+
 
 class RecurringTransactionUpdate(BaseModel):
     frequency: Frequency | None = None

@@ -1,6 +1,8 @@
 from datetime import timezone
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import text
+
 from app.database import SessionLocal
 from app.services.recurring_transaction_service import run_due_recurring_transactions
 from app.services.transaction_service import process_expired_pending_transactions
@@ -16,11 +18,11 @@ async def recurring_transactions_job() -> None:
     lock_acquired = False
 
     try:
-        lock_acquired = db.execute(
+        lock_acquired = bool(db.execute(
             text("SELECT pg_try_advisory_lock(:lock_id)"),
             {"lock_id": RECURRING_JOB_LOCK_ID},
-        ).scalar()
-        
+        ).scalar())
+
         if not lock_acquired:
             return
 
@@ -40,10 +42,10 @@ def pending_transactions_job() -> None:
     lock_acquired = False
 
     try:
-        lock_acquired = db.execute(
+        lock_acquired = bool(db.execute(
             text("SELECT pg_try_advisory_lock(:lock_id)"),
             {"lock_id": PENDING_TRANSACTIONS_JOB_LOCK_ID},
-        ).scalar()
+        ).scalar())
 
         if not lock_acquired:
             return

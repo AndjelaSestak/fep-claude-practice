@@ -1,9 +1,10 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional, List
-from datetime import datetime, date
-from app.models.transaction import TransactionType
-from app.models.recurring_transaction import Frequency
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from app.utils.enums import Frequency, TransactionType
 
 
 class TransactionTemplateBase(BaseModel):
@@ -35,7 +36,9 @@ class TransactionTemplateCreate(TransactionTemplateBase):
     def validate_recurring_fields(self):
         if self.type == TransactionType.recurring:
             if not self.frequency or not self.start_date:
-                raise ValueError("Frequency and start date are required for recurring transactions.")
+                raise ValueError(
+                    "Frequency and start date are required for recurring transactions."
+                )
         return self
 
 

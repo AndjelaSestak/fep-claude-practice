@@ -1,6 +1,6 @@
 import AlertDialog from '../../../components/ui/AlertDialog'
 import PinModal from '../../../components/ui/PinModal'
-import NewTemplateModal from '../../../components/ui/NewTemplateModal'
+import NewTemplateModal from '../../../components/ui/newTemplateModal/NewTemplateModal'
 import { useTemplatesContext } from '../../../context/TemplatesContext'
 
 const TemplatesModals = () => {
