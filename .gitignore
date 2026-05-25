@@ -48,6 +48,10 @@ logs/
 .coverage
 htmlcov/
 
+# Linting cache
+.mypy_cache/
+.ruff_cache/
+
 # React / Node
 node_modules/
 dist/

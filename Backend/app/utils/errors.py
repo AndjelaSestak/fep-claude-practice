@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 
 class AppError(Exception):
@@ -100,16 +100,20 @@ def setup_exception_handlers(app: FastAPI):
         )
 
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ):
         errors = []
         error_messages = []
         for err in exc.errors():
-            errors.append({
-                "type": err.get("type"),
-                "loc": err.get("loc"),
-                "msg": err.get("msg"),
-                "input": err.get("input"),
-            })
+            errors.append(
+                {
+                    "type": err.get("type"),
+                    "loc": err.get("loc"),
+                    "msg": err.get("msg"),
+                    "input": err.get("input"),
+                }
+            )
             msg = err.get("msg", "Validation error")
             if msg.startswith("Value error, "):
                 msg = msg.replace("Value error, ", "")
@@ -128,4 +132,3 @@ def setup_exception_handlers(app: FastAPI):
             status_code=400,
             content={"detail": str(exc)},
         )
-

@@ -12,7 +12,10 @@ from app.models.wallet import Wallet
 from app.repositories.card_repository import CardRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.card import CardCreate, CardPinVerify, CardVerify
-from app.services.email_types import send_card_details_email, send_card_verification_email
+from app.services.email_types import (
+    send_card_details_email,
+    send_card_verification_email,
+)
 from app.utils.datetime import ensure_utc
 from app.utils.errors import InvalidOTPError, InvalidPinError, OTPExpiredError
 from app.utils.security import get_password_hash, verify_password
@@ -100,7 +103,9 @@ class CardService:
             otp=otp_code,
         )
 
-        return await self.card_repository.get_by_id_and_user(new_card.id, current_user.id)
+        return await self.card_repository.get_by_id_and_user(
+            new_card.id, current_user.id
+        )
 
     async def verify_card(
         self,
@@ -108,9 +113,13 @@ class CardService:
         background_tasks: BackgroundTasks,
         current_user: User,
     ) -> dict:
-        card = await self.card_repository.get_by_id_and_user(data.card_id, current_user.id)
+        card = await self.card_repository.get_by_id_and_user(
+            data.card_id, current_user.id
+        )
 
-        verification = await self.card_repository.get_card_verification(data.card_id, data.otp_code)
+        verification = await self.card_repository.get_card_verification(
+            data.card_id, data.otp_code
+        )
         if not verification:
             raise InvalidOTPError("Invalid OTP code provided")
 
@@ -136,7 +145,9 @@ class CardService:
         return {"message": "Card successfully verified!"}
 
     async def verify_card_pin(self, data: CardPinVerify, current_user: User) -> dict:
-        card = await self.card_repository.get_by_id_and_user(data.card_id, current_user.id)
+        card = await self.card_repository.get_by_id_and_user(
+            data.card_id, current_user.id
+        )
 
         if not verify_password(data.pin, card.card_pin):
             raise InvalidPinError("Incorrect PIN")

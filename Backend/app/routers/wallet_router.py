@@ -12,12 +12,12 @@ router = APIRouter(prefix="/wallet", tags=["Wallet"])
 
 require_user = AsyncRequireRole(["user"])
 
-def get_wallet_service(
-    db: AsyncSession = Depends(get_async_db),
-) -> WalletService:
+
+def get_wallet_service(db: AsyncSession = Depends(get_async_db)) -> WalletService:
     return WalletService(
         wallet_repository=WalletRepository(db),
     )
+
 
 @router.get("/me/balance", response_model=WalletBalanceResponse)
 async def get_current_wallet_balance(

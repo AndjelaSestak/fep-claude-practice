@@ -1,4 +1,5 @@
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+
 from app.config import settings
 
 conf = ConnectionConfig(
@@ -15,6 +16,7 @@ conf = ConnectionConfig(
 )
 
 fastmail = FastMail(conf)
+
 
 async def send_email(subject: str, recipient: str, body: dict, template_name: str):
     TEST_EMAIL = "securebank.team@gmail.com"
