@@ -1,7 +1,7 @@
 import FormWrapper from '../../components/ui/FormWrapper'
 import AlertDialog from '../../components/ui/AlertDialog'
 import NewTemplateForm from './components/NewTemplateForm'
-import NewTransactionPinStep from '../new-transaction/components/NewTransactionPinStep'
+import PinStep from '../../components/ui/PinStep'
 import { NewTemplateProvider, useNewTemplateContext } from '../../context/NewTemplateContext'
 
 const NewTemplateContent = () => {
@@ -29,7 +29,7 @@ const NewTemplateContent = () => {
 
       <FormWrapper>
         {step === 'pin' ? (
-          <NewTransactionPinStep
+          <PinStep
             onConfirm={handlePinConfirm}
             onBack={() => setStep('form')}
             loading={loading}
