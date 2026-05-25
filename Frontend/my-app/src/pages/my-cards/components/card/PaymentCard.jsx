@@ -32,6 +32,7 @@ const PaymentCard = ({
         isBlocked={isBlocked}
       />
       <CardActions
+        cardId={card.id}
         isBlocked={isBlocked}
         onBlock={onBlock}
         onUnblock={onUnblock}

@@ -1,7 +1,9 @@
 import { Lock, Unlock, AlertTriangle, Trash2, FileText } from 'lucide-react'
 import Button from '../../../../components/ui/Button'
+import { useCardsContext } from '../../../../context/CardsContext'
 
 const CardActions = ({
+  cardId,
   isBlocked,
   onBlock,
   onUnblock,
@@ -10,12 +12,15 @@ const CardActions = ({
   onViewReports,
   onRemove
 }) => {
+  const { coolingDownCardId } = useCardsContext()
+
   return (
     <div className="p-4 flex flex-col gap-2">
       <Button
         variant="outline"
         size="sm"
         onClick={isBlocked ? onUnblock : onBlock}
+        disabled={coolingDownCardId === cardId}
         className="w-full flex items-center justify-center gap-2"
       >
         {isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}

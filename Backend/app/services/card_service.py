@@ -1,5 +1,6 @@
 import secrets
 import string
+from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks
@@ -18,6 +19,8 @@ from app.services.email_types import (
 )
 from app.utils.datetime import ensure_utc
 from app.utils.errors import (
+    CardNotFoundError,
+    CardTypeNotFoundError,
     InvalidOTPError,
     InvalidPinError,
     OTPExpiredError,
@@ -53,7 +56,11 @@ class CardService:
         card_data: CardCreate,
         background_tasks: BackgroundTasks,
     ) -> Card:
-        await self.card_repository.get_card_type_by_id(card_data.card_type_id)
+        card_type = await self.card_repository.get_card_type_by_id(
+            card_data.card_type_id
+        )
+        if not card_type:
+            raise CardTypeNotFoundError("Invalid card type")
 
         wallet = await self.wallet_repository.get_wallet_by_user_id(current_user.id)
         if wallet is None:
@@ -110,9 +117,12 @@ class CardService:
             otp=otp_code,
         )
 
-        return await self.card_repository.get_by_id_and_user(
+        created_card = await self.card_repository.get_by_id_and_user(
             new_card.id, current_user.id
         )
+        if not created_card:
+            raise CardNotFoundError("Card not found")
+        return created_card
 
     async def verify_card(
         self,
@@ -123,6 +133,8 @@ class CardService:
         card = await self.card_repository.get_by_id_and_user(
             data.card_id, current_user.id
         )
+        if not card:
+            raise CardNotFoundError("Card not found")
 
         verification = await self.card_repository.get_card_verification(
             data.card_id, data.otp_code
@@ -155,19 +167,26 @@ class CardService:
         card = await self.card_repository.get_by_id_and_user(
             data.card_id, current_user.id
         )
+        if not card:
+            raise CardNotFoundError("Card not found")
 
         if not verify_password(data.pin, card.card_pin):
             raise InvalidPinError("Incorrect PIN")
 
         return {"message": "PIN verified"}
 
-    async def get_user_cards(self, current_user: User) -> list[Card]:
+    async def get_user_cards(self, current_user: User) -> Sequence[Card]:
         return await self.card_repository.get_all_by_user(current_user.id)
 
     async def get_card_by_id(self, current_user: User, card_id: int) -> Card:
-        return await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        if not card:
+            raise CardNotFoundError("Card not found")
+        return card
 
     async def soft_delete_card(self, current_user: User, card_id: int) -> dict:
         card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        if not card:
+            raise CardNotFoundError("Card not found")
         await self.card_repository.delete(card)
         return {"message": "Card deleted successfully"}
