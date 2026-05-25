@@ -1,10 +1,15 @@
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 from app.utils.enums import ReportType
+
+if TYPE_CHECKING:
+    from app.models.card import Card
+    from app.models.user import User
 
 
 class CardReport(Base):

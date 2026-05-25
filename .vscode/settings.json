@@ -1,7 +1,11 @@
 {
-  "python-envs.defaultEnvManager": "ms-python.python:pyenv",
+  "python-envs.defaultEnvManager": "ms-python.python:venv",
   "python.defaultInterpreterPath": "${workspaceFolder}/Backend/venv/bin/python",
   "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.args": [
+    "--config-file",
+    "${workspaceFolder}/Backend/pyproject.toml"
+  ],
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {

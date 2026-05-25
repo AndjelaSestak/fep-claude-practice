@@ -1,9 +1,20 @@
 from datetime import date, datetime, timezone
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.card import Card
+    from app.models.card_report import CardReport
+    from app.models.email_verification import EmailVerification
+    from app.models.refresh_token import RefreshToken
+    from app.models.role import Role
+    from app.models.transaction import Transaction
+    from app.models.transaction_template import TransactionTemplate
+    from app.models.wallet import Wallet
 
 
 class User(Base):

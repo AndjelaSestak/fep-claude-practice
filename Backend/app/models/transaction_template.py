@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -15,6 +16,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 from app.models.transaction import TransactionType
+
+if TYPE_CHECKING:
+    from app.models.card import Card
+    from app.models.recurring_transaction import RecurringTransaction
+    from app.models.user import User
 
 
 class TransactionTemplate(Base):

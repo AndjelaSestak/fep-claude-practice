@@ -16,7 +16,7 @@ class UserRepository(BaseRepository[User]):
     async def get_all(self) -> list[User]:
         try:
             result = await self.db.execute(select(User).where(User.is_deleted == False))
-            return result.scalars().all()
+            return list(result.scalars().all())
         except SQLAlchemyError as e:
             raise DatabaseTransactionError(
                 "An error occurred while fetching users."
