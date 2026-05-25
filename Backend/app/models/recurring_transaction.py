@@ -1,10 +1,15 @@
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 from app.utils.enums import Frequency
+
+if TYPE_CHECKING:
+    from app.models.transaction import Transaction
+    from app.models.transaction_template import TransactionTemplate
 
 
 class RecurringTransaction(Base):

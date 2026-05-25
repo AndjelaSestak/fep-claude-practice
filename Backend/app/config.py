@@ -26,4 +26,4 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]

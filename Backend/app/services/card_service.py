@@ -17,7 +17,12 @@ from app.services.email_types import (
     send_card_verification_email,
 )
 from app.utils.datetime import ensure_utc
-from app.utils.errors import InvalidOTPError, InvalidPinError, OTPExpiredError
+from app.utils.errors import (
+    InvalidOTPError,
+    InvalidPinError,
+    OTPExpiredError,
+    WalletNotFoundError,
+)
 from app.utils.security import get_password_hash, verify_password
 
 # Plain card values keyed by card_id, kept only until OTP verification succeeds.
@@ -51,6 +56,8 @@ class CardService:
         await self.card_repository.get_card_type_by_id(card_data.card_type_id)
 
         wallet = await self.wallet_repository.get_wallet_by_user_id(current_user.id)
+        if wallet is None:
+            raise WalletNotFoundError("Active wallet not found for the user.")
 
         raw_number = "".join(secrets.choice(string.digits) for _ in range(16))
         card_number_masked = f"**** **** **** {raw_number[-4:]}"
@@ -162,5 +169,5 @@ class CardService:
 
     async def soft_delete_card(self, current_user: User, card_id: int) -> dict:
         card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
-        self.card_repository.delete(card)
+        await self.card_repository.delete(card)
         return {"message": "Card deleted successfully"}

@@ -47,6 +47,10 @@ def create_template(
         )
 
     if template.type == TransactionType.recurring:
+        if request.frequency is None or request.start_date is None:
+            raise DatabaseTransactionError(
+                "Frequency and start date are required for recurring templates."
+            )
         recurring_transaction_service.create_recurring_transaction(
             db=db,
             template=template,

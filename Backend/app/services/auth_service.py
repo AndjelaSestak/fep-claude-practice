@@ -3,6 +3,7 @@ import string
 from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks
+from jose import JWTError
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -331,8 +332,7 @@ def logout_user(db: Session, refresh_token: str | None):
         )
 
 
-def refresh_access_token(db: Session, refresh_token: str) -> str:
-    from jose import JWTError
+def refresh_access_token(db: Session, refresh_token: str) -> dict[str, str]:
 
     try:
         payload = decode_token(refresh_token)

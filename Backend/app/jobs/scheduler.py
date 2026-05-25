@@ -18,11 +18,11 @@ async def recurring_transactions_job() -> None:
     lock_acquired = False
 
     try:
-        lock_acquired = db.execute(
+        lock_acquired = bool(db.execute(
             text("SELECT pg_try_advisory_lock(:lock_id)"),
             {"lock_id": RECURRING_JOB_LOCK_ID},
-        ).scalar()
-        
+        ).scalar())
+
         if not lock_acquired:
             return
 
@@ -42,10 +42,10 @@ def pending_transactions_job() -> None:
     lock_acquired = False
 
     try:
-        lock_acquired = db.execute(
+        lock_acquired = bool(db.execute(
             text("SELECT pg_try_advisory_lock(:lock_id)"),
             {"lock_id": PENDING_TRANSACTIONS_JOB_LOCK_ID},
-        ).scalar()
+        ).scalar())
 
         if not lock_acquired:
             return

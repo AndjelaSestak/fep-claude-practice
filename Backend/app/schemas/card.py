@@ -80,7 +80,7 @@ class CardResponse(BaseModel):
     # but exclude=True keeps it out of the JSON response.
     wallet: Optional[_WalletBrief] = Field(default=None, exclude=True)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def account_number(self) -> str | None:
         return self.wallet.account_number if self.wallet else None
