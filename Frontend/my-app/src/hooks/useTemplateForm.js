@@ -9,7 +9,7 @@ import {
   formatAccountNumber,
   ACCOUNT_NUMBER_LENGTH
 } from '../utils/formatters'
-import { FREQUENCIES, EMPTY_FORM_TEMPLATES } from '../utils/constants'
+import { EMPTY_FORM_TEMPLATES } from '../utils/constants'
 
 const padDatePart = (value) => String(value).padStart(2, '0')
 
@@ -163,7 +163,6 @@ export const useTemplateForm = ({ onClose, onSuccess, template }) => {
     handleChange,
     handleSubmit,
     handlePinConfirm,
-    onCancel: onClose,
-    FREQUENCIES
+    onCancel: onClose
   }
 }

@@ -1,6 +1,7 @@
 import Button from '../../../components/ui/Button'
 import TemplateFormFields from './TemplateFormFields'
 import { useNewTemplateContext } from '../../../context/NewTemplateContext'
+import { FREQUENCIES } from '../../../utils/constants'
 
 const NewTemplateForm = () => {
   const {
@@ -13,8 +14,7 @@ const NewTemplateForm = () => {
     isStartDateLocked,
     handleChange,
     handleSubmit,
-    onCancel,
-    FREQUENCIES
+    onCancel
   } = useNewTemplateContext()
 
   return (
