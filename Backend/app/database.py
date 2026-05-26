@@ -2,8 +2,8 @@ from collections.abc import AsyncGenerator, Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
+
 from app.config import settings
 
 engine = create_engine(settings.DATABASE_URL)
@@ -23,6 +23,7 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
+
 def get_db() -> Generator:
     db = SessionLocal()
     try:
@@ -34,6 +35,7 @@ def get_db() -> Generator:
     finally:
         db.close()
 
+
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as db:
         try:
@@ -43,5 +45,5 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
             await db.rollback()
             raise
 
-Base = declarative_base()
 
+Base = declarative_base()

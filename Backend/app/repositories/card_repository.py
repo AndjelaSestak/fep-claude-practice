@@ -7,7 +7,12 @@ from app.models.card import Card
 from app.models.card_type import CardType
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.repositories.base_repository import BaseRepository
-from app.utils.errors import CardNotFoundError, CardTypeNotFoundError, DatabaseTransactionError
+from app.utils.enums import CardStatus
+from app.utils.errors import (
+    CardNotFoundError,
+    CardTypeNotFoundError,
+    DatabaseTransactionError,
+)
 
 
 class CardRepository(BaseRepository[Card]):
@@ -26,7 +31,9 @@ class CardRepository(BaseRepository[Card]):
             )
             return result.scalars().all()
         except SQLAlchemyError as e:
-            raise DatabaseTransactionError("An error occurred while fetching cards.") from e
+            raise DatabaseTransactionError(
+                "An error occurred while fetching cards."
+            ) from e
 
     async def get_by_id_and_user(self, card_id: int, user_id: int) -> Card:
         try:
@@ -41,7 +48,9 @@ class CardRepository(BaseRepository[Card]):
             )
             card = result.scalar_one_or_none()
         except SQLAlchemyError as e:
-            raise DatabaseTransactionError("An error occurred while fetching the card.") from e
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the card."
+            ) from e
         if not card:
             raise CardNotFoundError("Card not found")
         return card
@@ -53,24 +62,32 @@ class CardRepository(BaseRepository[Card]):
             )
             card_type = result.scalar_one_or_none()
         except SQLAlchemyError as e:
-            raise DatabaseTransactionError("An error occurred while fetching the card type.") from e
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the card type."
+            ) from e
         if not card_type:
             raise CardTypeNotFoundError("Invalid card type")
         return card_type
 
-    async def get_card_verification(self, card_id: int, otp_code: str) -> EmailVerification | None:
+    async def get_card_verification(
+        self, card_id: int, otp_code: str
+    ) -> EmailVerification | None:
         try:
             result = await self.db.execute(
-                select(EmailVerification).where(
+                select(EmailVerification)
+                .where(
                     EmailVerification.card_id == card_id,
                     EmailVerification.token == otp_code,
                     EmailVerification.purpose == VerificationPurpose.card_verification,
                     EmailVerification.is_used == False,
-                ).order_by(EmailVerification.expires_at.desc())
+                )
+                .order_by(EmailVerification.expires_at.desc())
             )
             return result.scalars().first()
         except SQLAlchemyError as e:
-            raise DatabaseTransactionError("An error occurred while fetching the card verification.") from e
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the card verification."
+            ) from e
 
     def delete(self, card: Card, soft_delete: bool = True) -> Card:
         if soft_delete:
@@ -79,3 +96,17 @@ class CardRepository(BaseRepository[Card]):
             self.db.delete(card)
         return card
 
+    async def get_active_by_wallet_id(self, wallet_id: int) -> Card | None:
+        try:
+            result = await self.db.execute(
+                select(Card).where(
+                    Card.wallet_id == wallet_id,
+                    Card.status == CardStatus.active,
+                    Card.is_deleted == False,
+                )
+            )
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the card."
+            ) from e
