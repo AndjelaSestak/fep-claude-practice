@@ -9,16 +9,7 @@ import { CardsProvider, useCardsContext } from '../../context/CardsContext'
 
 const MyCardsContent = () => {
   const navigate = useNavigate()
-  const {
-    cards,
-    loading,
-    handleBlock,
-    handleUnblock,
-    handleReportLost,
-    handleReportStolen,
-    handleRemove,
-    handleViewReports
-  } = useCardsContext()
+  const { cards, loading } = useCardsContext()
 
   return (
     <div className="flex h-screen bg-slate-100">
@@ -41,16 +32,7 @@ const MyCardsContent = () => {
             </Button>
           </PageHeader>
 
-          <CardsList
-            cards={cards}
-            loading={loading}
-            onBlock={handleBlock}
-            onUnblock={handleUnblock}
-            onReportStolen={handleReportStolen}
-            onReportLost={handleReportLost}
-            onRemove={handleRemove}
-            onViewReports={handleViewReports}
-          />
+          <CardsList cards={cards} loading={loading} />
         </main>
       </div>
 

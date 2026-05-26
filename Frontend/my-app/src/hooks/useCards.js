@@ -132,8 +132,8 @@ export const useCards = () => {
     }
   })
 
-  const handleRemove = (card) => {
-    setCardToDelete(card)
+  const handleRemove = (cardId, lastFourDigits) => {
+    setCardToDelete({ id: cardId, lastFourDigits })
     setDeleteDialogOpen(true)
   }
 

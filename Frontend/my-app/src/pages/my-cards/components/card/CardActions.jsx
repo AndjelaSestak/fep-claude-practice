@@ -1,21 +1,23 @@
 import { Lock, Unlock, AlertTriangle, Trash2, FileText } from 'lucide-react'
 import Button from '../../../../components/ui/Button'
+import { useCardsContext } from '../../../../context/CardsContext'
 
-const CardActions = ({
-  isBlocked,
-  onBlock,
-  onUnblock,
-  onReportLost,
-  onReportStolen,
-  onViewReports,
-  onRemove
-}) => {
+const CardActions = ({ cardId, isBlocked, lastFourDigits }) => {
+  const {
+    handleBlock,
+    handleUnblock,
+    handleReportLost,
+    handleReportStolen,
+    handleViewReports,
+    handleRemove
+  } = useCardsContext()
+
   return (
     <div className="p-4 flex flex-col gap-2">
       <Button
         variant="outline"
         size="sm"
-        onClick={isBlocked ? onUnblock : onBlock}
+        onClick={() => (isBlocked ? handleUnblock(cardId) : handleBlock(cardId))}
         className="w-full flex items-center justify-center gap-2"
       >
         {isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
@@ -27,7 +29,7 @@ const CardActions = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={onReportLost}
+            onClick={() => handleReportLost(cardId)}
             className="flex items-center justify-center gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -37,7 +39,7 @@ const CardActions = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={onReportStolen}
+            onClick={() => handleReportStolen(cardId)}
             className="flex items-center justify-center gap-1.5 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -49,7 +51,7 @@ const CardActions = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={onViewReports}
+        onClick={() => handleViewReports(cardId)}
         className="w-full flex items-center justify-center gap-2"
       >
         <FileText className="w-3.5 h-3.5" />
@@ -59,7 +61,7 @@ const CardActions = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={onRemove}
+        onClick={() => handleRemove(cardId, lastFourDigits)}
         className="w-full flex items-center justify-center gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
       >
         <Trash2 className="w-3.5 h-3.5" />

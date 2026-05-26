@@ -24,7 +24,7 @@ const CardsModals = () => {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         title="Remove card"
-        description={`Are you sure you want to remove card ending in ${cardToDelete?.card_number_masked?.slice(-4)}? This action cannot be undone.`}
+        description={`Are you sure you want to remove card ending in ${cardToDelete?.lastFourDigits}? This action cannot be undone.`}
         confirmLabel="Remove"
         onConfirm={confirmDelete}
         cancelLabel="Cancel"
