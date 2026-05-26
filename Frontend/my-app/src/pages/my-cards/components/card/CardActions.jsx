@@ -9,7 +9,8 @@ const CardActions = ({ cardId, isBlocked, lastFourDigits }) => {
     handleReportLost,
     handleReportStolen,
     handleViewReports,
-    handleRemove
+    handleRemove,
+    coolingDownCardId
   } = useCardsContext()
 
   return (
@@ -17,6 +18,7 @@ const CardActions = ({ cardId, isBlocked, lastFourDigits }) => {
       <Button
         variant="outline"
         size="sm"
+        disabled={coolingDownCardId === cardId}
         onClick={() => (isBlocked ? handleUnblock(cardId) : handleBlock(cardId))}
         className="w-full flex items-center justify-center gap-2"
       >
