@@ -23,7 +23,7 @@ const PaymentCard = ({ card }) => {
         cardType={cardType}
         isBlocked={isBlocked}
       />
-      <CardActions card={card} isBlocked={isBlocked} />
+      <CardActions cardId={card.id} isBlocked={isBlocked} lastFourDigits={cardNumber} />
     </div>
   )
 }

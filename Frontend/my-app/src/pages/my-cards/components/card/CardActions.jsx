@@ -2,14 +2,14 @@ import { Lock, Unlock, AlertTriangle, Trash2, FileText } from 'lucide-react'
 import Button from '../../../../components/ui/Button'
 import { useCardsContext } from '../../../../context/CardsContext'
 
-const CardActions = ({ card, isBlocked }) => {
+const CardActions = ({ cardId, isBlocked, lastFourDigits }) => {
   const {
     handleBlock,
     handleUnblock,
     handleReportLost,
     handleReportStolen,
     handleViewReports,
-    handleRemove,
+    handleRemove
   } = useCardsContext()
 
   return (
@@ -17,7 +17,7 @@ const CardActions = ({ card, isBlocked }) => {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => (isBlocked ? handleUnblock(card.id) : handleBlock(card.id))}
+        onClick={() => (isBlocked ? handleUnblock(cardId) : handleBlock(cardId))}
         className="w-full flex items-center justify-center gap-2"
       >
         {isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
@@ -29,7 +29,7 @@ const CardActions = ({ card, isBlocked }) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleReportLost(card.id)}
+            onClick={() => handleReportLost(cardId)}
             className="flex items-center justify-center gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -39,7 +39,7 @@ const CardActions = ({ card, isBlocked }) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleReportStolen(card.id)}
+            onClick={() => handleReportStolen(cardId)}
             className="flex items-center justify-center gap-1.5 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -51,7 +51,7 @@ const CardActions = ({ card, isBlocked }) => {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => handleViewReports(card.id)}
+        onClick={() => handleViewReports(cardId)}
         className="w-full flex items-center justify-center gap-2"
       >
         <FileText className="w-3.5 h-3.5" />
@@ -61,7 +61,7 @@ const CardActions = ({ card, isBlocked }) => {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => handleRemove(card)}
+        onClick={() => handleRemove(cardId, lastFourDigits)}
         className="w-full flex items-center justify-center gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
       >
         <Trash2 className="w-3.5 h-3.5" />
