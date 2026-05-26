@@ -90,7 +90,7 @@ class AuthService:
             token=otp_code,
             purpose=VerificationPurpose.registration,
             expires_at=datetime.now(timezone.utc)
-            + timedelta(minutes=10),  # Ističe za 10 min
+            + timedelta(minutes=10),  
             is_used=False,
         )
         self.email_verification_repository.add(new_verification)
@@ -159,7 +159,7 @@ class AuthService:
             token=otp_code,
             purpose=VerificationPurpose.registration,
             expires_at=datetime.now(timezone.utc)
-            + timedelta(minutes=10),  # Istice za 10 min
+            + timedelta(minutes=10),  
             is_used=False,
         )
         self.email_verification_repository.add(new_verification)

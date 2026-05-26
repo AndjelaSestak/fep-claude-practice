@@ -18,15 +18,26 @@ conf = ConnectionConfig(
     TEMPLATE_FOLDER=Path("app/templates/email"),
 )
 
-fastmail = FastMail(conf)
+
+class EmailService:
+    def __init__(self, mailer: FastMail) -> None:
+        self.mailer = mailer
+
+    async def send_email(
+        self,
+        subject: str,
+        recipient: str,
+        body: dict,
+        template_name: str,
+    ) -> None:
+        test_email = "securebank.team@gmail.com"
+        message = MessageSchema(
+            subject=subject,
+            recipients=[NameEmail("SecureBank", test_email)],
+            template_body=body,
+            subtype=MessageType.html,
+        )
+        await self.mailer.send_message(message, template_name=template_name)
 
 
-async def send_email(subject: str, recipient: str, body: dict, template_name: str):
-    TEST_EMAIL = "securebank.team@gmail.com"
-    message = MessageSchema(
-        subject=subject,
-        recipients=[NameEmail("SecureBank", TEST_EMAIL)],
-        template_body=body,
-        subtype=MessageType.html,
-    )
-    await fastmail.send_message(message, template_name=template_name)
+email_service = EmailService(FastMail(conf))

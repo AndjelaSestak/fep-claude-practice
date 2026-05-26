@@ -15,6 +15,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.services.auth_service import AuthService
 from app.services.card_report_service import CardReportService
+from app.services.email_service import EmailService, email_service
 from app.services.exchange_rate_service import ExchangeRateService
 from app.services.user_service import UserService
 from app.utils.errors import InvalidTokenError, NotAuthenticatedError
@@ -75,6 +76,10 @@ def get_card_report_service(
 
 def get_exchange_rate_service() -> ExchangeRateService:
     return ExchangeRateService()
+
+
+def get_email_service() -> EmailService:
+    return email_service
 
 
 def get_user_service(db: AsyncSession = Depends(_get_async_db)) -> UserService:

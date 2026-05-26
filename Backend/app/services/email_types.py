@@ -1,8 +1,8 @@
-from app.services.email_service import send_email
+from app.services.email_service import email_service
 
 
-async def send_verification_email(recipient: str, name: str, otp: str):
-    await send_email(
+async def send_verification_email(recipient: str, name: str, otp: str) -> None:
+    await email_service.send_email(
         subject="Verify your SecureBank account",
         recipient=recipient,
         body={"name": name, "otp": otp},
@@ -10,8 +10,8 @@ async def send_verification_email(recipient: str, name: str, otp: str):
     )
 
 
-async def send_reset_password_email(recipient: str, name: str, reset_link: str):
-    await send_email(
+async def send_reset_password_email(recipient: str, name: str, reset_link: str) -> None:
+    await email_service.send_email(
         subject="Reset your SecureBank password",
         recipient=recipient,
         body={"name": name, "reset_link": reset_link},
@@ -19,8 +19,8 @@ async def send_reset_password_email(recipient: str, name: str, reset_link: str):
     )
 
 
-async def send_welcome_email(recipient: str, name: str):
-    await send_email(
+async def send_welcome_email(recipient: str, name: str) -> None:
+    await email_service.send_email(
         subject="Welcome to SecureBank",
         recipient=recipient,
         body={"name": name},
@@ -30,8 +30,8 @@ async def send_welcome_email(recipient: str, name: str):
 
 async def send_card_verification_email(
     recipient: str, name: str, card_last_four: str, otp: str
-):
-    await send_email(
+) -> None:
+    await email_service.send_email(
         subject="Verify your new card - SecureBank",
         recipient=recipient,
         body={"name": name, "card_last_four": card_last_four, "otp": otp},
@@ -47,8 +47,8 @@ async def send_card_details_email(
     expiry_month: int,
     expiry_year: int,
     account_number: str,
-):
-    await send_email(
+) -> None:
+    await email_service.send_email(
         subject="Your new SecureBank card details",
         recipient=recipient,
         body={
@@ -64,7 +64,7 @@ async def send_card_details_email(
 
 async def send_card_block_notification(
     recipient: str, name: str, card_last_four: str, reason: str
-):
+) -> None:
     # Mapiramo ReportType na lepše poruke za korisnika
     reason_messages = {
         "lost": "reported as lost",
@@ -75,7 +75,7 @@ async def send_card_block_notification(
 
     friendly_reason = reason_messages.get(reason, "blocked due to security policy")
 
-    await send_email(
+    await email_service.send_email(
         subject="IMPORTANT: Your card has been blocked - SecureBank",
         recipient=recipient,
         body={
@@ -89,8 +89,8 @@ async def send_card_block_notification(
 
 async def send_message_from_contact_us(
     sender: str, subject: str, sender_email: str, message: str
-):
-    await send_email(
+) -> None:
+    await email_service.send_email(
         subject="Message from visitor on Contact Us page",
         recipient="support@securebank.com",
         body={

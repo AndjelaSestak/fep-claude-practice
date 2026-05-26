@@ -9,6 +9,7 @@ from app.models.card import Card, CardStatus
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
 from app.repositories.card_repository import CardRepository
+from app.repositories.email_verification_repository import EmailVerificationRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.card import CardCreate, CardPinVerify, CardVerify
 from app.services.email_types import (
@@ -37,9 +38,11 @@ class CardService:
         self,
         card_repository: CardRepository,
         wallet_repository: WalletRepository,
+        email_verification_repository: EmailVerificationRepository,
     ) -> None:
         self.card_repository = card_repository
         self.wallet_repository = wallet_repository
+        self.email_verification_repository = email_verification_repository
 
     async def create_card(
         self,
@@ -90,7 +93,7 @@ class CardService:
             expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
             is_used=False,
         )
-        self.card_repository.add(new_verification)
+        self.email_verification_repository.add(new_verification)
 
         _pending_card_details[new_card.id] = {
             "card_number": raw_number,
@@ -127,8 +130,10 @@ class CardService:
         if not card:
             raise CardNotFoundError("Card not found")
 
-        verification = await self.card_repository.get_card_verification(
-            data.card_id, data.otp_code
+        verification_repo = self.email_verification_repository
+        verification = await verification_repo.get_latest_card_verification(
+            data.card_id,
+            data.otp_code,
         )
         if not verification:
             raise InvalidOTPError("Invalid OTP code provided")
