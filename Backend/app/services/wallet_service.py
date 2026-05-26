@@ -1,7 +1,24 @@
+import secrets
+import string
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.user import User
+from app.models.wallet import Wallet
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.wallet import WalletBalanceResponse
 from app.utils.errors import WalletNotFoundError
+
+
+async def generate_account_number(db: AsyncSession) -> str:
+    while True:
+        account_number = "".join(secrets.choice(string.digits) for _ in range(16))
+        result = await db.execute(
+            select(Wallet.id).where(Wallet.account_number == account_number).limit(1)
+        )
+        if result.scalar_one_or_none() is None:
+            return account_number
 
 
 class WalletService:

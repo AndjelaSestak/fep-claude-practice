@@ -1,5 +1,3 @@
-from typing import Annotated
-
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -9,10 +7,9 @@ from fastapi import (
     Response,
     status,
 )
-from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.database import get_db
+from app.dependencies import get_auth_service
 from app.models.user import User
 from app.schemas.auth import (
     ForgotPasswordRequest,
@@ -23,7 +20,7 @@ from app.schemas.auth import (
     VerifyOTP,
 )
 from app.schemas.user import UserCreate, UserResponse
-from app.services import auth_service
+from app.services.auth_service import AuthService
 from app.utils.permissions import RequireRole
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -34,58 +31,64 @@ require_user = RequireRole(["user"])
 @router.post(
     "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
-def register_user(
+async def register_user(
     user: UserCreate,
     background_tasks: BackgroundTasks,
-    db: Annotated[Session, Depends(get_db)],
+    service: AuthService = Depends(get_auth_service),
 ):
-    return auth_service.register_user(
-        db=db, user_data=user, background_tasks=background_tasks
+    return await service.register_user(
+        user_data=user, background_tasks=background_tasks
     )
 
 
 @router.post("/verify_email", status_code=status.HTTP_200_OK)
-def verify_email(
+async def verify_email(
     data: VerifyOTP,
     background_tasks: BackgroundTasks,
-    db: Annotated[Session, Depends(get_db)],
+    service: AuthService = Depends(get_auth_service),
 ):
-    return auth_service.verify_user_email(
-        db=db, data=data, background_tasks=background_tasks
-    )
+    return await service.verify_user_email(data=data, background_tasks=background_tasks)
 
 
 @router.post("/forgot_password_email")
-def forgot_password_email(
+async def forgot_password_email(
     request: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    service: AuthService = Depends(get_auth_service),
 ):
-    return auth_service.forgot_password(
-        db=db, email=request.email, background_tasks=background_tasks
+    return await service.forgot_password(
+        email=request.email, background_tasks=background_tasks
     )
 
 
 @router.post("/reset_password")
-def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
-    return auth_service.reset_password(db=db, data=data)
+async def reset_password(
+    data: ResetPasswordRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    return await service.reset_password(data=data)
 
 
 @router.post("/resend_verification_email", status_code=status.HTTP_200_OK)
-def resend_verification_email(
+async def resend_verification_email(
     data: ResendEmailRequest,
     background_tasks: BackgroundTasks,
-    db: Annotated[Session, Depends(get_db)],
+    service: AuthService = Depends(get_auth_service),
 ):
-    return auth_service.resend_verification_email(
-        db=db, email=data.email, background_tasks=background_tasks
+    return await service.resend_verification_email(
+        email=data.email, background_tasks=background_tasks
     )
 
 
 @router.post("/login", response_model=MessageResponse, status_code=status.HTTP_200_OK)
-def login(request: LoginRequest, response: Response, db: Session = Depends(get_db)):
-    tokens = auth_service.login_user(
-        db=db, email=request.email, password=request.password
+async def login(
+    request: LoginRequest,
+    response: Response,
+    service: AuthService = Depends(get_auth_service),
+):
+    tokens = await service.login_user(
+        email=request.email,
+        password=request.password,
     )
     response.set_cookie(
         key="access_token",
@@ -107,17 +110,19 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
 
 
 @router.post("/refresh", response_model=MessageResponse, status_code=status.HTTP_200_OK)
-def refresh(request: Request, response: Response, db: Session = Depends(get_db)):
+async def refresh(
+    request: Request,
+    response: Response,
+    service: AuthService = Depends(get_auth_service),
+):
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token"
         )
 
-    # Servis sada vraća dict {"access_token": ..., "refresh_token": ...}
-    new_tokens = auth_service.refresh_access_token(db=db, refresh_token=refresh_token)
+    new_tokens = await service.refresh_access_token(refresh_token=refresh_token)
 
-    # Postavi novi Access Token
     response.set_cookie(
         key="access_token",
         value=new_tokens["access_token"],
@@ -127,7 +132,6 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
-    # Postavi novi Refresh Token (rotacija)
     response.set_cookie(
         key="refresh_token",
         value=new_tokens["refresh_token"],
@@ -141,9 +145,13 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
 
 
 @router.post("/logout", response_model=MessageResponse, status_code=status.HTTP_200_OK)
-def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+async def logout(
+    request: Request,
+    response: Response,
+    service: AuthService = Depends(get_auth_service),
+):
     refresh_token = request.cookies.get("refresh_token")
-    auth_service.logout_user(db=db, refresh_token=refresh_token)
+    await service.logout_user(refresh_token=refresh_token)
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return {"message": "Logged out successfully"}

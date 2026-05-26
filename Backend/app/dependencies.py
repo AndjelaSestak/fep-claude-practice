@@ -11,6 +11,10 @@ from app.repositories.card_repository import CardRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.services.card_report_service import CardReportService
+from app.repositories.email_verification_repository import EmailVerificationRepository
+from app.repositories.refresh_token_repository import RefreshTokenRepository
+from app.repositories.role_repository import RoleRepository
+from app.services.auth_service import AuthService
 from app.services.exchange_rate_service import ExchangeRateService
 from app.services.user_service import UserService
 from app.utils.errors import InvalidTokenError, NotAuthenticatedError
@@ -77,4 +81,14 @@ def get_user_service(db: AsyncSession = Depends(_get_async_db)) -> UserService:
     return UserService(
         user_repository=UserRepository(db),
         wallet_repository=WalletRepository(db),
+    )
+
+
+def get_auth_service(db: AsyncSession = Depends(_get_async_db)) -> AuthService:
+    return AuthService(
+        user_repository=UserRepository(db),
+        wallet_repository=WalletRepository(db),
+        role_repository=RoleRepository(db),
+        email_verification_repository=EmailVerificationRepository(db),
+        refresh_token_repository=RefreshTokenRepository(db),
     )

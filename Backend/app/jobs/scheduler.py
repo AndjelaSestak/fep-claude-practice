@@ -13,15 +13,18 @@ scheduler = AsyncIOScheduler(timezone=timezone.utc)
 RECURRING_JOB_LOCK_ID = 1001
 PENDING_TRANSACTIONS_JOB_LOCK_ID = 1002
 
+
 async def recurring_transactions_job() -> None:
     db = SessionLocal()
     lock_acquired = False
 
     try:
-        lock_acquired = bool(db.execute(
-            text("SELECT pg_try_advisory_lock(:lock_id)"),
-            {"lock_id": RECURRING_JOB_LOCK_ID},
-        ).scalar())
+        lock_acquired = bool(
+            db.execute(
+                text("SELECT pg_try_advisory_lock(:lock_id)"),
+                {"lock_id": RECURRING_JOB_LOCK_ID},
+            ).scalar()
+        )
 
         if not lock_acquired:
             return
@@ -42,10 +45,12 @@ def pending_transactions_job() -> None:
     lock_acquired = False
 
     try:
-        lock_acquired = bool(db.execute(
-            text("SELECT pg_try_advisory_lock(:lock_id)"),
-            {"lock_id": PENDING_TRANSACTIONS_JOB_LOCK_ID},
-        ).scalar())
+        lock_acquired = bool(
+            db.execute(
+                text("SELECT pg_try_advisory_lock(:lock_id)"),
+                {"lock_id": PENDING_TRANSACTIONS_JOB_LOCK_ID},
+            ).scalar()
+        )
 
         if not lock_acquired:
             return
@@ -59,6 +64,7 @@ def pending_transactions_job() -> None:
                 {"lock_id": PENDING_TRANSACTIONS_JOB_LOCK_ID},
             )
         db.close()
+
 
 def start_scheduler() -> None:
     scheduler.add_job(

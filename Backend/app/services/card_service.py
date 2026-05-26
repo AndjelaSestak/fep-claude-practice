@@ -4,12 +4,10 @@ from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks
-from sqlalchemy.orm import Session
 
 from app.models.card import Card, CardStatus
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
-from app.models.wallet import Wallet
 from app.repositories.card_repository import CardRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.card import CardCreate, CardPinVerify, CardVerify
@@ -32,13 +30,6 @@ from app.utils.security import get_password_hash, verify_password
 # Avoids storing plain text in the DB; values are deleted immediately after the
 # details email is dispatched.
 _pending_card_details: dict = {}
-
-
-def generate_account_number(db: Session) -> str:
-    while True:
-        account_number = "".join(secrets.choice(string.digits) for _ in range(16))
-        if not db.query(Wallet).filter(Wallet.account_number == account_number).first():
-            return account_number
 
 
 class CardService:
