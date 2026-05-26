@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import Button from '../../../components/ui/Button'
-import InputField from '../../../components/ui/InputField'
+import Button from './Button'
+import InputField from './InputField'
 
-const NewTransactionPinStep = ({ onConfirm, onBack, loading }) => {
+const PinStep = ({ onConfirm, onBack, loading }) => {
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
 
@@ -54,4 +54,4 @@ const NewTransactionPinStep = ({ onConfirm, onBack, loading }) => {
   )
 }
 
-export default NewTransactionPinStep
+export default PinStep

@@ -17,6 +17,7 @@ import AddCardPage from '../pages/add-card/AddCardPage'
 import MyCardsPage from '../pages/my-cards/MyCardsPage'
 import TemplatesPage from '../pages/templates/TemplatesPage'
 import NewTransactionPage from '../pages/new-transaction/NewTransactionPage'
+import NewTemplatePage from '../pages/new-template/NewTemplatePage'
 
 const router = createBrowserRouter([
   {
@@ -90,6 +91,10 @@ const router = createBrowserRouter([
   {
     path: '/new-transaction',
     element: <NewTransactionPage />
+  },
+  {
+    path: '/new-template',
+    element: <NewTemplatePage />
   }
 ])
 

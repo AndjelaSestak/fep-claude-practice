@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { queryKeys } from '../lib/queryKeys'
@@ -11,11 +12,10 @@ import { getApiErrorMessage } from '../utils/getApiErrorMessage'
 
 export const useTemplates = () => {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deactivateTarget, setDeactivateTarget] = useState(null)
-  const [newTemplateOpen, setNewTemplateOpen] = useState(false)
-  const [editTarget, setEditTarget] = useState(null)
 
   const invalidateTemplates = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.templates.all, exact: true })
@@ -102,10 +102,6 @@ export const useTemplates = () => {
     singleTemplates,
     recurringTemplates,
     isLoading,
-    newTemplateOpen,
-    setNewTemplateOpen,
-    editTarget,
-    setEditTarget,
     deleteTarget,
     setDeleteTarget,
     confirmDelete,
@@ -114,6 +110,8 @@ export const useTemplates = () => {
     confirmDeactivate,
     handleActivate,
     handleExecuteClick,
+    onNewTemplate: () => navigate('/new-template'),
+    onEditTemplate: (template) => navigate('/new-template', { state: { template } }),
     pinDialogOpen,
     onPinClose: () => setPinDialogOpen(false),
     onPinConfirm: (pin) => executeMutation.mutate({ templateId: pinTarget, pin }),

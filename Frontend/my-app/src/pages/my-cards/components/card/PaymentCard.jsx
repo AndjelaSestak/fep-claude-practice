@@ -7,15 +7,7 @@ const CARD_TYPE_MAP = {
   2: 'Mastercard'
 }
 
-const PaymentCard = ({
-  card,
-  onBlock,
-  onUnblock,
-  onReportStolen,
-  onReportLost,
-  onRemove,
-  onViewReports
-}) => {
+const PaymentCard = ({ card }) => {
   const { card_number_masked, account_number, card_type_id, status = 'active' } = card
 
   const cardNumber = getLastFourDigits(card_number_masked)
@@ -31,16 +23,7 @@ const PaymentCard = ({
         cardType={cardType}
         isBlocked={isBlocked}
       />
-      <CardActions
-        cardId={card.id}
-        isBlocked={isBlocked}
-        onBlock={onBlock}
-        onUnblock={onUnblock}
-        onReportLost={onReportLost}
-        onReportStolen={onReportStolen}
-        onViewReports={onViewReports}
-        onRemove={onRemove}
-      />
+      <CardActions cardId={card.id} isBlocked={isBlocked} lastFourDigits={cardNumber} />
     </div>
   )
 }

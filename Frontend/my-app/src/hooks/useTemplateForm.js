@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../lib/queryKeys'
-import { getMyCards } from '../services/cardService'
+import { getMyCards, verifyCardPin } from '../services/cardService'
 import { getSupportedCurrencies } from '../services/transactionService'
 import { createTemplate, updateTemplate } from '../services/templateService'
 import {
@@ -9,7 +9,7 @@ import {
   formatAccountNumber,
   ACCOUNT_NUMBER_LENGTH
 } from '../utils/formatters'
-import { FREQUENCIES, EMPTY_FORM_TEMPLATES } from '../utils/constants'
+import { EMPTY_FORM_TEMPLATES } from '../utils/constants'
 
 const padDatePart = (value) => String(value).padStart(2, '0')
 
@@ -44,19 +44,19 @@ const templateToForm = (t) => ({
   end_date: t.recurring_transactions?.[0]?.end_date ?? ''
 })
 
-export const useTemplateForm = ({ open, onClose, onSuccess, template }) => {
+export const useTemplateForm = ({ onClose, onSuccess, template }) => {
   const queryClient = useQueryClient()
   const isEditMode = !!template
   const recurringTransaction = template?.recurring_transactions?.[0]
 
-  const initialFormData = useMemo(() => {
-    if (!open) return EMPTY_FORM_TEMPLATES
-    return isEditMode ? templateToForm(template) : EMPTY_FORM_TEMPLATES
-  }, [open, isEditMode, template])
+  const initialFormData = useMemo(
+    () => (isEditMode ? templateToForm(template) : EMPTY_FORM_TEMPLATES),
+    [isEditMode, template]
+  )
 
   const [formData, setFormData] = useState(initialFormData)
-  const [successDialogOpen, setSuccessDialogOpen] = useState(false)
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+  const [step, setStep] = useState('form')
+  const [pendingPayload, setPendingPayload] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
 
   const isRecurring = formData.type === 'recurring'
@@ -65,14 +65,12 @@ export const useTemplateForm = ({ open, onClose, onSuccess, template }) => {
 
   const { data: cardsData = [] } = useQuery({
     queryKey: queryKeys.cards.all,
-    queryFn: getMyCards,
-    enabled: open
+    queryFn: getMyCards
   })
 
   const { data: currenciesData = [] } = useQuery({
     queryKey: queryKeys.currencies.all,
-    queryFn: getSupportedCurrencies,
-    enabled: open
+    queryFn: getSupportedCurrencies
   })
 
   const cards = cardsData.map((c) => ({ value: String(c.id), label: c.card_number_masked }))
@@ -83,11 +81,10 @@ export const useTemplateForm = ({ open, onClose, onSuccess, template }) => {
       isEditMode ? updateTemplate(template.id, payload) : createTemplate(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.templates.all })
-      setSuccessDialogOpen(true)
+      onSuccess?.()
     },
     onError: () => {
       setErrorMessage(`Failed to ${isEditMode ? 'update' : 'create'} template. Please try again.`)
-      setErrorDialogOpen(true)
     }
   })
 
@@ -99,13 +96,11 @@ export const useTemplateForm = ({ open, onClose, onSuccess, template }) => {
     }))
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const buildPayload = () => {
     const recipientAccountNumber = getAccountNumberDigits(formData.recipient_account_number)
     if (recipientAccountNumber.length !== ACCOUNT_NUMBER_LENGTH) {
       setErrorMessage('Recipient account number must contain exactly 16 digits.')
-      setErrorDialogOpen(true)
-      return
+      return null
     }
 
     const payload = {
@@ -131,16 +126,27 @@ export const useTemplateForm = ({ open, onClose, onSuccess, template }) => {
       if (formData.start_date === originalStartDate) delete payload.start_date
     }
 
-    templateMutation.mutate(payload)
+    return payload
   }
 
-  const handleSuccessConfirm = () => {
-    setSuccessDialogOpen(false)
-    onClose()
-    onSuccess?.()
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setErrorMessage('')
+    const payload = buildPayload()
+    if (!payload) return
+
+    if (isRecurring && !isEditMode) {
+      setPendingPayload(payload)
+      setStep('pin')
+    } else {
+      templateMutation.mutate(payload)
+    }
   }
 
-  const handleErrorClose = () => setErrorDialogOpen(false)
+  const handlePinConfirm = async (pin) => {
+    await verifyCardPin(parseInt(formData.card_id), pin)
+    templateMutation.mutate(pendingPayload)
+  }
 
   return {
     formData,
@@ -150,13 +156,13 @@ export const useTemplateForm = ({ open, onClose, onSuccess, template }) => {
     isEditMode,
     isRecurring,
     isStartDateLocked,
-    successDialogOpen,
-    errorDialogOpen,
+    step,
+    setStep,
     errorMessage,
+    setErrorMessage,
     handleChange,
     handleSubmit,
-    handleSuccessConfirm,
-    handleErrorClose,
-    FREQUENCIES
+    handlePinConfirm,
+    onCancel: onClose
   }
 }
