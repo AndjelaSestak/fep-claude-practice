@@ -1,6 +1,6 @@
-import FormField from '../FormField'
-import Input from '../InputField'
-import Select from '../Select'
+import FormField from '../../../components/ui/FormField'
+import Input from '../../../components/ui/InputField'
+import Select from '../../../components/ui/Select'
 
 const TemplateFormFields = ({
   formData,

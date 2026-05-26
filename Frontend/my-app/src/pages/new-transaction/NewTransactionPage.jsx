@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import FormWrapper from '../../components/ui/FormWrapper'
 import NewTransactionForm from './components/NewTransactionForm'
-import NewTransactionPinStep from './components/NewTransactionPinStep'
+import PinStep from '../../components/ui/PinStep'
 import { useNewTransaction } from '../../hooks/useNewTransaction'
 
 const NewTransactionPage = () => {
@@ -38,7 +38,7 @@ const NewTransactionPage = () => {
 
       <FormWrapper>
         {pinDialogOpen ? (
-          <NewTransactionPinStep
+          <PinStep
             onConfirm={handlePinConfirm}
             onBack={() => setPinDialogOpen(false)}
             loading={loading}
