@@ -9,8 +9,8 @@ const TemplatesContent = () => {
   const {
     singleTemplates,
     recurringTemplates,
-    setNewTemplateOpen,
-    setEditTarget,
+    onNewTemplate,
+    onEditTemplate,
     setDeleteTarget,
     handleActivate,
     handleExecuteClick,
@@ -24,18 +24,18 @@ const TemplatesContent = () => {
         <NavBarAfterLogin />
         <main className="p-8 overflow-y-auto">
           <div className="max-w-5xl mx-auto space-y-6">
-            <TemplatesHeader onNewTemplate={() => setNewTemplateOpen(true)} />
+            <TemplatesHeader onNewTemplate={onNewTemplate} />
             <TemplateSection
               label="Single Templates"
               templates={singleTemplates}
               onExecute={handleExecuteClick}
-              onEdit={setEditTarget}
+              onEdit={onEditTemplate}
               onDelete={setDeleteTarget}
             />
             <TemplateSection
               label="Recurring Templates"
               templates={recurringTemplates}
-              onEdit={setEditTarget}
+              onEdit={onEditTemplate}
               onDelete={setDeleteTarget}
               onActivate={handleActivate}
               onDeactivate={setDeactivateTarget}

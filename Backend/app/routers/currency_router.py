@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends
 
+from app.dependencies import get_exchange_rate_service
 from app.models.user import User
 from app.services.exchange_rate_service import ExchangeRateService
 from app.utils.permissions import AsyncRequireRole
-from app.dependencies import get_exchange_rate_service
 
 router = APIRouter(prefix="/currency", tags=["Currency"])
 
 require_user = AsyncRequireRole(["user"])
+
 
 @router.get("/currencies")
 async def get_currencies(
@@ -15,6 +16,7 @@ async def get_currencies(
     service: ExchangeRateService = Depends(get_exchange_rate_service),
 ):
     return await service.get_supported_currencies()
+
 
 @router.get("/exchange_rate")
 async def get_exchange_rate(

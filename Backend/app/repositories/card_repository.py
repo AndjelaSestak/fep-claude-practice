@@ -29,7 +29,7 @@ class CardRepository(BaseRepository[Card]):
                     Card.is_deleted == False,
                 )
             )
-            return result.scalars().all()
+            return list(result.scalars().all())
         except SQLAlchemyError as e:
             raise DatabaseTransactionError(
                 "An error occurred while fetching cards."
@@ -89,11 +89,11 @@ class CardRepository(BaseRepository[Card]):
                 "An error occurred while fetching the card verification."
             ) from e
 
-    def delete(self, card: Card, soft_delete: bool = True) -> Card:
+    async def delete(self, card: Card, soft_delete: bool = True) -> Card:
         if soft_delete:
             card.is_deleted = True
         else:
-            self.db.delete(card)
+            await self.db.delete(card)
         return card
 
     async def get_active_by_wallet_id(self, wallet_id: int) -> Card | None:

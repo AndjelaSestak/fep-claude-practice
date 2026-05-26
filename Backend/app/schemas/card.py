@@ -1,6 +1,14 @@
+from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator, ConfigDict, model_validator, computed_field
-from datetime import datetime, timezone
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+)
+
 from app.utils.enums import CardStatus
 
 
@@ -72,7 +80,7 @@ class CardResponse(BaseModel):
     # but exclude=True keeps it out of the JSON response.
     wallet: Optional[_WalletBrief] = Field(default=None, exclude=True)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def account_number(self) -> str | None:
         return self.wallet.account_number if self.wallet else None

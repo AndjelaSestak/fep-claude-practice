@@ -4,7 +4,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+ignore = ["F821", "E712"]
 
 [tool.mypy]
-python_executable = "/Users/andjelasestak/PaymentService/Commit-Pray/Backend/venv/bin/python"
 ignore_missing_imports = true

@@ -1,24 +1,29 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI 
-from fastapi.middleware.cors import CORSMiddleware
-from alembic import command
-from alembic.config import Config
 
-from app.routers.visitor_router import router as visitor_router
-from app.routers.transaction_router import router as transaction_router
-from app.routers.auth_router import router as auth_router
-from app.routers.user_router import router as user_router  
-from app.routers.card_router import router as card_router  
-from app.routers.currency_router import router as currency_router   
-from app.routers.wallet_router import router as wallet_router
-from app.routers.card_report_router import router as card_report_router
-from app.routers.generate_report_router import router as generate_report_router
-from app.routers.transaction_template_router import router as transaction_template_router
-from app.routers.recurring_transaction_router import router as recurring_transaction_router
-from alembic.config import Config 
-from app.utils.errors import setup_exception_handlers
-from app.seed import seed
+from alembic.config import Config
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from alembic import command
 from app.jobs.scheduler import start_scheduler, stop_scheduler
+from app.routers.auth_router import router as auth_router
+from app.routers.card_report_router import router as card_report_router
+from app.routers.card_router import router as card_router
+from app.routers.currency_router import router as currency_router
+from app.routers.generate_report_router import router as generate_report_router
+from app.routers.recurring_transaction_router import (
+    router as recurring_transaction_router,
+)
+from app.routers.transaction_router import router as transaction_router
+from app.routers.transaction_template_router import (
+    router as transaction_template_router,
+)
+from app.routers.user_router import router as user_router
+from app.routers.visitor_router import router as visitor_router
+from app.routers.wallet_router import router as wallet_router
+from app.seed import seed
+from app.utils.errors import setup_exception_handlers
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,11 +35,11 @@ async def lifespan(app: FastAPI):
         print("Database seeded successfully!")
     except Exception as e:
         print(f"Failed to seed data: {e}")
-        
+
     start_scheduler()
-    
-    yield 
-    
+
+    yield
+
     stop_scheduler()
 
 

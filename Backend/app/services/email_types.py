@@ -27,13 +27,17 @@ async def send_welcome_email(recipient: str, name: str):
         template_name="welcome_email.html",
     )
 
-async def send_card_verification_email(recipient: str, name: str, card_last_four: str, otp: str):
+
+async def send_card_verification_email(
+    recipient: str, name: str, card_last_four: str, otp: str
+):
     await send_email(
         subject="Verify your new card - SecureBank",
         recipient=recipient,
         body={"name": name, "card_last_four": card_last_four, "otp": otp},
         template_name="card_verification_email.html",
     )
+
 
 async def send_card_details_email(
     recipient: str,
@@ -58,29 +62,34 @@ async def send_card_details_email(
     )
 
 
-async def send_card_block_notification(recipient: str, name: str, card_last_four: str, reason: str):
+async def send_card_block_notification(
+    recipient: str, name: str, card_last_four: str, reason: str
+):
     # Mapiramo ReportType na lepše poruke za korisnika
     reason_messages = {
         "lost": "reported as lost",
         "stolen": "reported as stolen",
         "manual_block": "manually blocked by you",
-        "admin_block": "blocked by our administration for security reasons"
+        "admin_block": "blocked by our administration for security reasons",
     }
-    
+
     friendly_reason = reason_messages.get(reason, "blocked due to security policy")
 
     await send_email(
         subject="IMPORTANT: Your card has been blocked - SecureBank",
         recipient=recipient,
         body={
-            "name": name, 
-            "card_last_four": card_last_four, 
-            "reason": friendly_reason
+            "name": name,
+            "card_last_four": card_last_four,
+            "reason": friendly_reason,
         },
         template_name="card_block_email.html",
     )
 
-async def send_message_from_contact_us(sender: str, subject: str, sender_email: str, message: str):
+
+async def send_message_from_contact_us(
+    sender: str, subject: str, sender_email: str, message: str
+):
     await send_email(
         subject="Message from visitor on Contact Us page",
         recipient="support@securebank.com",
@@ -88,8 +97,7 @@ async def send_message_from_contact_us(sender: str, subject: str, sender_email: 
             "sender": sender,
             "subject": subject,
             "sender_email": sender_email,
-            "message": message
+            "message": message,
         },
         template_name="message_from_visitor.html",
-
     )

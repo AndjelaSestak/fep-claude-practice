@@ -1,9 +1,21 @@
-from sqlalchemy import Integer, Numeric, Boolean, String, Text, DateTime, ForeignKey, Enum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
-import enum
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 from app.utils.enums import CardStatus
+
+if TYPE_CHECKING:
+    from app.models.card_report import CardReport
+    from app.models.card_type import CardType
+    from app.models.email_verification import EmailVerification
+    from app.models.transaction import Transaction
+    from app.models.transaction_template import TransactionTemplate
+    from app.models.user import User
+    from app.models.wallet import Wallet
+
 
 class Card(Base):
     __tablename__ = "cards"
@@ -17,15 +29,27 @@ class Card(Base):
     cardholder_name: Mapped[str] = mapped_column(Text, nullable=False)
     expiry_month: Mapped[int] = mapped_column(Integer, nullable=False)
     expiry_year: Mapped[int] = mapped_column(Integer, nullable=False)
-    status: Mapped[CardStatus] = mapped_column(Enum(CardStatus), default=CardStatus.blocked)
+    status: Mapped[CardStatus] = mapped_column(
+        Enum(CardStatus), default=CardStatus.blocked
+    )
     is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
 
     user: Mapped["User"] = relationship("User", back_populates="cards")
     card_type: Mapped["CardType"] = relationship("CardType", back_populates="cards")
     wallet: Mapped["Wallet"] = relationship("Wallet", back_populates="cards")
-    transactions: Mapped[list["Transaction"]] = relationship("Transaction", back_populates="card")
-    card_reports: Mapped[list["CardReport"]] = relationship("CardReport", back_populates="card")
-    transaction_templates: Mapped[list["TransactionTemplate"]] = relationship("TransactionTemplate", back_populates="card")
-    email_verifications: Mapped[list["EmailVerification"]] = relationship("EmailVerification", back_populates="card")
+    transactions: Mapped[list["Transaction"]] = relationship(
+        "Transaction", back_populates="card"
+    )
+    card_reports: Mapped[list["CardReport"]] = relationship(
+        "CardReport", back_populates="card"
+    )
+    transaction_templates: Mapped[list["TransactionTemplate"]] = relationship(
+        "TransactionTemplate", back_populates="card"
+    )
+    email_verifications: Mapped[list["EmailVerification"]] = relationship(
+        "EmailVerification", back_populates="card"
+    )
