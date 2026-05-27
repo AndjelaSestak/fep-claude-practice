@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -17,35 +17,24 @@ class RecurringTransactionRepository(BaseRepository[RecurringTransaction]):
         super().__init__(db)
 
     async def get_by_id_and_user(
-        self, recurring_transaction_id: int, user_id: int
+        self,
+        recurring_transaction_id: int,
+        user_id: int,
+        *,
+        active_only: bool = False,
     ) -> RecurringTransaction | None:
         try:
-            result = await self.db.execute(
-                select(RecurringTransaction)
-                .join(TransactionTemplate)
-                .where(
-                    RecurringTransaction.id == recurring_transaction_id,
-                    TransactionTemplate.user_id == user_id,
-                )
-            )
-            return result.scalar_one_or_none()
-        except SQLAlchemyError as e:
-            raise DatabaseTransactionError(
-                "An error occurred while fetching the recurring transaction."
-            ) from e
+            conditions = [
+                RecurringTransaction.id == recurring_transaction_id,
+                TransactionTemplate.user_id == user_id,
+            ]
+            if active_only:
+                conditions.append(RecurringTransaction.is_active == True)
 
-    async def get_active_by_id_and_user(
-        self, recurring_transaction_id: int, user_id: int
-    ) -> RecurringTransaction | None:
-        try:
             result = await self.db.execute(
                 select(RecurringTransaction)
                 .join(TransactionTemplate)
-                .where(
-                    RecurringTransaction.id == recurring_transaction_id,
-                    RecurringTransaction.is_active == True,
-                    TransactionTemplate.user_id == user_id,
-                )
+                .where(*conditions)
             )
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
@@ -76,24 +65,14 @@ class RecurringTransactionRepository(BaseRepository[RecurringTransaction]):
     async def has_executed_transactions(self, recurring_transaction_id: int) -> bool:
         try:
             result = await self.db.execute(
-                select(Transaction.id).where(
-                    Transaction.recurring_transaction_id == recurring_transaction_id
+                select(
+                    exists().where(
+                        Transaction.recurring_transaction_id == recurring_transaction_id
+                    )
                 )
             )
-            return result.first() is not None
+            return result.scalar() or False
         except SQLAlchemyError as e:
             raise DatabaseTransactionError(
                 "An error occurred while checking executed transactions."
             ) from e
-
-    def deactivate(
-        self, recurring_transaction: RecurringTransaction
-    ) -> RecurringTransaction:
-        recurring_transaction.is_active = False
-        return recurring_transaction
-
-    def set_active(
-        self, recurring_transaction: RecurringTransaction, is_active: bool
-    ) -> RecurringTransaction:
-        recurring_transaction.is_active = is_active
-        return recurring_transaction

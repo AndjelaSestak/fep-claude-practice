@@ -80,9 +80,7 @@ class RecurringTransactionService:
             raise TransactionNotFoundError(
                 f"Recurring transaction is already {status}."
             )
-        self.recurring_transaction_repository.set_active(
-            recurring_transaction, is_active
-        )
+        self._set_is_active(recurring_transaction, is_active)
         await self.recurring_transaction_repository.flush()
         await self.recurring_transaction_repository.refresh(recurring_transaction)
         return recurring_transaction
@@ -100,7 +98,7 @@ class RecurringTransactionService:
                 and recurring_transaction.next_run_at.date()
                 > recurring_transaction.end_date
             ):
-                self.recurring_transaction_repository.deactivate(recurring_transaction)
+                self._set_is_active(recurring_transaction, False)
                 await self.recurring_transaction_repository.flush()
                 continue
 
@@ -142,8 +140,8 @@ class RecurringTransactionService:
     ) -> RecurringTransaction:
 
         recurring_transaction = (
-            await self.recurring_transaction_repository.get_active_by_id_and_user(
-                recurring_transaction_id, current_user.id
+            await self.recurring_transaction_repository.get_by_id_and_user(
+                recurring_transaction_id, current_user.id, active_only=True
             )
         )
 
@@ -178,4 +176,10 @@ class RecurringTransactionService:
 
         await self.recurring_transaction_repository.flush()
         await self.recurring_transaction_repository.refresh(recurring_transaction)
+        return recurring_transaction
+
+    def _set_is_active(
+        self, recurring_transaction: RecurringTransaction, is_active: bool
+    ) -> RecurringTransaction:
+        recurring_transaction.is_active = is_active
         return recurring_transaction
