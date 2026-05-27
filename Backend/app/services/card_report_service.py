@@ -1,137 +1,129 @@
+from collections.abc import Sequence
+
 from fastapi import BackgroundTasks
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
 from app.models.card import Card, CardStatus
-from app.models.card_report import CardReport, ReportType
+from app.models.card_report import CardReport
 from app.models.user import User
+from app.repositories.card_report_repository import CardReportRepository
+from app.repositories.card_repository import CardRepository
 from app.services.email_types import send_card_block_notification
-from app.utils.errors import BadRequestError, DatabaseTransactionError
+from app.utils.enums import ReportType
+from app.utils.errors import BadRequestError, CardNotFoundError
 
 
-def _report_and_block_card(
-    db: Session,
-    card_id: int,
-    background_tasks: BackgroundTasks,
-    report_type: ReportType,
-    new_status: CardStatus,
-    current_user: User,
-) -> Card:
-    card = (
-        db.query(Card)
-        .filter(Card.id == card_id, Card.user_id == current_user.id)
-        .first()
-    )
-    if not card:
-        raise BadRequestError("Card not found")
-    if card.status != CardStatus.active:
-        raise BadRequestError("Only active cards can be reported or blocked")
+class CardReportService:
+    def __init__(
+        self,
+        card_repository: CardRepository,
+        card_report_repository: CardReportRepository,
+    ) -> None:
+        self.card_repository = card_repository
+        self.card_report_repository = card_report_repository
 
-    card_report = CardReport(
-        card_id=card.id,
-        user_id=card.user_id,
-        report_type=report_type,
-    )
+    async def _report_and_block_card(
+        self,
+        card_id: int,
+        background_tasks: BackgroundTasks,
+        report_type: ReportType,
+        new_status: CardStatus,
+        current_user: User,
+    ) -> Card:
+        card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        if not card:
+            raise CardNotFoundError("Card not found")
 
-    card.status = new_status
-    try:
-        db.add(card_report)
-        db.commit()
-        db.refresh(card)
+        if card.status != CardStatus.active:
+            raise BadRequestError("Only active cards can be reported or blocked")
 
-    except SQLAlchemyError:
-        raise DatabaseTransactionError(
-            "An error occurred while reporting or blocking the card. Please try again."
+        card.status = new_status
+
+        card_report = CardReport(
+            card_id=card.id,
+            user_id=card.user_id,
+            report_type=report_type,
+        )
+        self.card_report_repository.add(card_report)
+
+        background_tasks.add_task(
+            send_card_block_notification,
+            recipient=current_user.email,
+            name=current_user.name,
+            card_last_four=card.card_number_masked[-4:]
+            if card.card_number_masked
+            else "****",
+            reason=report_type.value,
         )
 
-    background_tasks.add_task(
-        send_card_block_notification,
-        recipient=card.user.email,
-        name=card.user.name,
-        card_last_four=card.card_number_masked[-4:]
-        if card.card_number_masked
-        else "****",
-        reason=report_type.value,
-    )
+        return card
 
-    return card
-
-
-def manual_block_card(
-    db: Session, card_id: int, background_tasks: BackgroundTasks, current_user: User
-) -> Card:
-    return _report_and_block_card(
-        db=db,
-        card_id=card_id,
-        background_tasks=background_tasks,
-        report_type=ReportType.manual_block,
-        new_status=CardStatus.blocked,
-        current_user=current_user,
-    )
-
-
-def report_lost_card(
-    db: Session, card_id: int, background_tasks: BackgroundTasks, current_user: User
-) -> Card:
-    return _report_and_block_card(
-        db=db,
-        card_id=card_id,
-        background_tasks=background_tasks,
-        report_type=ReportType.lost,
-        new_status=CardStatus.reported_lost,
-        current_user=current_user,
-    )
-
-
-def report_stolen_card(
-    db: Session, card_id: int, background_tasks: BackgroundTasks, current_user: User
-) -> Card:
-    return _report_and_block_card(
-        db=db,
-        card_id=card_id,
-        background_tasks=background_tasks,
-        report_type=ReportType.stolen,
-        new_status=CardStatus.reported_stolen,
-        current_user=current_user,
-    )
-
-
-def manual_unblock_card(db: Session, card_id: int, current_user: User) -> Card:
-    card = (
-        db.query(Card)
-        .filter(Card.id == card_id, Card.user_id == current_user.id)
-        .first()
-    )
-    if not card:
-        raise BadRequestError("Card not found")
-    if card.status == CardStatus.active:
-        raise BadRequestError("Card is already active")
-
-    card.status = CardStatus.active
-    try:
-        db.commit()
-        db.refresh(card)
-    except SQLAlchemyError:
-        raise DatabaseTransactionError(
-            "An error occurred while unblocking the card. Please try again."
+    async def manual_block_card(
+        self,
+        card_id: int,
+        background_tasks: BackgroundTasks,
+        current_user: User,
+    ) -> Card:
+        return await self._report_and_block_card(
+            card_id=card_id,
+            background_tasks=background_tasks,
+            report_type=ReportType.manual_block,
+            new_status=CardStatus.blocked,
+            current_user=current_user,
         )
 
-    return card
-
-
-def get_card_reports(db: Session, card_id: int, current_user: User) -> list[CardReport]:
-    card = (
-        db.query(Card)
-        .filter(
-            Card.id == card_id,
-            Card.user_id == current_user.id,
-            Card.is_email_verified == True,
-            Card.is_deleted == False,
+    async def report_lost_card(
+        self,
+        card_id: int,
+        background_tasks: BackgroundTasks,
+        current_user: User,
+    ) -> Card:
+        return await self._report_and_block_card(
+            card_id=card_id,
+            background_tasks=background_tasks,
+            report_type=ReportType.lost,
+            new_status=CardStatus.reported_lost,
+            current_user=current_user,
         )
-        .first()
-    )
-    if not card:
-        raise BadRequestError("Card not found")
 
-    reports = db.query(CardReport).filter(CardReport.card_id == card_id).all()
-    return reports
+    async def report_stolen_card(
+        self,
+        card_id: int,
+        background_tasks: BackgroundTasks,
+        current_user: User,
+    ) -> Card:
+        return await self._report_and_block_card(
+            card_id=card_id,
+            background_tasks=background_tasks,
+            report_type=ReportType.stolen,
+            new_status=CardStatus.reported_stolen,
+            current_user=current_user,
+        )
+
+    async def manual_unblock_card(
+        self,
+        card_id: int,
+        current_user: User,
+    ) -> Card:
+        card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        if not card:
+            raise CardNotFoundError("Card not found")
+
+        if card.status == CardStatus.active:
+            raise BadRequestError("Card is already active")
+
+        card.status = CardStatus.active
+        return card
+
+    async def get_card_reports(
+        self,
+        card_id: int,
+        current_user: User,
+    ) -> Sequence[CardReport]:
+        card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        if not card:
+            raise CardNotFoundError("Card not found")
+
+        if not card.is_email_verified:
+            raise BadRequestError("Card not found")
+
+        return await self.card_report_repository.get_by_card_id(card_id)

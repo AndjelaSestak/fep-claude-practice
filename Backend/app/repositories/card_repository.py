@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,19 +9,14 @@ from app.models.card import Card
 from app.models.card_type import CardType
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.repositories.base_repository import BaseRepository
-from app.utils.enums import CardStatus
-from app.utils.errors import (
-    CardNotFoundError,
-    CardTypeNotFoundError,
-    DatabaseTransactionError,
-)
+from app.utils.errors import DatabaseTransactionError
 
 
 class CardRepository(BaseRepository[Card]):
     def __init__(self, db: AsyncSession):
         super().__init__(db)
 
-    async def get_all_by_user(self, user_id: int) -> list[Card]:
+    async def get_all_by_user(self, user_id: int) -> Sequence[Card]:
         try:
             result = await self.db.execute(
                 select(Card)
@@ -29,13 +26,13 @@ class CardRepository(BaseRepository[Card]):
                     Card.is_deleted == False,
                 )
             )
-            return list(result.scalars().all())
+            return result.scalars().all()
         except SQLAlchemyError as e:
             raise DatabaseTransactionError(
                 "An error occurred while fetching cards."
             ) from e
 
-    async def get_by_id_and_user(self, card_id: int, user_id: int) -> Card:
+    async def get_by_id_and_user(self, card_id: int, user_id: int) -> Card | None:
         try:
             result = await self.db.execute(
                 select(Card)
@@ -46,28 +43,22 @@ class CardRepository(BaseRepository[Card]):
                     Card.is_deleted == False,
                 )
             )
-            card = result.scalar_one_or_none()
+            return result.scalar_one_or_none()
         except SQLAlchemyError as e:
             raise DatabaseTransactionError(
                 "An error occurred while fetching the card."
             ) from e
-        if not card:
-            raise CardNotFoundError("Card not found")
-        return card
 
-    async def get_card_type_by_id(self, card_type_id: int) -> CardType:
+    async def get_card_type_by_id(self, card_type_id: int) -> CardType | None:
         try:
             result = await self.db.execute(
                 select(CardType).where(CardType.id == card_type_id)
             )
-            card_type = result.scalar_one_or_none()
+            return result.scalar_one_or_none()
         except SQLAlchemyError as e:
             raise DatabaseTransactionError(
                 "An error occurred while fetching the card type."
             ) from e
-        if not card_type:
-            raise CardTypeNotFoundError("Invalid card type")
-        return card_type
 
     async def get_card_verification(
         self, card_id: int, otp_code: str

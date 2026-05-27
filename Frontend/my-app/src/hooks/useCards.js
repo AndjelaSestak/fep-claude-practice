@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { queryKeys } from '../lib/queryKeys'
@@ -24,6 +24,15 @@ export const useCards = () => {
 
   const [reportsDialogOpen, setReportsDialogOpen] = useState(false)
   const [activeReportCardId, setActiveReportCardId] = useState(null)
+
+  const [coolingDownCardId, setCoolingDownCardId] = useState(null)
+  const cooldownTimer = useRef(null)
+
+  const startCooldown = (cardId) => {
+    if (cooldownTimer.current) clearTimeout(cooldownTimer.current)
+    setCoolingDownCardId(cardId)
+    cooldownTimer.current = setTimeout(() => setCoolingDownCardId(null), 2000)
+  }
 
   const invalidateCards = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.cards.all, exact: true })
@@ -84,6 +93,7 @@ export const useCards = () => {
     mutationFn: blockCard,
     onMutate: optimisticUpdate('blocked'),
     onSuccess: (_, cardId) => {
+      startCooldown(cardId)
       toast.success('Card blocked.')
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.reports(cardId) })
     },
@@ -97,6 +107,7 @@ export const useCards = () => {
     mutationFn: unblockCard,
     onMutate: optimisticUpdate('active'),
     onSuccess: (_, cardId) => {
+      startCooldown(cardId)
       toast.success('Card unblocked.')
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.reports(cardId) })
     },
@@ -110,6 +121,7 @@ export const useCards = () => {
     mutationFn: reportLostCard,
     onMutate: optimisticUpdate('reported_lost'),
     onSuccess: (_, cardId) => {
+      startCooldown(cardId)
       toast.success('Card reported as lost.')
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.reports(cardId) })
     },
@@ -123,6 +135,7 @@ export const useCards = () => {
     mutationFn: reportStolenCard,
     onMutate: optimisticUpdate('reported_stolen'),
     onSuccess: (_, cardId) => {
+      startCooldown(cardId)
       toast.success('Card reported as stolen.')
       queryClient.invalidateQueries({ queryKey: queryKeys.cards.reports(cardId) })
     },
@@ -132,8 +145,8 @@ export const useCards = () => {
     }
   })
 
-  const handleRemove = (card) => {
-    setCardToDelete(card)
+  const handleRemove = (cardId, lastFourDigits) => {
+    setCardToDelete({ id: cardId, lastFourDigits })
     setDeleteDialogOpen(true)
   }
 
@@ -177,6 +190,7 @@ export const useCards = () => {
   return {
     cards,
     loading,
+    coolingDownCardId,
     deleteDialogOpen,
     cardToDelete,
     handleRemove,
