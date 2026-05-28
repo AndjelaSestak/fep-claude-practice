@@ -77,7 +77,6 @@ class EmailVerificationRepository(BaseRepository[EmailVerification]):
                     EmailVerification.is_used == False,
                 )
                 .order_by(EmailVerification.expires_at.desc())
-                .limit(1)
             )
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
