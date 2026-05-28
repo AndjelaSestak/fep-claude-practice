@@ -15,7 +15,7 @@ async def generate_account_number(db: AsyncSession) -> str:
     while True:
         account_number = "".join(secrets.choice(string.digits) for _ in range(16))
         result = await db.execute(
-            select(Wallet.id).where(Wallet.account_number == account_number).limit(1)
+            select(Wallet.id).where(Wallet.account_number == account_number)
         )
         if result.scalar_one_or_none() is None:
             return account_number

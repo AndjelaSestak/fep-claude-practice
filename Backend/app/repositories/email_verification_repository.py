@@ -24,7 +24,6 @@ class EmailVerificationRepository(BaseRepository[EmailVerification]):
                     EmailVerification.is_used == False,
                 )
                 .order_by(EmailVerification.expires_at.desc())
-                .limit(1)
             )
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
@@ -32,9 +31,7 @@ class EmailVerificationRepository(BaseRepository[EmailVerification]):
                 "An error occurred while fetching the email verification."
             ) from e
 
-    async def mark_active_registration_verifications_used(
-        self, user_id: int
-    ) -> None:
+    async def mark_active_registration_verifications_used(self, user_id: int) -> None:
         try:
             await self.db.execute(
                 update(EmailVerification)
@@ -55,13 +52,11 @@ class EmailVerificationRepository(BaseRepository[EmailVerification]):
     ) -> EmailVerification | None:
         try:
             result = await self.db.execute(
-                select(EmailVerification)
-                .where(
+                select(EmailVerification).where(
                     EmailVerification.token == token,
                     EmailVerification.purpose == VerificationPurpose.password_reset,
-                    EmailVerification.is_used == False,
+                    EmailVerification.is_used.is_(False),
                 )
-                .limit(1)
             )
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
