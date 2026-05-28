@@ -8,13 +8,13 @@ from app.database import get_db as _get_db
 from app.models.user import User
 from app.repositories.card_report_repository import CardReportRepository
 from app.repositories.card_repository import CardRepository
-from app.repositories.user_repository import UserRepository
-from app.repositories.wallet_repository import WalletRepository
-from app.services.card_report_service import CardReportService
 from app.repositories.email_verification_repository import EmailVerificationRepository
 from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.repositories.role_repository import RoleRepository
+from app.repositories.user_repository import UserRepository
+from app.repositories.wallet_repository import WalletRepository
 from app.services.auth_service import AuthService
+from app.services.card_report_service import CardReportService
 from app.services.exchange_rate_service import ExchangeRateService
 from app.services.user_service import UserService
 from app.utils.errors import InvalidTokenError, NotAuthenticatedError
