@@ -3,6 +3,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.user import User
 from app.repositories.base_repository import BaseRepository
@@ -34,6 +35,52 @@ class UserRepository(BaseRepository[User]):
         except SQLAlchemyError as e:
             raise DatabaseTransactionError(
                 "An error occurred while fetching the user."
+            ) from e
+
+    async def get_by_id_with_role(self, user_id: int) -> User | None:
+        try:
+            result = await self.db.execute(
+                select(User)
+                .options(selectinload(User.role))
+                .where(
+                    User.id == user_id,
+                    User.is_deleted == False,
+                )
+            )
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the user."
+            ) from e
+
+    async def get_by_email(self, email: str) -> User | None:
+        try:
+            result = await self.db.execute(
+                select(User).where(
+                    User.email == email,
+                    User.is_deleted == False,
+                )
+            )
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the user by email."
+            ) from e
+
+    async def get_by_email_with_role(self, email: str) -> User | None:
+        try:
+            result = await self.db.execute(
+                select(User)
+                .options(selectinload(User.role))
+                .where(
+                    User.email == email,
+                    User.is_deleted == False,
+                )
+            )
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the user by email."
             ) from e
 
     def soft_delete(self, user: User) -> User:
