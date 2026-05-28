@@ -12,10 +12,7 @@ from app.repositories.card_repository import CardRepository
 from app.repositories.email_verification_repository import EmailVerificationRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.card import CardCreate, CardPinVerify, CardVerify
-from app.services.email_types import (
-    send_card_details_email,
-    send_card_verification_email,
-)
+from app.services.email_service import email_service
 from app.utils.datetime import ensure_utc
 from app.utils.errors import (
     CardNotFoundError,
@@ -104,7 +101,7 @@ class CardService:
         }
 
         background_tasks.add_task(
-            send_card_verification_email,
+            email_service.send_card_verification_email,
             recipient=current_user.email,
             name=current_user.name,
             card_last_four=raw_number[-4:],
@@ -130,24 +127,23 @@ class CardService:
         if not card:
             raise CardNotFoundError("Card not found")
 
-        verification_repo = self.email_verification_repository
-        verification = await verification_repo.get_latest_card_verification(
+        verific = await self.email_verification_repository.get_latest_card_verification(
             data.card_id,
             data.otp_code,
         )
-        if not verification:
+        if not verific:
             raise InvalidOTPError("Invalid OTP code provided")
 
-        if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
+        if ensure_utc(verific.expires_at) < datetime.now(timezone.utc):
             raise OTPExpiredError("OTP code has expired")
 
         card.is_email_verified = True
-        verification.is_used = True
+        verific.is_used = True
 
         details = _pending_card_details.pop(card.id, None)
         if details:
             background_tasks.add_task(
-                send_card_details_email,
+                email_service.send_card_details_email,
                 recipient=current_user.email,
                 name=current_user.name,
                 card_number=details["card_number"],
