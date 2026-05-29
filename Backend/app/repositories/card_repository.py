@@ -86,3 +86,18 @@ class CardRepository(BaseRepository[Card]):
         else:
             await self.db.delete(card)
         return card
+
+    async def get_active_by_wallet_id(self, wallet_id: int) -> Card | None:
+        try:
+            result = await self.db.execute(
+                select(Card).where(
+                    Card.wallet_id == wallet_id,
+                    Card.status == CardStatus.active,
+                    Card.is_deleted == False,
+                )
+            )
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the card."
+            ) from e
