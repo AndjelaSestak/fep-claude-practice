@@ -82,6 +82,7 @@ async def pending_transactions_job() -> None:
                 )
 
 
+
 def start_scheduler() -> None:
     scheduler.add_job(
         recurring_transactions_job,
