@@ -1,19 +1,14 @@
-from fastapi import BackgroundTasks
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
-from app.models.card import Card
-from app.models.recurring_transaction import RecurringTransaction
-from app.models.transaction import TransactionType
 from app.models.transaction_template import TransactionTemplate
 from app.models.user import User
-from app.schemas.recurring_transaction import RecurringTransactionUpdate
-from app.schemas.transaction import CreateTransactionRequest
+from app.repositories.card_repository import CardRepository
+from app.repositories.template_repository import TemplateRepository
 from app.schemas.transaction_template import (
     TransactionTemplateCreate,
     TransactionTemplateUpdate,
 )
-from app.services import recurring_transaction_service, transaction_service
+from app.utils.enums import TransactionType
 from app.utils.errors import (
     DatabaseTransactionError,
     InvalidPinError,
@@ -23,188 +18,114 @@ from app.utils.errors import (
 from app.utils.security import verify_password
 
 
-def create_template(
-    db: Session, request: TransactionTemplateCreate, current_user: User
-) -> TransactionTemplate:
-    template = TransactionTemplate(
-        user_id=current_user.id,
-        name=request.name,
-        type=request.type,
-        amount=request.amount,
-        currency=request.currency,
-        recipient=request.recipient,
-        recipient_account_number=request.recipient_account_number,
-        card_id=request.card_id,
-        reference=request.reference,
-    )
-    try:
-        db.add(template)
-        db.commit()
-        db.refresh(template)
-    except SQLAlchemyError:
-        raise DatabaseTransactionError(
-            "An error occurred while creating template. Please try again."
-        )
+class TransactionTemplateService:
+    def __init__(
+        self,
+        template_repository: TemplateRepository,
+        card_repository: CardRepository,
+    ) -> None:
+        self.template_repository = template_repository
+        self.card_repository = card_repository
 
-    if template.type == TransactionType.recurring:
-        if request.frequency is None or request.start_date is None:
+    async def create_template(
+        self, request: TransactionTemplateCreate, current_user: User
+    ) -> TransactionTemplate:
+        template = TransactionTemplate(
+            user_id=current_user.id,
+            name=request.name,
+            type=request.type,
+            amount=request.amount,
+            currency=request.currency,
+            recipient=request.recipient,
+            recipient_account_number=request.recipient_account_number,
+            card_id=request.card_id,
+            reference=request.reference,
+        )
+        try:
+            self.template_repository.add(template)
+            await self.template_repository.flush()
+            await self.template_repository.refresh(template)
+        except SQLAlchemyError as e:
             raise DatabaseTransactionError(
-                "Frequency and start date are required for recurring templates."
-            )
-        recurring_transaction_service.create_recurring_transaction(
-            db=db,
-            template=template,
-            frequency=request.frequency,
-            end_date=request.end_date,
-            start_date=request.start_date,
+                "An error occurred while creating template."
+            ) from e
+
+        return await self.template_repository.get_by_id_and_user(
+            template.id, current_user.id
         )
 
-    return template
+    async def get_templates(self, current_user: User) -> list[TransactionTemplate]:
+        return await self.template_repository.get_all_by_user(current_user.id)
 
-
-def get_templates(db: Session, current_user: User):
-    return (
-        db.query(TransactionTemplate)
-        .filter(
-            TransactionTemplate.user_id == current_user.id,
-            TransactionTemplate.is_deleted == False,
+    async def get_template_by_id(
+        self, template_id: int, current_user: User
+    ) -> TransactionTemplate:
+        template = await self.template_repository.get_by_id_and_user(
+            template_id, current_user.id
         )
-        .all()
-    )
+        if not template:
+            raise TemplateNotFoundError("Template not found")
+        return template
 
+    async def update_template(
+        self, template_id: int, request: TransactionTemplateUpdate, current_user: User
+    ) -> TransactionTemplate:
+        template = await self.get_template_by_id(template_id, current_user)
 
-def get_template_by_id(
-    db: Session, template_id: int, current_user: User
-) -> TransactionTemplate:
-    template = (
-        db.query(TransactionTemplate)
-        .filter(
-            TransactionTemplate.id == template_id,
-            TransactionTemplate.user_id == current_user.id,
-            TransactionTemplate.is_deleted == False,
-        )
-        .first()
-    )
-    if not template:
-        raise TemplateNotFoundError("Template not found")
-    return template
+        TEMPLATE_FIELDS = {
+            "name",
+            "amount",
+            "currency",
+            "recipient",
+            "recipient_account_number",
+            "card_id",
+            "reference",
+        }
 
+        update_data = request.model_dump(exclude_unset=True)
 
-def update_template(
-    db: Session,
-    template_id: int,
-    request: TransactionTemplateUpdate,
-    current_user: User,
-) -> TransactionTemplate:
-    template = get_template_by_id(db, template_id, current_user)
+        for key, value in update_data.items():
+            if key in TEMPLATE_FIELDS:
+                setattr(template, key, value)
 
-    TEMPLATE_FIELDS = {
-        "name",
-        "amount",
-        "currency",
-        "recipient",
-        "recipient_account_number",
-        "card_id",
-        "reference",
-    }
+        try:
+            await self.template_repository.flush()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "Failed to update template due to a database error."
+            ) from e
 
-    RECURRING_FIELDS = {"frequency", "start_date", "end_date"}
-
-    update_data = request.model_dump(exclude_unset=True)
-
-    for key, value in update_data.items():
-        if key in TEMPLATE_FIELDS:
-            setattr(template, key, value)
-
-    recurring_update = {k: v for k, v in update_data.items() if k in RECURRING_FIELDS}
-
-    if template.type == TransactionType.recurring and recurring_update:
-        recurring_transactions = (
-            db.query(RecurringTransaction)
-            .filter(
-                RecurringTransaction.transaction_template_id == template.id,
-                RecurringTransaction.is_active == True,
-            )
-            .all()
+        return await self.template_repository.get_by_id_and_user(
+            template.id, current_user.id
         )
 
-        if not recurring_transactions:
-            raise TemplateNotFoundError("Recurring transaction not found")
+    async def delete_template(self, template_id: int, current_user: User) -> None:
+        template = await self.get_template_by_id(template_id, current_user)
+        for recurring in template.recurring_transactions:
+            if recurring.is_active:
+                recurring.is_active = False
+        template.is_deleted = True
+        try:
+            await self.template_repository.flush()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "An error occurred while deleting template."
+            ) from e
 
-        if len(recurring_transactions) > 1:
+    async def validate_execute(
+        self, template_id: int, current_user: User, pin: str
+    ) -> TransactionTemplate:
+        template = await self.get_template_by_id(template_id, current_user)
+
+        if template.type == TransactionType.recurring:
             raise TemplateExecutionError(
-                "Multiple active recurring transactions found for this template"
+                "Recurring templates are executed automatically via scheduler."
             )
 
-        recurring_transaction = recurring_transactions[0]
-
-        recurring_transaction_service.update_recurring_transaction(
-            db=db,
-            recurring_transaction_id=recurring_transaction.id,
-            request=RecurringTransactionUpdate(**recurring_update),
-            current_user=current_user,
+        card = await self.card_repository.get_by_id_and_user(
+            template.card_id, current_user.id
         )
+        if not card or not verify_password(pin, card.card_pin):
+            raise InvalidPinError("Incorrect PIN")
 
-    try:
-        db.commit()
-        db.refresh(template)
-    except SQLAlchemyError:
-        raise DatabaseTransactionError(
-            "Failed to update template due to a database error."
-        )
-
-    return template
-
-
-def delete_template(db: Session, template_id: int, current_user: User):
-    template = get_template_by_id(db, template_id, current_user)
-    for recurring in template.recurring_transactions:
-        if recurring.is_active:
-            recurring.is_active = False
-    template.is_deleted = True
-
-    try:
-        db.commit()
-        db.refresh(template)
-    except SQLAlchemyError:
-        raise DatabaseTransactionError(
-            "An error occurred while deleting template. Please try again."
-        )
-
-
-def execute_template(
-    db: Session,
-    template_id: int,
-    current_user: User,
-    background_tasks: BackgroundTasks,
-    pin: str,
-):
-    template = get_template_by_id(db, template_id, current_user)
-
-    if template.type == TransactionType.recurring:
-        raise TemplateExecutionError(
-            "Recurring templates are executed automatically via scheduler."
-        )
-
-    card = (
-        db.query(Card)
-        .filter(Card.id == template.card_id, Card.user_id == current_user.id)
-        .first()
-    )
-    if not card or not verify_password(pin, card.card_pin):
-        raise InvalidPinError("Incorrect PIN")
-
-    transaction_request = CreateTransactionRequest(
-        card_id=template.card_id,
-        amount=float(template.amount),
-        currency=template.currency,
-        recipient=template.recipient,
-        recipient_account_number=template.recipient_account_number,
-        reference=template.reference,
-    )
-
-    transaction = transaction_service.create_transaction(
-        db=db, request=transaction_request, current_user=current_user
-    )
-    background_tasks.add_task(transaction_service.process_transaction, transaction.id)
-    return transaction
+        return template

@@ -42,7 +42,7 @@ async def get_all_transactions_for_user(
     current_user: User = Depends(require_user),
     service: TransactionService = Depends(get_transaction_service),
 ):
-    return await service.get_transactions_by_user(
+    return await service.get_transaction_by_user(
         user_id=current_user.id,
         search=filters.search,
         type=filters.type,
@@ -58,12 +58,14 @@ async def get_all_transactions_for_user(
 async def create_transaction(
     request: CreateTransactionRequest,
     background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(require_user),
     service: TransactionService = Depends(get_transaction_service),
 ):
     transaction = await service.create_transaction(
         request=request, current_user=current_user
     )
+    await db.commit()
     background_tasks.add_task(service.process_transaction, transaction.id)
     return transaction
 

@@ -17,6 +17,8 @@ from app.services.transaction_service import TransactionService
 from app.utils.datetime import ensure_utc, utc_now
 from app.utils.errors import (
     BadRequestError,
+    TemplateExecutionError,
+    TemplateNotFoundError,
     TransactionNotFoundError,
 )
 
@@ -177,6 +179,21 @@ class RecurringTransactionService:
         await self.recurring_transaction_repository.flush()
         await self.recurring_transaction_repository.refresh(recurring_transaction)
         return recurring_transaction
+
+    async def update_for_template(
+        self,
+        template: TransactionTemplate,
+        request: RecurringTransactionUpdate,
+        current_user: User,
+    ) -> None:
+        active = [r for r in template.recurring_transactions if r.is_active]
+        if not active:
+            raise TemplateNotFoundError("Recurring transaction not found")
+        if len(active) > 1:
+            raise TemplateExecutionError(
+                "Multiple active recurring transactions found for this template"
+            )
+        await self.update_recurring_transaction(active[0].id, request, current_user)
 
     def _set_is_active(
         self, recurring_transaction: RecurringTransaction, is_active: bool
