@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from app.models.card import Card
 from app.models.card_type import CardType
 from app.repositories.base_repository import BaseRepository
+from app.utils.enums import CardStatus
 from app.utils.errors import DatabaseTransactionError
 
 
