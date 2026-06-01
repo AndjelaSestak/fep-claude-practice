@@ -17,11 +17,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.auth import ResetPasswordRequest, VerifyOTP
 from app.schemas.user import UserCreate
-from app.services.email_types import (
-    send_reset_password_email,
-    send_verification_email,
-    send_welcome_email,
-)
+from app.services.email_service import email_service
 from app.services.wallet_service import generate_account_number
 from app.utils.datetime import ensure_utc
 from app.utils.errors import (
@@ -89,8 +85,7 @@ class AuthService:
             user_id=new_user.id,
             token=otp_code,
             purpose=VerificationPurpose.registration,
-            expires_at=datetime.now(timezone.utc)
-            + timedelta(minutes=10),  # Ističe za 10 min
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
             is_used=False,
         )
         self.email_verification_repository.add(new_verification)
@@ -104,7 +99,7 @@ class AuthService:
         self.wallet_repository.add(new_wallet)
 
         background_tasks.add_task(
-            send_verification_email,
+            email_service.send_verification_email,
             recipient=new_user.email,
             name=new_user.name,
             otp=otp_code,
@@ -135,7 +130,7 @@ class AuthService:
         verification.is_used = True
 
         background_tasks.add_task(
-            send_welcome_email, recipient=data.email, name=user.name
+            email_service.send_welcome_email, recipient=data.email, name=user.name
         )
 
         return {"message": "Email successfully verified!"}
@@ -158,14 +153,13 @@ class AuthService:
             user_id=user.id,
             token=otp_code,
             purpose=VerificationPurpose.registration,
-            expires_at=datetime.now(timezone.utc)
-            + timedelta(minutes=10),  # Istice za 10 min
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
             is_used=False,
         )
         self.email_verification_repository.add(new_verification)
 
         background_tasks.add_task(
-            send_verification_email,
+            email_service.send_verification_email,
             recipient=user.email,
             name=user.name,
             otp=otp_code,
@@ -224,7 +218,7 @@ class AuthService:
         reset_link = f"http://localhost:5173/reset_password?token={reset_token}"
 
         background_tasks.add_task(
-            send_reset_password_email,
+            email_service.send_reset_password_email,
             recipient=user.email,
             name=user.name,
             reset_link=reset_link,

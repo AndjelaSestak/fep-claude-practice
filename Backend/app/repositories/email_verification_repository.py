@@ -63,3 +63,23 @@ class EmailVerificationRepository(BaseRepository[EmailVerification]):
             raise DatabaseTransactionError(
                 "An error occurred while fetching the password reset verification."
             ) from e
+
+    async def get_latest_card_verification(
+        self, card_id: int, token: str
+    ) -> EmailVerification | None:
+        try:
+            result = await self.db.execute(
+                select(EmailVerification)
+                .where(
+                    EmailVerification.card_id == card_id,
+                    EmailVerification.token == token,
+                    EmailVerification.purpose == VerificationPurpose.card_verification,
+                    EmailVerification.is_used == False,
+                )
+                .order_by(EmailVerification.expires_at.desc())
+            )
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the card verification."
+            ) from e

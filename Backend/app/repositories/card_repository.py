@@ -7,8 +7,8 @@ from sqlalchemy.orm import selectinload
 
 from app.models.card import Card
 from app.models.card_type import CardType
-from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.repositories.base_repository import BaseRepository
+from app.utils.enums import CardStatus
 from app.utils.errors import DatabaseTransactionError
 
 
@@ -58,26 +58,6 @@ class CardRepository(BaseRepository[Card]):
         except SQLAlchemyError as e:
             raise DatabaseTransactionError(
                 "An error occurred while fetching the card type."
-            ) from e
-
-    async def get_card_verification(
-        self, card_id: int, otp_code: str
-    ) -> EmailVerification | None:
-        try:
-            result = await self.db.execute(
-                select(EmailVerification)
-                .where(
-                    EmailVerification.card_id == card_id,
-                    EmailVerification.token == otp_code,
-                    EmailVerification.purpose == VerificationPurpose.card_verification,
-                    EmailVerification.is_used == False,
-                )
-                .order_by(EmailVerification.expires_at.desc())
-            )
-            return result.scalars().first()
-        except SQLAlchemyError as e:
-            raise DatabaseTransactionError(
-                "An error occurred while fetching the card verification."
             ) from e
 
     async def delete(self, card: Card, soft_delete: bool = True) -> Card:

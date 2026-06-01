@@ -7,7 +7,7 @@ from app.models.card_report import CardReport
 from app.models.user import User
 from app.repositories.card_report_repository import CardReportRepository
 from app.repositories.card_repository import CardRepository
-from app.services.email_types import send_card_block_notification
+from app.services.email_service import email_service
 from app.utils.enums import ReportType
 from app.utils.errors import BadRequestError, CardNotFoundError
 
@@ -46,7 +46,7 @@ class CardReportService:
         self.card_report_repository.add(card_report)
 
         background_tasks.add_task(
-            send_card_block_notification,
+            email_service.send_card_block_notification,
             recipient=current_user.email,
             name=current_user.name,
             card_last_four=card.card_number_masked[-4:]
