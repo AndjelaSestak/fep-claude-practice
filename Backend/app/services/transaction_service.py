@@ -155,6 +155,9 @@ class TransactionService:
             transaction.recipient_account_number
         )
 
+        if not recipient_wallet:
+            return
+
         converted_amount = convert_amount(
             float(transaction.amount), transaction.currency, recipient_wallet.currency
         )
