@@ -42,11 +42,12 @@ async def get_all_transactions_for_user(
     current_user: User = Depends(require_user),
     service: TransactionService = Depends(get_transaction_service),
 ):
-    return await service.get_transaction_by_user(
+    return await service.get_filtered_transactions(
         user_id=current_user.id,
         search=filters.search,
         type=filters.type,
         direction=filters.direction,
+        period=filters.period,
         limit=filters.limit,
         offset=filters.offset,
     )
