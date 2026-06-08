@@ -1,22 +1,14 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, status
-from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.dependencies import get_card_report_service
 from app.models.user import User
 from app.schemas.card_report import CardReportRequest, CardStatusResponse
-from app.services.card_report_service import (
-    get_card_reports,
-    manual_block_card,
-    manual_unblock_card,
-    report_lost_card,
-    report_stolen_card,
-)
-from app.utils.permissions import RequireRole
+from app.services.card_report_service import CardReportService
+from app.utils.permissions import AsyncRequireRole
 
 router = APIRouter(prefix="/card_reports", tags=["Card Reports"])
 
-
-require_user = RequireRole(["user"])
+require_user = AsyncRequireRole(["user"])
 
 
 @router.patch(
@@ -24,13 +16,13 @@ require_user = RequireRole(["user"])
     response_model=CardStatusResponse,
     status_code=status.HTTP_200_OK,
 )
-def block_card_route(
+async def block_card(
     card_id: int,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    service: CardReportService = Depends(get_card_report_service),
 ):
-    return manual_block_card(db, card_id, background_tasks, current_user=current_user)
+    return await service.manual_block_card(card_id, background_tasks, current_user)
 
 
 @router.patch(
@@ -38,13 +30,13 @@ def block_card_route(
     response_model=CardStatusResponse,
     status_code=status.HTTP_200_OK,
 )
-def report_lost_card_route(
+async def report_lost_card(
     card_id: int,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    service: CardReportService = Depends(get_card_report_service),
 ):
-    return report_lost_card(db, card_id, background_tasks, current_user=current_user)
+    return await service.report_lost_card(card_id, background_tasks, current_user)
 
 
 @router.patch(
@@ -52,13 +44,13 @@ def report_lost_card_route(
     response_model=CardStatusResponse,
     status_code=status.HTTP_200_OK,
 )
-def report_stolen_card_route(
+async def report_stolen_card(
     card_id: int,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    service: CardReportService = Depends(get_card_report_service),
 ):
-    return report_stolen_card(db, card_id, background_tasks, current_user=current_user)
+    return await service.report_stolen_card(card_id, background_tasks, current_user)
 
 
 @router.patch(
@@ -66,12 +58,12 @@ def report_stolen_card_route(
     response_model=CardStatusResponse,
     status_code=status.HTTP_200_OK,
 )
-def unblock_card_route(
+async def unblock_card(
     card_id: int,
-    db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    service: CardReportService = Depends(get_card_report_service),
 ):
-    return manual_unblock_card(db, card_id, current_user=current_user)
+    return await service.manual_unblock_card(card_id, current_user)
 
 
 @router.get(
@@ -79,9 +71,9 @@ def unblock_card_route(
     response_model=list[CardReportRequest],
     status_code=status.HTTP_200_OK,
 )
-def get_card_reports_route(
+async def get_card_reports(
     card_id: int,
-    db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    service: CardReportService = Depends(get_card_report_service),
 ):
-    return get_card_reports(db, card_id, current_user=current_user)
+    return await service.get_card_reports(card_id, current_user)

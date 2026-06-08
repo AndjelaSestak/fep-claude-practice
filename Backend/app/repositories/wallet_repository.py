@@ -28,3 +28,17 @@ class WalletRepository(BaseRepository[Wallet]):
     def deactivate(self, wallet: Wallet) -> Wallet:
         wallet.is_active = False
         return wallet
+
+    async def get_by_account_number(self, account_number: str) -> Wallet | None:
+        try:
+            result = await self.db.execute(
+                select(Wallet).where(
+                    Wallet.account_number == account_number,
+                    Wallet.is_active == True,
+                )
+            )
+            return result.scalar_one_or_none()
+        except SQLAlchemyError as e:
+            raise DatabaseTransactionError(
+                "An error occurred while fetching the wallet."
+            ) from e

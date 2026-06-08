@@ -1,23 +1,22 @@
 import secrets
 import string
+from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 
 from fastapi import BackgroundTasks
-from sqlalchemy.orm import Session
 
 from app.models.card import Card, CardStatus
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.user import User
-from app.models.wallet import Wallet
 from app.repositories.card_repository import CardRepository
+from app.repositories.email_verification_repository import EmailVerificationRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.card import CardCreate, CardPinVerify, CardVerify
-from app.services.email_types import (
-    send_card_details_email,
-    send_card_verification_email,
-)
+from app.services.email_service import email_service
 from app.utils.datetime import ensure_utc
 from app.utils.errors import (
+    CardNotFoundError,
+    CardTypeNotFoundError,
     InvalidOTPError,
     InvalidPinError,
     OTPExpiredError,
@@ -31,21 +30,16 @@ from app.utils.security import get_password_hash, verify_password
 _pending_card_details: dict = {}
 
 
-def generate_account_number(db: Session) -> str:
-    while True:
-        account_number = "".join(secrets.choice(string.digits) for _ in range(16))
-        if not db.query(Wallet).filter(Wallet.account_number == account_number).first():
-            return account_number
-
-
 class CardService:
     def __init__(
         self,
         card_repository: CardRepository,
         wallet_repository: WalletRepository,
+        email_verification_repository: EmailVerificationRepository,
     ) -> None:
         self.card_repository = card_repository
         self.wallet_repository = wallet_repository
+        self.email_verification_repository = email_verification_repository
 
     async def create_card(
         self,
@@ -53,7 +47,11 @@ class CardService:
         card_data: CardCreate,
         background_tasks: BackgroundTasks,
     ) -> Card:
-        await self.card_repository.get_card_type_by_id(card_data.card_type_id)
+        card_type = await self.card_repository.get_card_type_by_id(
+            card_data.card_type_id
+        )
+        if not card_type:
+            raise CardTypeNotFoundError("Invalid card type")
 
         wallet = await self.wallet_repository.get_wallet_by_user_id(current_user.id)
         if wallet is None:
@@ -92,7 +90,7 @@ class CardService:
             expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
             is_used=False,
         )
-        self.card_repository.add(new_verification)
+        self.email_verification_repository.add(new_verification)
 
         _pending_card_details[new_card.id] = {
             "card_number": raw_number,
@@ -103,16 +101,19 @@ class CardService:
         }
 
         background_tasks.add_task(
-            send_card_verification_email,
+            email_service.send_card_verification_email,
             recipient=current_user.email,
             name=current_user.name,
             card_last_four=raw_number[-4:],
             otp=otp_code,
         )
 
-        return await self.card_repository.get_by_id_and_user(
+        created_card = await self.card_repository.get_by_id_and_user(
             new_card.id, current_user.id
         )
+        if not created_card:
+            raise CardNotFoundError("Card not found")
+        return created_card
 
     async def verify_card(
         self,
@@ -123,23 +124,26 @@ class CardService:
         card = await self.card_repository.get_by_id_and_user(
             data.card_id, current_user.id
         )
+        if not card:
+            raise CardNotFoundError("Card not found")
 
-        verification = await self.card_repository.get_card_verification(
-            data.card_id, data.otp_code
+        verific = await self.email_verification_repository.get_latest_card_verification(
+            data.card_id,
+            data.otp_code,
         )
-        if not verification:
+        if not verific:
             raise InvalidOTPError("Invalid OTP code provided")
 
-        if ensure_utc(verification.expires_at) < datetime.now(timezone.utc):
+        if ensure_utc(verific.expires_at) < datetime.now(timezone.utc):
             raise OTPExpiredError("OTP code has expired")
 
         card.is_email_verified = True
-        verification.is_used = True
+        verific.is_used = True
 
         details = _pending_card_details.pop(card.id, None)
         if details:
             background_tasks.add_task(
-                send_card_details_email,
+                email_service.send_card_details_email,
                 recipient=current_user.email,
                 name=current_user.name,
                 card_number=details["card_number"],
@@ -155,19 +159,26 @@ class CardService:
         card = await self.card_repository.get_by_id_and_user(
             data.card_id, current_user.id
         )
+        if not card:
+            raise CardNotFoundError("Card not found")
 
         if not verify_password(data.pin, card.card_pin):
             raise InvalidPinError("Incorrect PIN")
 
         return {"message": "PIN verified"}
 
-    async def get_user_cards(self, current_user: User) -> list[Card]:
+    async def get_user_cards(self, current_user: User) -> Sequence[Card]:
         return await self.card_repository.get_all_by_user(current_user.id)
 
     async def get_card_by_id(self, current_user: User, card_id: int) -> Card:
-        return await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        if not card:
+            raise CardNotFoundError("Card not found")
+        return card
 
     async def soft_delete_card(self, current_user: User, card_id: int) -> dict:
         card = await self.card_repository.get_by_id_and_user(card_id, current_user.id)
+        if not card:
+            raise CardNotFoundError("Card not found")
         await self.card_repository.delete(card)
         return {"message": "Card deleted successfully"}

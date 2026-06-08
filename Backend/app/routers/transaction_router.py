@@ -1,20 +1,32 @@
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import get_async_db
 from app.models.user import User
+from app.repositories.card_repository import CardRepository
+from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.wallet_repository import WalletRepository
 from app.schemas.transaction import CreateTransactionRequest, TransactionResponse
-from app.services import transaction_service
 from app.services.exchange_rate_service import get_supported_currencies
+from app.services.transaction_service import TransactionService
 from app.utils.enums import TransactionFilterParams
-from app.utils.errors import TransactionNotFoundError
-from app.utils.permissions import RequireRole
+from app.utils.permissions import AsyncRequireRole
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
-require_user = RequireRole(["user"])
+require_user = AsyncRequireRole(["user"])
+
+
+def get_transaction_service(
+    db: AsyncSession = Depends(get_async_db),
+) -> TransactionService:
+    return TransactionService(
+        transaction_repository=TransactionRepository(db),
+        wallet_repository=WalletRepository(db),
+        card_repository=CardRepository(db),
+    )
 
 
 @router.get("/currencies", status_code=status.HTTP_200_OK)
@@ -25,59 +37,57 @@ def get_currencies(current_user: User = Depends(require_user)):
 @router.get(
     "/", response_model=list[TransactionResponse], status_code=status.HTTP_200_OK
 )
-def get_all_transactions_for_user(
+async def get_all_transactions_for_user(
     filters: Annotated[TransactionFilterParams, Query()],
-    db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    service: TransactionService = Depends(get_transaction_service),
 ):
-    transactions = transaction_service.get_transaction_by_user(
-        db,
+    return await service.get_filtered_transactions(
         user_id=current_user.id,
         search=filters.search,
         type=filters.type,
         direction=filters.direction,
+        period=filters.period,
         limit=filters.limit,
         offset=filters.offset,
     )
-    return transactions
 
 
 @router.post(
     "", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
 )
-def create_transaction(
+async def create_transaction(
     request: CreateTransactionRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(require_user),
+    service: TransactionService = Depends(get_transaction_service),
 ):
-    transaction = transaction_service.create_transaction(
-        db=db, request=request, current_user=current_user
+    transaction = await service.create_transaction(
+        request=request, current_user=current_user
     )
-    background_tasks.add_task(transaction_service.process_transaction, transaction.id)
+    await db.commit()
+    background_tasks.add_task(service.process_transaction, transaction.id)
     return transaction
 
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)
-def read_transaction(
+async def read_transaction(
     transaction_id: int,
-    db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    service: TransactionService = Depends(get_transaction_service),
 ):
-    db_transaction = transaction_service.get_transaction_by_id(
-        db, transaction_id=transaction_id, user_id=current_user.id
+    return await service.get_transaction_by_id(
+        transaction_id=transaction_id, user_id=current_user.id
     )
-    if not db_transaction:
-        raise TransactionNotFoundError("Transaction not found or access denied")
-    return db_transaction
 
 
 @router.delete("/{transaction_id}", response_model=TransactionResponse)
-def cancel_transaction(
+async def cancel_transaction(
     transaction_id: int,
-    db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    service: TransactionService = Depends(get_transaction_service),
 ):
-    return transaction_service.cancel_transaction(
-        db=db, transaction_id=transaction_id, current_user=current_user
+    return await service.cancel_transaction(
+        transaction_id=transaction_id, current_user=current_user
     )

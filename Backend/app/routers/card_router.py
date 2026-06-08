@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_async_db
 from app.models.user import User
 from app.repositories.card_repository import CardRepository
+from app.repositories.email_verification_repository import EmailVerificationRepository
 from app.repositories.wallet_repository import WalletRepository
 from app.schemas.card import CardCreate, CardPinVerify, CardResponse, CardVerify
 from app.services.card_service import CardService
@@ -18,6 +19,7 @@ def get_card_service(db: AsyncSession = Depends(get_async_db)) -> CardService:
     return CardService(
         card_repository=CardRepository(db),
         wallet_repository=WalletRepository(db),
+        email_verification_repository=EmailVerificationRepository(db),
     )
 
 

@@ -68,7 +68,7 @@ export const useNewTransaction = ({ open, onClose, onSuccess }) => {
       setErrors({})
       setPendingFormData(null)
       toast.success('Your transaction has been submitted and is being processed.')
-      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.list() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all })
       onClose()
       onSuccess?.()
     },

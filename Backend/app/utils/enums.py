@@ -54,7 +54,7 @@ class Frequency(str, enum.Enum):
 
 class TransactionFilterParams(BaseModel):
     search: Optional[str] = None
-    type: TransactionType = TransactionType.single
+    type: TransactionType = TransactionType.all
     direction: TransactionDirection = TransactionDirection.all
     period: Optional[str] = None
     limit: int = 10

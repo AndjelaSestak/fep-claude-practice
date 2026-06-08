@@ -2,7 +2,7 @@ import api from './api'
 
 export const createTemplate = async (data) => {
   try {
-    const response = await api.post('/templates/create_template', data)
+    const response = await api.post('/templates', data)
     return response.data
   } catch (error) {
     console.error('Error creating template:', error)
@@ -12,7 +12,7 @@ export const createTemplate = async (data) => {
 
 export const getTemplates = async () => {
   try {
-    const response = await api.get('/templates/get_all_templates')
+    const response = await api.get('/templates')
     return response.data
   } catch (error) {
     console.error('Error fetching templates:', error)
@@ -22,7 +22,7 @@ export const getTemplates = async () => {
 
 export const getTemplateById = async (templateId) => {
   try {
-    const response = await api.get(`/templates/get_template_details/${templateId}`)
+    const response = await api.get(`/templates/${templateId}`)
     return response.data
   } catch (error) {
     console.error('Error fetching template:', error)
@@ -32,7 +32,7 @@ export const getTemplateById = async (templateId) => {
 
 export const updateTemplate = async (templateId, data) => {
   try {
-    const response = await api.patch(`/templates/update_template/${templateId}`, data)
+    const response = await api.put(`/templates/${templateId}`, data)
     return response.data
   } catch (error) {
     console.error('Error updating template:', error)
@@ -42,7 +42,7 @@ export const updateTemplate = async (templateId, data) => {
 
 export const deleteTemplate = async (templateId) => {
   try {
-    const response = await api.delete(`/templates/delete_template/${templateId}`)
+    const response = await api.delete(`/templates/${templateId}`)
     return response.data
   } catch (error) {
     console.error('Error deleting template:', error)
