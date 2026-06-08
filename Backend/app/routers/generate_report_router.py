@@ -6,13 +6,29 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
-from app.services import generate_report_service, transaction_service
+from app.repositories.card_repository import CardRepository
+from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.wallet_repository import WalletRepository
+from app.services.generate_report_service import GenerateReportService
+from app.services.transaction_service import TransactionService
 from app.utils.enums import TransactionFilterParams
-from app.utils.permissions import RequireRole
+from app.utils.permissions import AsyncRequireRole
 
 router = APIRouter(prefix="/generate_report/export", tags=["Generate Report"])
 
-require_user = RequireRole(["user"])
+require_user = AsyncRequireRole(["user"])
+
+
+def get_transaction_service() -> TransactionService:
+    return TransactionService(
+        transaction_repository=TransactionRepository(),
+        wallet_repository=WalletRepository(),
+        card_repository=CardRepository(),
+    )
+
+
+def get_report_service() -> GenerateReportService:
+    return GenerateReportService()
 
 
 @router.get("/csv")
@@ -21,7 +37,7 @@ async def export_transactions_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
-    transactions = transaction_service.get_filtered_transactions(
+    transactions = get_transaction_service().get_filtered_transactions(
         db,
         current_user.id,
         filters.search,
@@ -31,7 +47,7 @@ async def export_transactions_csv(
     )
 
     filename_base = f"izvestaj_{date.today()}"
-    csv_data = generate_report_service.generate_csv_report(transactions)
+    csv_data = get_report_service().generate_csv_report(transactions)
 
     return Response(
         content=csv_data,
@@ -49,7 +65,7 @@ async def export_transactions_pdf(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
-    transactions = transaction_service.get_filtered_transactions(
+    transactions = get_transaction_service().get_filtered_transactions(
         db,
         current_user.id,
         filters.search,
@@ -59,7 +75,7 @@ async def export_transactions_pdf(
     )
 
     filename_base = f"izvestaj_{date.today()}"
-    pdf_data = generate_report_service.generate_pdf_report(
+    pdf_data = get_report_service().generate_pdf_report(
         transactions, current_user.email
     )
 
