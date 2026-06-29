@@ -18,6 +18,7 @@ import MyCardsPage from '../pages/my-cards/MyCardsPage'
 import TemplatesPage from '../pages/templates/TemplatesPage'
 import NewTransactionPage from '../pages/new-transaction/NewTransactionPage'
 import NewTemplatePage from '../pages/new-template/NewTemplatePage'
+import PaymentAccountsPage from '../pages/payment-accounts/PaymentAccountsPage'
 
 const router = createBrowserRouter([
   {
@@ -95,6 +96,14 @@ const router = createBrowserRouter([
   {
     path: '/new-template',
     element: <NewTemplatePage />
+  },
+  {
+    path: '/payment-accounts',
+    element: (
+      <ProtectedRoute>
+        <PaymentAccountsPage />
+      </ProtectedRoute>
+    )
   }
 ])
 
