@@ -11,8 +11,8 @@ const PageHeader = ({ label, title, subtitle, children }) => {
             {label}
           </span>
         </div>
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-1">{title}</h1>
-        <p className="text-gray-700 font-semibold opacity-80">{subtitle}</p>
+        <h1 className="text-4xl font-black text-gray-900 dark:text-gray-100 tracking-tight mb-1">{title}</h1>
+        <p className="text-gray-700 dark:text-gray-300 font-semibold opacity-80">{subtitle}</p>
       </div>
 
       {children && <div className="relative z-10">{children}</div>}
