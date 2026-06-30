@@ -23,3 +23,10 @@ export const formatAccountNumber = (value) =>
   getAccountNumberDigits(value)
     .replace(/(.{4})/g, '$1 ')
     .trim()
+
+export const formatBalance = (balance) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(balance)

@@ -27,5 +27,8 @@ export const queryKeys = {
     all: ['transactions'],
     list: (filters = {}) => ['transactions', 'list', filters],
     detail: (transactionId) => ['transactions', 'detail', transactionId]
+  },
+  paymentAccounts: {
+    all: ['paymentAccounts']
   }
 }
