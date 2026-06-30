@@ -48,18 +48,18 @@ Do not invent project rules.
 
 # Review Scope
 
-Always compare the current branch against the `dev` branch.
+Always review only the currently staged changes.
 
 Start by identifying changed files with:
 
 ```bash
-git diff --name-only dev...HEAD
+git diff --cached --name-only
 ```
 
 Then inspect the actual changes with:
 
 ```bash
-git diff dev...HEAD
+git diff --cached
 ```
 
 Review every changed file.
@@ -218,7 +218,7 @@ Otherwise, do not mention tests.
 2. Identify changed files with:
 
 ```bash
-git diff --name-only dev...HEAD
+git diff --cached --name-only
 ```
 
 3. Read frontend or backend `CLAUDE.md` files depending on changed files.
@@ -226,7 +226,7 @@ git diff --name-only dev...HEAD
 4. Inspect the changed code with:
 
 ```bash
-git diff dev...HEAD
+git diff --cached
 ```
 
 5. Read nearby existing code to understand current patterns.
