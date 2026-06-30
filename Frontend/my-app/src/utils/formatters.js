@@ -30,3 +30,13 @@ export const formatBalance = (balance) =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(balance)
+
+export const formatDate = (dateString) => {
+  if (!dateString) return ''
+  return new Date(dateString).toLocaleDateString('sr-RS')
+}
+
+export const formatDateTime = (dateString) => {
+  if (!dateString) return ''
+  return new Date(dateString).toLocaleString('sr-RS')
+}

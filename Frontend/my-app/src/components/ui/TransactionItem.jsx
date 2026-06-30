@@ -1,4 +1,5 @@
 import { cn } from '../../utils/cn'
+import { formatDate } from '../../utils/formatters'
 import { ArrowUpRight, ArrowDownLeft, Clock, X } from 'lucide-react'
 import Button from './Button'
 import AlertDialog from './AlertDialog'
@@ -21,7 +22,7 @@ export function TransactionItem({ transaction, className, onCancel }) {
 
   const displayType = transaction.type === 'recurring' ? 'Recurring' : 'Single'
 
-  const formattedDate = new Date(transaction.created_at).toLocaleDateString('sr-RS')
+  const formattedDate = formatDate(transaction.created_at)
 
   const formattedAmount = `${isIncoming ? '+' : '-'}${transaction.currency} ${Number(
     transaction.amount

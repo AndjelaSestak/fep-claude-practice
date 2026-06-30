@@ -1,5 +1,6 @@
 import Button from '../../../components/ui/Button'
 import { useTransactionContext } from '../../../context/TransactionContext'
+import { formatDateTime } from '../../../utils/formatters'
 
 export const TransactionDetailsModal = () => {
   const { isModalOpen, setIsModalOpen, detailsLoading, selectedTransaction } =
@@ -54,7 +55,7 @@ export const TransactionDetailsModal = () => {
             </div>
             <div className="flex justify-between border-b pb-2">
               <span className="text-gray-500">Date:</span>
-              <span>{new Date(selectedTransaction.created_at).toLocaleString('sr-RS')}</span>
+              <span>{formatDateTime(selectedTransaction.created_at)}</span>
             </div>
             <Button
               className="w-full"

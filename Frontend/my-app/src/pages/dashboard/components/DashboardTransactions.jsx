@@ -1,4 +1,5 @@
 import Button from '../../../components/ui/Button'
+import { formatDateTime } from '../../../utils/formatters'
 import { ItemList } from '../../../components/ui/ItemList'
 import { TransactionFilters } from '../../../components/ui/TransactionFilters'
 import { TransactionItem } from '../../../components/ui/TransactionItem'
@@ -102,7 +103,7 @@ const DashboardTransactions = () => {
 
                 <div className="flex justify-between border-b pb-2">
                   <span className="text-gray-500">Date:</span>
-                  <span>{new Date(selectedTransaction.created_at).toLocaleString('sr-RS')}</span>
+                  <span>{formatDateTime(selectedTransaction.created_at)}</span>
                 </div>
 
                 <Button

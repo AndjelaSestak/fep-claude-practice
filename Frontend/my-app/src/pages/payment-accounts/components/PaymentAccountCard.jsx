@@ -10,14 +10,14 @@ const PaymentAccountCard = ({ currency, balance, account_number }) => {
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        <span className="text-2xl font-bold text-gray-800">
           {formatBalance(balance)}{' '}
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{currency}</span>
+          <span className="text-sm font-medium text-gray-500">{currency}</span>
         </span>
       </div>
 
       <div className="mt-auto">
-        <span className="text-xs text-gray-400 dark:text-gray-500 font-mono tracking-wider">
+        <span className="text-xs text-gray-400 font-mono tracking-wider">
           {maskAccountNumber(account_number)}
         </span>
       </div>

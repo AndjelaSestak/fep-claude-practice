@@ -8,7 +8,7 @@ const PaymentAccountsPage = () => {
   const { accounts, isLoading } = usePaymentAccounts()
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-slate-900">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <NavBarAfterLogin />
@@ -25,14 +25,14 @@ const PaymentAccountsPage = () => {
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={i}
-                    className="bg-gray-100 dark:bg-gray-700 rounded-[2.5rem] h-40 animate-pulse"
+                    className="bg-gray-100 rounded-[2.5rem] h-40 animate-pulse"
                   />
                 ))}
               </div>
             )}
 
             {!isLoading && accounts.length === 0 && (
-              <div className="text-gray-400 dark:text-gray-500 text-sm">No payment accounts found.</div>
+              <div className="text-gray-400 text-sm">No payment accounts found.</div>
             )}
 
             {!isLoading && accounts.length > 0 && (
