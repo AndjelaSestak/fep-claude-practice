@@ -1,5 +1,6 @@
 import Sidebar from '../../components/layout/SideBar'
 import NavBarAfterLogin from '../../components/layout/NavBarAfterLogin'
+import Button from '../../components/ui/Button'
 import PageHeader from '../../components/ui/PageHeader'
 import PaymentAccountCard from './components/PaymentAccountCard'
 import { usePaymentAccounts } from '../../hooks/usePaymentAccounts'
@@ -8,7 +9,7 @@ const PaymentAccountsPage = () => {
   const { accounts, isLoading } = usePaymentAccounts()
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-slate-900">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <NavBarAfterLogin />
@@ -18,7 +19,11 @@ const PaymentAccountsPage = () => {
               label="Accounts"
               title="Payment Accounts"
               subtitle="All your payment accounts at a glance"
-            />
+            >
+              <Button variant="outline" size="sm" disabled>
+                Export
+              </Button>
+            </PageHeader>
 
             {isLoading && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
